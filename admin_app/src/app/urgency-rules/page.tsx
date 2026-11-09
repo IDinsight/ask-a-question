@@ -1,8 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  IconAlertTriangle,
   IconArrowRight,
   IconBolt,
+  IconRefresh,
   IconPencil,
   IconPlayerPlayFilled,
   IconPlus,
@@ -10,6 +12,12 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -72,6 +80,11 @@ const UrgencyRulesPage = () => {
   const [backupRuleText, setBackupRuleText] = useState("");
   const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
+  // Track the initial fetch so we don't flash the "no rules yet" empty state
+  // while loading, or show it when the fetch actually failed
+  const [loadingRules, setLoadingRules] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0); // bump to retry the fetch
 
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
@@ -189,17 +202,23 @@ const UrgencyRulesPage = () => {
 
   useEffect(() => {
     if (token) {
+      setLoadingRules(true);
+      setLoadError(null);
       getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
-          handleCustomError(error, "Failed to fetch urgency rules");
+          const message =
+            (error as CustomError)?.message || "Failed to fetch urgency rules";
+          setLoadError(message);
           console.error(error);
-        });
+        })
+        .finally(() => setLoadingRules(false));
       setCurrAccessLevel(accessLevel);
     } else {
       setItems([]);
+      setLoadingRules(false);
     }
-  }, [token, accessLevel]);
+  }, [token, accessLevel, reloadKey]);
 
   const [openSidebar, setOpenSideBar] = useState(false);
   const handleSidebarToggle = () => setOpenSideBar(!openSidebar);
@@ -233,7 +252,7 @@ const UrgencyRulesPage = () => {
               <Button
                 size="lg"
                 className="bg-warning text-warning-foreground hover:bg-warning/90"
-                disabled={openSidebar || isEmpty}
+                disabled={openSidebar || isEmpty || loadingRules}
                 onClick={handleSidebarToggle}
               >
                 <IconPlayerPlayFilled data-icon="inline-start" />
@@ -250,7 +269,31 @@ const UrgencyRulesPage = () => {
             </div>
           </header>
 
-          {isEmpty ? (
+          {loadingRules ? (
+            <div
+              role="status"
+              className="flex items-center justify-center gap-2 border bg-card py-16 text-sm text-muted-foreground"
+            >
+              <Spinner />
+              Loading rules...
+            </div>
+          ) : loadError ? (
+            <Alert variant="destructive">
+              <IconAlertTriangle />
+              <AlertTitle className="text-sm">Couldn&apos;t load urgency rules</AlertTitle>
+              <AlertDescription>{loadError}</AlertDescription>
+              <AlertAction>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                >
+                  <IconRefresh data-icon="inline-start" />
+                  Retry
+                </Button>
+              </AlertAction>
+            </Alert>
+          ) : isEmpty ? (
             <>
               <Empty className="border border-border bg-card px-6 py-16">
                 <EmptyHeader className="max-w-md">

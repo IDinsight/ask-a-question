@@ -1,7 +1,13 @@
 import React, { useState } from "react";
-import { IconAlertTriangle, IconBolt, IconCircleCheck } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconBolt,
+  IconBraces,
+  IconCircleCheck,
+  IconExclamationCircle,
+} from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Empty,
   EmptyDescription,
@@ -9,9 +15,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Trace, TraceLine, TraceTitle } from "@/components/ui/trace";
+import { IconButtonWithTooltip } from "@/components/AssistantParts";
 import { JsonDialog } from "@/components/JsonDialog";
 import { TestSidebar } from "@/components/SidebarCommon";
-import TypingAnimation from "@/components/TypingAnimation";
 import { apiCalls } from "@/utils/api";
 
 interface UDResults {
@@ -22,7 +29,7 @@ interface UDResults {
 interface UDResponseBoxData {
   dateTime: string;
   parsedData: UDResults | string; // string is for error messages
-  rawJson: string;
+  rawJson: unknown;
 }
 
 interface UDResponseBoxProps {
@@ -37,83 +44,81 @@ const getUDResponse = (
   setResponse: React.Dispatch<React.SetStateAction<UDResponseBoxData | null>>,
   token: string | null,
 ) => {
-  const processUDResponse = (response: any) => {
-    const udResults: UDResults = {
-      is_urgent: response.is_urgent,
-      matched_rules: response.matched_rules,
-    };
-
-    setResponse({
-      dateTime: new Date().toISOString(),
-      parsedData: udResults,
-      rawJson: response,
-    });
-  };
-
-  const processErrorMessage = (error: Error) => {
-    setResponse({
-      dateTime: new Date().toISOString(),
-      parsedData: "API call failed. See <json> for details.",
-      rawJson: `{error: ${error.message}}`,
-    });
-  };
-
-  if (question === "") {
+  if (question === "" || !token) {
     return;
   }
   setLoading(true);
-  if (token) {
-    apiCalls
-      .getUrgencyDetection(question, token)
-      .then((response) => {
-        processUDResponse(response);
-      })
-      .catch((error: Error) => {
-        processErrorMessage(error);
-        console.error(error);
-      })
-      .finally(() => {
-        setLoading(false);
+  apiCalls
+    .getUrgencyDetection(question, token)
+    .then((response) => {
+      setResponse({
+        dateTime: new Date().toISOString(),
+        parsedData: {
+          is_urgent: response.is_urgent,
+          // Guard against a missing list so the render never crashes
+          matched_rules: response.matched_rules ?? [],
+        },
+        rawJson: response,
       });
-  }
+    })
+    .catch((error: Error) => {
+      console.error(error);
+      setResponse({
+        dateTime: new Date().toISOString(),
+        parsedData: error.message || "The urgency detection request failed.",
+        rawJson: { error: error.message },
+      });
+    })
+    .finally(() => {
+      setLoading(false);
+    });
 };
 
-/** Urgent / not urgent, plus the rules that matched. */
+/** Urgent / not urgent as an alert, then the rules that matched. */
 const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
-  const single = parsedData.matched_rules.length === 1;
+  const count = parsedData.matched_rules.length;
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Classification
-        </h3>
-        {parsedData.is_urgent ? (
-          <span className="flex items-center gap-1.5 text-base font-semibold text-urgent">
-            <IconAlertTriangle className="size-4" aria-hidden="true" />
-            Urgent
-          </span>
-        ) : (
-          <span className="flex items-center gap-1.5 text-base font-semibold">
-            <IconCircleCheck
-              className="size-4 text-muted-foreground"
-              aria-hidden="true"
-            />
-            Not urgent
-          </span>
-        )}
-      </div>
-      {parsedData.is_urgent && (
-        <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {single ? "Matched Rule" : "Matched Rules"}
-        </h3>
+      {parsedData.is_urgent ? (
+        // Amber "urgent" token, matching the rest of the urgency page
+        <Alert className="border-urgent/40 bg-urgent/5 text-urgent *:data-[slot=alert-description]:text-urgent/90">
+          <IconAlertTriangle />
+          <AlertTitle className="text-sm">Urgent</AlertTitle>
+          <AlertDescription>
+            {count === 1 ? "1 rule matched" : `${count} rules matched`} this message.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert>
+          <IconCircleCheck className="text-muted-foreground" />
+          <AlertTitle className="text-sm">Not urgent</AlertTitle>
+          <AlertDescription>No rules matched this message.</AlertDescription>
+        </Alert>
       )}
-      {parsedData.matched_rules.length > 0 && (
-        // A bulleted list only when there's more than one rule
-        <ul className={single ? "flex flex-col" : "flex list-disc flex-col gap-2 pl-5"}>
-          {parsedData.matched_rules.map((text: string, i: number) => (
-            <li key={i}>{text}</li>
-          ))}
-        </ul>
+
+      {count > 0 && (
+        <section className="flex flex-col gap-2">
+          <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {count === 1 ? "Matched rule" : `Matched rules (${count})`}
+          </h3>
+          <ol className="flex flex-col gap-2">
+            {parsedData.matched_rules.map((text, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-2 border bg-background px-3 py-2.5"
+              >
+                <IconBolt
+                  className="mt-0.5 size-3.5 shrink-0 text-urgent"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 text-sm break-words whitespace-pre-wrap">
+                  {text}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
     </div>
   );
@@ -124,7 +129,13 @@ const UDResponseBox: React.FC<UDResponseBoxProps> = ({ loading, responseBoxData 
   const [jsonModalOpen, setJsonModalOpen] = useState<boolean>(false);
 
   if (loading) {
-    return <TypingAnimation />;
+    return (
+      <Trace role="status">
+        <TraceLine status="running">
+          <TraceTitle>Checking your rules...</TraceTitle>
+        </TraceLine>
+      </Trace>
+    );
   }
 
   if (!responseBoxData) {
@@ -148,14 +159,22 @@ const UDResponseBox: React.FC<UDResponseBoxProps> = ({ loading, responseBoxData 
       <div className="flex flex-col gap-3">
         {/* A string means the request failed */}
         {typeof responseBoxData.parsedData === "string" ? (
-          <p>{responseBoxData.parsedData}</p>
+          <Alert variant="destructive">
+            <IconExclamationCircle />
+            <AlertTitle className="text-sm">Request failed</AlertTitle>
+            <AlertDescription>{responseBoxData.parsedData}</AlertDescription>
+          </Alert>
         ) : (
           <RenderUDResponse parsedData={responseBoxData.parsedData} />
         )}
         <div className="flex items-center justify-end">
-          <Button variant="link" size="xs" onClick={() => setJsonModalOpen(true)}>
-            {"<json>"}
-          </Button>
+          <IconButtonWithTooltip
+            label="View raw response"
+            size="icon-sm"
+            onClick={() => setJsonModalOpen(true)}
+          >
+            <IconBraces />
+          </IconButtonWithTooltip>
         </div>
       </div>
 

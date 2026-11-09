@@ -34,7 +34,12 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,7 +55,7 @@ import {
   getContentList,
   getTagList,
 } from "../api";
-import { RelatedContentsAutoComplete } from "../components/RelatedContentsAutoComplete";
+import { RelatedContentsAutoComplete } from "../_components/RelatedContentsAutoComplete";
 import { Content, EditContentBody, Tag } from "../types";
 
 /** A tag option; `isNew` marks the "Create …" entry for a tag that doesn't exist yet. */
@@ -72,7 +77,8 @@ const AddEditContentPage = () => {
   const content_id = Number(searchParams.get("content_id")) || null;
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [openDiscardChangesModal, setOpenDiscardChangesModal] = React.useState(false);
+  const [openDiscardChangesModal, setOpenDiscardChangesModal] =
+    React.useState(false);
 
   const [isSaved, setIsSaved] = React.useState(true);
 
@@ -197,7 +203,9 @@ const ContentBox = ({
                 data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
-        setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
+        setContentTags(
+          defaultTags.filter((tag): tag is Tag => tag !== undefined),
+        );
       } catch (error) {
         const customError = error as CustomError;
         let errorMessage = "Error fetching tags";
@@ -218,7 +226,9 @@ const ContentBox = ({
         const defaultContents =
           content && content.related_contents_id.length > 0
             ? content.related_contents_id.map((content_id) =>
-                data.find((content: Content) => content.content_id === content_id),
+                data.find(
+                  (content: Content) => content.content_id === content_id,
+                ),
               )
             : [];
         setSelectedContents(
@@ -258,7 +268,9 @@ const ContentBox = ({
       const customError = error as CustomError;
       if (error.status === 403) {
         // 403 here means the workspace's content quota is used up.
-        console.error("Content quota reached. Please contact support for assistance.");
+        console.error(
+          "Content quota reached. Please contact support for assistance.",
+        );
         console.error("Error details:", customError.message);
         setErrorMessage(customError.message);
         setSaveError(true);
@@ -266,7 +278,8 @@ const ContentBox = ({
       } else {
         console.error("Failed to save content. Please try again later.", error);
         setErrorMessage(
-          customError.message || "Failed to save content. Please try again later.",
+          customError.message ||
+            "Failed to save content. Please try again later.",
         );
         setSaveError(true);
         return null;
@@ -344,7 +357,9 @@ const ContentBox = ({
           handleTagsChange([...contentTags, data]);
           setRefreshKey((prevKey) => prevKey + 1);
         })
-        .catch((error) => handleCustomError(error, `Failed to create tag "${tag}"`));
+        .catch((error) =>
+          handleCustomError(error, `Failed to create tag "${tag}"`),
+        );
     } else {
       setSnackMessage(`Tag "${tag}" already exists`);
     }
@@ -409,8 +424,8 @@ const ContentBox = ({
               Delete tag &quot;{tagToDelete?.tag_name}&quot;?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This tag will be removed from all contents and will no longer be an
-              option. This action cannot be undone.
+              This tag will be removed from all contents and will no longer be
+              an option. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -460,7 +475,9 @@ const ContentBox = ({
               value={content ? content.content_text : ""}
               onChange={(e) => handleChange(e, "content_text")}
             />
-            {isContentEmpty && <FieldError>Content should not be empty</FieldError>}
+            {isContentEmpty && (
+              <FieldError>Content should not be empty</FieldError>
+            )}
           </Field>
 
           <Field className="max-w-[500px]">
@@ -486,7 +503,9 @@ const ContentBox = ({
                 handleTagsChange(updated);
               }}
               itemToStringLabel={(tag: TagOption) => tag.tag_name}
-              isItemEqualToValue={(a: TagOption, b: TagOption) => a.tag_id === b.tag_id}
+              isItemEqualToValue={(a: TagOption, b: TagOption) =>
+                a.tag_id === b.tag_id
+              }
             >
               <ComboboxChips ref={tagsAnchor} className="min-h-9">
                 <ComboboxValue>
@@ -494,7 +513,9 @@ const ContentBox = ({
                     <>
                       {values.map((tag) => (
                         <ComboboxChip key={tag.tag_id}>
-                          <span className="max-w-40 truncate">{tag.tag_name}</span>
+                          <span className="max-w-40 truncate">
+                            {tag.tag_name}
+                          </span>
                         </ComboboxChip>
                       ))}
                       <ComboboxChipsInput
@@ -601,7 +622,12 @@ const Header = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="icon" aria-label="Back to content" onClick={onBack}>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Back to content"
+        onClick={onBack}
+      >
         <IconChevronLeft />
       </Button>
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -628,7 +654,10 @@ const DiscardChangesModal = ({
   onConfirmDiscard: () => void;
 }) => {
   return (
-    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => !nextOpen && onClose()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Discard changes?</AlertDialogTitle>

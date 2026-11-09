@@ -6,10 +6,12 @@ import type { Metadata } from "next";
 import React, { Suspense } from "react";
 import { inter } from "@/fonts";
 import QueryProvider from "@/utils/QueryProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Ask A Question",
-  description: "Trustworthy answers for communities. Actionable insights for you.",
+  description:
+    "Trustworthy answers for communities. Actionable insights for you.",
 };
 
 export default function RootLayout({
@@ -25,7 +27,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryProvider>
           <Suspense>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+            </AuthProvider>
           </Suspense>
         </QueryProvider>
       </body>
