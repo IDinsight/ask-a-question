@@ -1,0 +1,12 @@
+{
+  "skill_name": "security",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "",
+      "expected_output": "",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}
