@@ -7,13 +7,13 @@ from httpx import ASGITransport, AsyncClient
 from pytest import Item
 from pytest_asyncio import is_async_test
 
+from app import create_app
 from app.core.database import get_session_context_manager
 from app.core.security import (
     create_access_token,
     get_key_hash,
     get_password_salted_hash,
 )
-from app.main import create_app
 from app.users.models import UserDB
 
 TEST_USERNAME = "test_username"

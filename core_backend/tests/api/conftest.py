@@ -15,6 +15,7 @@ from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
+from app import create_app
 from app.contents.models import ContentDB
 from app.core.config import (
     LITELLM_API_KEY,
@@ -33,7 +34,6 @@ from app.core.security import (
     get_key_hash,
     get_password_salted_hash,
 )
-from app.main import create_app
 
 # process_input / process_output were merged into the question_answer service module.
 from app.question_answer import service as process_input

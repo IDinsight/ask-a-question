@@ -2,7 +2,7 @@
 
 Services must not depend on FastAPI. Instead of raising `HTTPException`, a service
 raises one of the exceptions below. `register_exception_handlers` (called from
-`app.main.create_app`) converts them into JSON responses with the same shape that
+`app.create_app`) converts them into JSON responses with the same shape that
 `HTTPException` produces (`{"detail": ...}`), so API clients see no difference.
 """
 
