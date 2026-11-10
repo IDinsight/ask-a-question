@@ -18,11 +18,10 @@ import os
 import random
 import textwrap
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Coroutine, Optional, cast
+from typing import TYPE_CHECKING, Any, Coroutine, Optional, cast
 
 import numpy as np
 import pandas as pd
-from bertopic import BERTopic
 from bokeh.core.types import ID
 from bokeh.embed import json_item
 from bokeh.embed.standalone import StandaloneEmbedJson
@@ -43,13 +42,16 @@ from bokeh.models import (
 from bokeh.palettes import Turbo256
 from bokeh.plotting import figure
 from dateutil.relativedelta import relativedelta
-from hdbscan import HDBSCAN
 from langfuse.decorators import langfuse_context, observe  # type: ignore
 from pydantic import BaseModel
 from redis import asyncio as aioredis
-from sentence_transformers import SentenceTransformer
 from sqlalchemy.ext.asyncio import AsyncSession
-from umap import UMAP
+
+# BERTopic, UMAP, HDBSCAN and SentenceTransformer pull in torch/transformers and add
+# about two seconds to start-up, so they are imported inside the functions that
+# use them. This import is for type annotations only.
+if TYPE_CHECKING:
+    from bertopic import BERTopic
 
 from app.core.config import (
     DISABLE_DASHBOARD_LLM,
@@ -1122,6 +1124,11 @@ def fit_topic_model(*, embeddings: np.ndarray, texts: list[str]) -> BERTopic:
         A fitted BERTopic model.
     """
 
+    # Heavy imports, done lazily (see the note at the top of the module).
+    from bertopic import BERTopic
+    from hdbscan import HDBSCAN
+    from umap import UMAP
+
     umap_model = UMAP(
         metric="cosine", min_dist=0.0, n_components=2, n_neighbors=15, random_state=42
     )
@@ -1155,6 +1162,9 @@ def generate_embeddings(*, texts: list[str]) -> np.ndarray:
     np.ndarray
         An array of embeddings for the provided texts.
     """
+
+    # Heavy import, done lazily (see the note at the top of the module).
+    from sentence_transformers import SentenceTransformer
 
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings_any = sentence_model.encode(
@@ -1217,7 +1227,7 @@ async def generate_topic_labels_async(
     topic_dicts = await asyncio.gather(*tasks) if tasks else []
 
     # Map `topic_ids` to `topic_dicts`.
-    topic_labels = dict(zip(topic_ids, topic_dicts))
+    topic_labels = dict(zip(topic_ids, topic_dicts, strict=False))
 
     # Logging for debugging.
     logger.debug(f"Generated topic_labels: {topic_labels}")
@@ -1521,7 +1531,7 @@ def produce_bokeh_plot(*, embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Make 'Unclassified' and 'Content' topics gray, everything else blue.
     embeddings_df["color"] = embeddings_df["topic_title"].apply(
-        lambda t: ("gray" if t.lower() in ["unclassified", "content"] else "blue")
+        lambda t: "gray" if t.lower() in ["unclassified", "content"] else "blue"
     )
 
     # Identify known topics excluding special topics and 'Unclassified'
@@ -1556,9 +1566,7 @@ def produce_bokeh_plot(*, embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Exclude 'Content' from `topic_counts`.
     topic_counts = (
-        embeddings_df[
-            ~embeddings_df["topic_title"].str.lower().isin(["content"])
-        ]  # type: ignore
+        embeddings_df[~embeddings_df["topic_title"].str.lower().isin(["content"])]  # type: ignore
         .groupby(["topic_id", "topic_title"])
         .size()
         .reset_index(name="counts")
@@ -1834,7 +1842,7 @@ def produce_bokeh_plot(*, embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     select_all_callback = CustomJS(
         args={"multi_select": multi_select},
         code=f"""
-        multi_select.value = { [str(tid) for tid in unique_topic_ids] };
+        multi_select.value = {[str(tid) for tid in unique_topic_ids]};
         multi_select.change.emit();
     """,
     )

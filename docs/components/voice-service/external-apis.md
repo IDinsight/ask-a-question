@@ -24,7 +24,7 @@ Note: To use the [Manual Setup](../../develop/setup.md#set-up-manually) method, 
 
 2. Run `export GOOGLE_APPLICATION_CREDENTIALS="core_backend/credentials.json"` to set the environment variable.
 
-3. While in the root of the directory, run `python core_backend/main.py`.
+3. From the `core_backend/` directory, run `python -m app.main`.
 
 
 ??? "Do not navigate to `core_backend` folder using `cd core_backend`"

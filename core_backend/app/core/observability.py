@@ -225,7 +225,7 @@ def create_metrics_app() -> Callable:
     Returns
     -------
     Callable
-        The metrics app, mounted at `/metrics` by `app.create_app`.
+        The metrics app, mounted at `/metrics` by `app.main`.
     """
 
     registry = CollectorRegistry()

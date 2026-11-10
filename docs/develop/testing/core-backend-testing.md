@@ -1,94 +1,95 @@
 # Writing and running tests
 
-If you are writing new features, you should also add unit tests. Tests are under
-`core_backend/tests`.
+If you are writing new features, you should also add tests. Tests live under
+`core_backend/tests` and mirror the feature layout of `core_backend/app`.
 
-## Running unit tests
+## Layout
+
+Each feature gets one test file per layer:
+
+```
+tests/
+├── conftest.py                         # shared fixtures (users, workspaces, client)
+├── test.env                            # test settings, loaded automatically
+├── tags/
+│   ├── test_tags_router.py             # HTTP: status codes, auth, validation
+│   ├── test_tags_service.py            # business rules, repository mocked out
+│   └── test_tags_repository.py         # SQL against a real Postgres
+├── users/
+│   └── ...
+├── core/                               # app/core (database, utils, observability)
+├── migrations/                         # alembic migration tests
+├── bdd/                                # pytest-bdd user/workspace scenarios
+└── question_answer/rails/              # guardrail tests that call a real LLM
+```
+
+How each layer is tested:
+
+- **Router tests** go through `TestClient(app)` (the `client` fixture). To reach an
+  error branch, patch the service function the router imports, or use
+  `app.dependency_overrides` and reset it afterwards.
+- **Service tests** don't touch the database or the network. Patch the repository
+  functions the service imports with `unittest.mock.AsyncMock`.
+- **Repository tests** use the `rollback_asession` fixture. Everything they write
+  is rolled back when the test ends, so they need no clean-up code.
+
+## Running tests
 
 !!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
-??? warning "Don't run `pytest` directly"
-    Unless you have updated your environment variables and started a testing instance
-    of postgres, the tests will end up writing to your dev environment :weary_cat:
+From `core_backend/`:
 
-Run tests using:
+    uv run pytest
 
-    make tests
+That's it. You don't need to source any env file or start containers:
 
-This target starts up new postgres and redis containers for testing. It also sets the
-correct environment variables, runs `pytest`, and then destroys the containers once done.
+- `tests/test.env` is loaded automatically. Variables you export in your shell take
+  priority. Your dev `core_backend/.env` is never read during tests.
+- If the test Postgres (port 5433) or Redis (port 6381) is not reachable, the
+  `testdb` and `redis-test` containers are started for you.
+- Every run gets a **brand-new database**, copied from a migrated template. The
+  template is rebuilt only when the migrations change. The test database name must
+  contain `test`, otherwise the run stops instead of dropping it.
+
+Useful variations:
+
+    uv run pytest tests/tags                 # one feature
+    uv run pytest --cov                      # with coverage (fails under 80%)
+    uv run pytest --durations=10             # find slow tests
+    uv run pytest -p no:randomly             # fixed order (pytest-randomly shuffles)
+    make teardown-test-containers            # stop and remove the test containers
 
 ### Debugging unit tests
 
-Before debugging, run `make setup-test-db` within `core_backend` to launch new postgres container for testing and set the correct environment variables.
-
-After debugging, clean up the testing resources by calling `make teardown-test-db`.
-
-#### Configs for Visual Studio Code
-
-??? note "`.vscode/launch.json`"
-
-    Add the following configuration to your `.vscode/launch.json` file to set environment
-    variables for debugging:
-
-    ```json
-    {
-        "version": "0.2.0",
-        "configurations": [
-            {  // configuration for debugging
-                "name": "Python: Tests in current file",
-                "purpose": ["debug-test"],
-                "type": "python",
-                "request": "launch",
-                "program": "${file}",
-                "args": ["--color=yes"],
-                "envFile": "${workspaceFolder}/core_backend/tests/api/test.env",
-                "console": "integratedTerminal",
-                "justMyCode": false
-            }
-        ]
-    }
-    ```
+Because the settings load automatically, the VS Code test explorer and debugger
+work with no extra env file. Point them at `core_backend`:
 
 ??? note "`.vscode/settings.json`"
-
-    Add the following configuration to `.vscode/settings.json` to set the correct pytest
-    working directory and environment variables:
 
     ```json
     {
         "python.testing.cwd": "${workspaceFolder}/core_backend",
-        "python.testing.pytestArgs": [
-            "tests",
-            "--rootdir=${workspaceFolder}/core_backend"
-        ],
+        "python.testing.pytestArgs": ["tests"],
         "python.testing.unittestEnabled": false,
-        "python.testing.pytestEnabled": true,
-        "python.envFile": "${workspaceFolder}/core_backend/tests/api/test.env"
+        "python.testing.pytestEnabled": true
     }
     ```
 
 ## Running optional tests
 
-There are some additional tests that are not run by default. Most of these
-either make call to OpenAI or depend on other components:
+Some tests are not run by default because they call a real LLM:
 
-- *Language Identification*: Tests if the the solution is able to identify the
-language given a short sample text.
-- *Test if LLM response aligns with provided context*: Tests for hallucinations by
-checking if the LLM response is supported by the provided context.
-- *Test safety*: Tests for prompt injection and jailbreaking.
+- *Language Identification*: checks that the solution can identify the language of
+  a short sample text.
+- *Test if LLM response aligns with provided context*: checks for hallucinations by
+  testing whether the LLM response is supported by the provided context.
+- *Test safety*: tests for prompt injection and jailbreaking.
 
-These tests will require the LiteLLM Proxy server to be running (to accept LLM calls). You can run this by going to root and running:
+These need the LiteLLM Proxy server to be running. From the repository root:
 
     make setup-llm-proxy
 
-Then run the tests using:
+Then, with your LLM credentials exported in the shell:
 
     cd core_backend
-    make setup-test-db
-    python -m pytest -m rails
-
-And when done:
-
-    make teardown-test-db
+    uv run pytest -m rails tests/question_answer/rails

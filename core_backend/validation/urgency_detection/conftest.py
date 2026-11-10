@@ -7,13 +7,13 @@ from httpx import ASGITransport, AsyncClient
 from pytest import Item
 from pytest_asyncio import is_async_test
 
-from app import create_app
 from app.core.database import get_session_context_manager
 from app.core.security import (
     create_access_token,
     get_key_hash,
     get_password_salted_hash,
 )
+from app.main import app
 from app.users.models import UserDB
 
 TEST_USERNAME = "test_username"
@@ -30,7 +30,6 @@ def pytest_collection_modifyitems(items: List[Item]) -> None:
 
 @pytest.fixture(scope="session")
 async def client() -> AsyncGenerator[AsyncClient, None]:
-    app = create_app()
     # httpx 0.28 removed the `app=` shortcut; route requests to the ASGI app
     # through an explicit transport instead.
     transport = ASGITransport(app=app)

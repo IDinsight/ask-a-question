@@ -76,4 +76,37 @@ dev = [
 ]
 
 [tool.fastapi]
-entrypoint = "main:app"
+entrypoint = "app.main:app"
+
+# Pytest config for core_backend. Native TOML table (pytest >= 9). Having it here
+# makes core_backend/ the rootdir, so the repo-root pyproject.toml is not used.
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+# -ra: short summary of skips/failures. --strict-markers: typos in marks fail.
+# -m "not rails": the guardrail tests call a real LLM, so they are opt-in
+# (`pytest -m rails`). A later -m on the command line replaces this one.
+addopts = ["-ra", "--strict-markers", "-m", "not rails"]
+asyncio_mode = "auto"
+bdd_features_base_dir = "tests/bdd/features"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "rails: tests the LLM guardrails. These call a real LLM service.",
+    "alembic: alembic migration tests (pytest-alembic).",
+]
+
+# Coverage for `pytest --cov` (opt-in: measuring slows the run down).
+[tool.coverage.run]
+source = ["app"]
+branch = true
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

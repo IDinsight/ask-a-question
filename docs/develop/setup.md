@@ -207,7 +207,7 @@ procedures.
 5. Start the backend app.
 
     ```shell
-    python core_backend/main.py
+    python -m app.main  # run from core_backend/
     ```
 
     ??? note "Here's what you should see if the above command executes successfully"

@@ -4,13 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app import create_app
 from app.core.database import get_session
+from app.main import app
 
 
 @pytest.fixture(scope="session")
 def client() -> Generator[TestClient, None, None]:
-    app = create_app()
     with TestClient(app) as c:
         yield c
 
