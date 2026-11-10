@@ -505,7 +505,7 @@ class TestEmbeddingsSearch:
             headers={"Authorization": f"Bearer {api_key_workspace_1}"},
             json=json_,
         )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
     async def test_response_feedback_sentiment_only(

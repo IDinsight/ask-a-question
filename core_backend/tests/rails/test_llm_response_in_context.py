@@ -30,7 +30,7 @@ def read_test_data(file: str) -> list[tuple]:
         return [(c["context"], *t.values()) for c in content for t in c["tests"]]
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 @pytest.mark.parametrize(
     "context, statement, expected, reason", read_test_data(CONTEXT_RESPONSE_FILE)
 )

@@ -3,7 +3,7 @@ from typing import AsyncGenerator, List
 
 import pytest
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pytest import Item
 from pytest_asyncio import is_async_test
 
@@ -20,7 +20,7 @@ TEST_USER_API_KEY = "test_api_key"
 
 def pytest_collection_modifyitems(items: List[Item]) -> None:
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
-    session_scope_marker = pytest.mark.asyncio(scope="session")
+    session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
 
@@ -28,7 +28,10 @@ def pytest_collection_modifyitems(items: List[Item]) -> None:
 @pytest.fixture(scope="session")
 async def client() -> AsyncGenerator[AsyncClient, None]:
     app = create_app()
-    async with AsyncClient(app=app, base_url="http://test") as c:
+    # httpx 0.28 removed the `app=` shortcut; route requests to the ASGI app
+    # through an explicit transport instead.
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
 
 

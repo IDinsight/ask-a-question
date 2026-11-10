@@ -3,10 +3,11 @@
 import logging
 
 import uvicorn
+from fastapi.logger import logger
+from uvicorn_worker import UvicornWorker  # moved out of uvicorn.workers (deprecated)
+
 from app import create_app
 from app.core.config import BACKEND_ROOT_PATH
-from fastapi.logger import logger
-from uvicorn.workers import UvicornWorker
 
 app = create_app()
 
