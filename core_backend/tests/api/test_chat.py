@@ -8,15 +8,15 @@ from litellm import token_counter
 from redis import asyncio as aioredis
 
 from app.core.config import LITELLM_MODEL_CHAT
-from app.llm_call.utils import (
-    _ask_llm_async,
+from app.core.security import get_random_int32
+from app.core.utils import ask_llm_async
+from app.question_answer.schemas import QueryBase
+from app.question_answer.service import (
     _truncate_chat_history,
     append_message_content_to_chat_history,
     init_chat_history,
+    init_user_query_and_chat_histories,
 )
-from app.question_answer.routers import init_user_query_and_chat_histories
-from app.question_answer.schemas import QueryBase
-from app.utils import get_random_int32
 
 
 async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) -> None:
@@ -49,11 +49,11 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
 
     with (
         patch(
-            "app.question_answer.routers.init_chat_history",
+            "app.question_answer.service.init_chat_history",
             new_callable=AsyncMock,
         ) as mock_init_chat_history,
         patch(
-            "app.question_answer.routers.get_chat_response",
+            "app.question_answer.service.get_chat_response",
             new_callable=AsyncMock,
         ) as mock_get_chat_response,
     ):
@@ -91,7 +91,7 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
 
 
 async def test__ask_llm_async() -> None:
-    """Test expected operation for the `_ask_llm_async` function when neither
+    """Test expected operation for the `ask_llm_async` function when neither
     messages nor system message and user message is supplied.
     """
 
@@ -102,7 +102,7 @@ async def test__ask_llm_async() -> None:
 
     with (
         patch(
-            "app.llm_call.utils.acompletion", new_callable=AsyncMock
+            "app.core.utils.acompletion", new_callable=AsyncMock
         ) as mock_acompletion,
     ):
         mock_acompletion.return_value = mock_acompletion_return_value
@@ -111,9 +111,9 @@ async def test__ask_llm_async() -> None:
         # because the function is called either without appropriate arguments or with
         # missing arguments.
         with pytest.raises(AssertionError):
-            _ = await _ask_llm_async()
-            _ = await _ask_llm_async(system_message="FooBar")
-            _ = await _ask_llm_async(user_message="FooBar")
+            _ = await ask_llm_async()
+            _ = await ask_llm_async(system_message="FooBar")
+            _ = await ask_llm_async(user_message="FooBar")
 
 
 def test__truncate_chat_history() -> None:
@@ -346,7 +346,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
         ],
     }
 
-    with patch("app.llm_call.utils.requests.get", return_value=mock_response):
+    with patch("app.question_answer.service.requests.get", return_value=mock_response):
         # Call the function under test
         session_id = "12345"
         (
@@ -417,7 +417,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             },
         ],
     }
-    with patch("app.llm_call.utils.requests.get", return_value=mock_response):
+    with patch("app.question_answer.service.requests.get", return_value=mock_response):
         _, _, reset_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=True, session_id=session_id
         )

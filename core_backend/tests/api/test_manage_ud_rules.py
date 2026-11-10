@@ -9,7 +9,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.urgency_rules.models import UrgencyRuleDB
-from app.urgency_rules.routers import _convert_record_to_schema
+from app.urgency_rules.service import _convert_record_to_schema
 
 from .conftest import async_fake_embedding
 

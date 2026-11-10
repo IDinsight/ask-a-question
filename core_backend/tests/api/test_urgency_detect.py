@@ -9,11 +9,11 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.urgency_detection.config import URGENCY_CLASSIFIER
+from app.core.config import URGENCY_CLASSIFIER
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
-from app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
-from app.workspaces.utils import get_workspace_by_workspace_name
+from app.urgency_detection.service import ALL_URGENCY_CLASSIFIERS
+from app.workspaces.repository import get_workspace_by_workspace_name
 from tests.api.conftest import TEST_ADMIN_USERNAME_1, TEST_ADMIN_USERNAME_2
 
 

@@ -11,6 +11,7 @@ from typing import Sequence, Union
 import pgvector
 import sqlalchemy as sa
 from alembic import op
+
 from app.core.config import PGVECTOR_VECTOR_SIZE
 
 # revision identifiers, used by Alembic.

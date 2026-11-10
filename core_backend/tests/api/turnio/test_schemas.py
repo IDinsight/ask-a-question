@@ -3,11 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.turnio.schemas import (
-    TurnMessage,
-    TurnMessageBody,
-    TurnTextMessage,
-)
+from app.question_answer.schemas import TurnMessage, TurnMessageBody, TurnTextMessage
 
 
 class DummyBody:

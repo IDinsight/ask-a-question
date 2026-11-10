@@ -18,23 +18,27 @@ from sqlalchemy import (
 )
 from urllib3.exceptions import InsecureRequestWarning
 
+from app.contents.models import ContentDB
 from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_GENERATION,
 )
-from app.contents.models import ContentDB
 from app.core.database import get_session
-from app.llm_call.utils import remove_json_markdown
+from app.core.security import get_key_hash
+from app.core.utils import remove_json_markdown
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
     QueryResponseContentDB,
     ResponseFeedbackDB,
 )
+from app.tags import models as _tags_models  # noqa: F401  (mapper registry)
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
-from app.users.models import WorkspaceDB
-from app.utils import get_key_hash
+from app.urgency_rules import models as _ur_models  # noqa: F401
+from app.users import models as _users_models  # noqa: F401
+from app.workspaces import models as _ws_models  # noqa: F401
+from app.workspaces.models import WorkspaceDB
 
 # To disable InsecureRequestWarning.
 urllib3.disable_warnings(InsecureRequestWarning)

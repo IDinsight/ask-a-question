@@ -42,6 +42,8 @@ TimeHours = Literal[
     "20:00",
     "22:00",
 ]
+# Timeframe accepted in dashboard endpoint paths.
+DashboardTimeFilter = Literal["day", "week", "month", "year", "custom"]
 
 
 class AIFeedbackSummary(BaseModel):

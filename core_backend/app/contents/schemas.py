@@ -5,6 +5,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.tags.schemas import TagRetrieve
+
 
 class ContentCreate(BaseModel):
     """Pydantic model for content creation request."""
@@ -67,3 +69,21 @@ class CustomErrorList(BaseModel):
     """Pydantic model for list of custom errors."""
 
     errors: list[CustomError]
+
+
+class QuerySearchResult(BaseModel):
+    """Pydantic model for each individual search result."""
+
+    distance: float
+    id: int
+    text: str
+    title: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BulkUploadResponse(BaseModel):
+    """Pydantic model for the CSV-upload response."""
+
+    contents: list[ContentRetrieve]
+    tags: list[TagRetrieve]

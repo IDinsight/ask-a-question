@@ -15,8 +15,7 @@ from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
-from app import create_app
-from app.auth.dependencies import create_access_token
+from app.contents.models import ContentDB
 from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -24,33 +23,33 @@ from app.core.config import (
     PGVECTOR_VECTOR_SIZE,
     REDIS_HOST,
 )
-from app.contents.models import ContentDB
 from app.core.database import (
     SYNC_DB_API,
     get_connection_url,
     get_session_context_manager,
 )
-from app.llm_call import process_input, process_output
-from app.llm_call.llm_prompts import (
-    RAG,
-    AlignmentScore,
-    IdentifiedLanguage,
+from app.core.security import (
+    create_access_token,
+    get_key_hash,
+    get_password_salted_hash,
 )
+from app.main import create_app
+
+# process_input / process_output were merged into the question_answer service module.
+from app.question_answer import service as process_input
+from app.question_answer import service as process_output
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryResponseContentDB,
 )
-from app.question_answer.schemas import QueryRefined, QueryResponse
+from app.question_answer.schemas import IdentifiedLanguage, QueryRefined, QueryResponse
+from app.question_answer.service import RAG, AlignmentScore
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from app.urgency_rules.models import UrgencyRuleDB
-from app.users.models import (
-    UserDB,
-    UserWorkspaceDB,
-    WorkspaceDB,
-)
+from app.users.models import UserDB, UserWorkspaceDB
 from app.users.schemas import UserRoles
-from app.utils import get_key_hash, get_password_salted_hash
-from app.workspaces.utils import get_workspace_by_workspace_name
+from app.workspaces.models import WorkspaceDB
+from app.workspaces.repository import get_workspace_by_workspace_name
 
 # Admin users.
 TEST_ADMIN_PASSWORD_1 = "admin_password_1"  # pragma: allowlist secret
@@ -1031,18 +1030,20 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
         Pytest monkeypatch object.
     """
 
-    monkeysession.setattr("app.contents.models.embedding", async_fake_embedding)
-    monkeysession.setattr("app.urgency_rules.models.embedding", async_fake_embedding)
+    monkeysession.setattr("app.contents.repository.embedding", async_fake_embedding)
+    monkeysession.setattr(
+        "app.urgency_rules.repository.embedding", async_fake_embedding
+    )
     monkeysession.setattr(process_input, "_classify_safety", mock_return_args)
     monkeysession.setattr(process_input, "_identify_language", mock_identify_language)
     monkeysession.setattr(process_input, "_paraphrase_question", mock_return_args)
     monkeysession.setattr(process_input, "_translate_question", mock_translate_question)
     monkeysession.setattr(process_output, "_get_llm_align_score", mock_get_align_score)
     monkeysession.setattr(
-        "app.urgency_detection.routers.detect_urgency", mock_detect_urgency
+        "app.urgency_detection.service.detect_urgency", mock_detect_urgency
     )
     monkeysession.setattr(
-        "app.llm_call.process_output.get_llm_rag_answer",
+        "app.question_answer.service.get_llm_rag_answer",
         patched_llm_rag_answer,
     )
 
@@ -1058,15 +1059,15 @@ def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
     """
 
     monkeysession.setattr(
-        "app.question_answer.routers.upload_file_to_gcs",
+        "app.question_answer.service.upload_file_to_gcs",
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "app.llm_call.process_output.upload_file_to_gcs",
+        "app.question_answer.service.upload_file_to_gcs",
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "app.llm_call.process_output.generate_public_url",
+        "app.question_answer.service.generate_public_url",
         async_fake_generate_public_url,
     )
 

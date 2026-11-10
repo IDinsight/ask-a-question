@@ -1,9 +1,18 @@
 from logging.config import fileConfig
 
 from alembic import context
-from app import models
-from app.core.database import SYNC_DB_API, get_connection_url
 from sqlalchemy import engine_from_config, pool
+
+# Import every feature's `models.py` so all tables are registered on
+# `Base.metadata`; otherwise autogenerate would see missing tables.
+from app.contents import models as _contents_models  # noqa: F401
+from app.core.database import SYNC_DB_API, Base, get_connection_url
+from app.question_answer import models as _question_answer_models  # noqa: F401
+from app.tags import models as _tags_models  # noqa: F401
+from app.urgency_detection import models as _urgency_detection_models  # noqa: F401
+from app.urgency_rules import models as _urgency_rules_models  # noqa: F401
+from app.users import models as _users_models  # noqa: F401
+from app.workspaces import models as _workspaces_models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,7 +35,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = models.Base.metadata
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,q
 # can be acquired:

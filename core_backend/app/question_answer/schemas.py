@@ -1,15 +1,103 @@
-"""This module contains Pydantic models for question answering queries and responses."""
+"""Pydantic schemas for the question-answer feature (incl. Turn.io payloads)."""
 
+from __future__ import annotations
+
+import textwrap
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.json_schema import SkipJsonSchema
 
-from ..llm_call.llm_prompts import IdentifiedLanguage
-from ..schemas import FeedbackSentiment, QuerySearchResult
+from app.contents.schemas import QuerySearchResult
 
 
+class FeedbackSentiment(str, Enum):
+    """Enum for feedback sentiment."""
+
+    NEGATIVE = "negative"
+    POSITIVE = "positive"
+    UNKNOWN = "unknown"
+
+
+
+# ---- from core/languages
+class IdentifiedLanguage(str, Enum):
+    """Identified language of the user's input."""
+
+    # AFRIKAANS = "AFRIKAANS"
+    ENGLISH = "ENGLISH"
+    FRENCH = "FRENCH"
+    SPANISH = "SPANISH"
+    HINDI = "HINDI"
+    SWAHILI = "SWAHILI"
+    UNINTELLIGIBLE = "UNINTELLIGIBLE"
+    UNSUPPORTED = "UNSUPPORTED"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+
+    @classmethod
+    def get_supported_languages(cls) -> list[str]:
+        """Return a list of supported languages.
+
+        Returns
+        -------
+        list[str]
+            A list of supported languages.
+        """
+
+        return [
+            lang
+            for lang in cls._member_names_
+            if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
+        ]
+
+    @classmethod
+    def _missing_(cls, value: str) -> IdentifiedLanguage:  # type: ignore[override]
+        """If language identified is not one of the supported language, it is
+        classified as UNSUPPORTED.
+
+        Parameters
+        ----------
+        value
+            The language identified.
+
+        Returns
+        -------
+        IdentifiedLanguage
+            The identified language (i.e., UNSUPPORTED).
+        """
+
+        return cls.UNSUPPORTED
+
+    @classmethod
+    def get_prompt(cls) -> str:
+        """Return the prompt for the language identification bot.
+
+        Returns
+        -------
+        str
+            The prompt for the language identification bot.
+        """
+
+        return textwrap.dedent(
+            f"""
+            You are a high-performing language identification bot that classifies the
+            language of the user input into one of {", ".join(cls._member_names_)}.
+
+            If the user input is
+            1. in one of the supported languages, then respond with that language.
+            2. written in a mix of languages, then respond with the dominant language.
+            3. in a real language but not a supported language, then respond with
+            UNSUPPORTED.
+            4. unintelligible or gibberish, then respond with UNINTELLIGIBLE.
+
+            Answer should be a single word and strictly one of
+            [{", ".join(cls._member_names_)}]"""
+        ).strip()
+
+
+# ---- from question_answer/schemas
 class ErrorType(str, Enum):
     """Enum for error types."""
 
@@ -135,3 +223,38 @@ class ContentFeedback(ResponseFeedbackBase):
     content_id: int = Field(..., examples=[1])
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---- from integrations/turnio/schemas
+class TurnMessageBody(BaseModel):
+    """
+    Schema for the body of a text message using turn.io's API
+    See: https://whatsapp.turn.io/docs/api/messages#text-messages
+    """
+
+    body: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TurnMessage(BaseModel):
+    """
+    Schema for sending a message using turn.io's API.
+    """
+
+    preview_url: bool = False
+    recipient_type: Literal["individual"] = "individual"
+    to: str
+    type: Literal["text", "audio", "image", "video", "interactive"] = "text"
+
+
+class TurnTextMessage(TurnMessage):
+    """
+    Schema for sending a message using turn.io's API
+    See: https://whatsapp.turn.io/docs/api/messages#text-messages
+    """
+
+    type: Literal["text"] = "text"
+    text: TurnMessageBody
+
+

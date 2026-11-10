@@ -13,7 +13,7 @@ from httpx import AsyncClient
 from app.core.config import (
     LITELLM_MODEL_EMBEDDING,
 )
-from app.utils import setup_logger
+from app.core.observability import setup_logger
 
 logger = setup_logger(name="UDValidation")
 

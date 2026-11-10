@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.question_answer import routers
-from app.question_answer.routers import _chat, chat
+from app.question_answer.router import _chat, chat
 from app.question_answer.schemas import QueryBase, QueryResponse
 
 

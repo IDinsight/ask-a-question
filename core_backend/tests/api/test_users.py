@@ -9,7 +9,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.users.models import (
+from app.users.repository import (
     UserAlreadyExistsError,
     UserNotFoundError,
     get_user_by_username,

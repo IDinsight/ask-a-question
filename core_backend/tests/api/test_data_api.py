@@ -10,7 +10,8 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.question_answer.models import (
+from app.contents.schemas import QuerySearchResult
+from app.question_answer.repository import (
     save_content_feedback_to_db,
     save_query_response_to_db,
     save_response_feedback_to_db,
@@ -19,13 +20,13 @@ from app.question_answer.models import (
 from app.question_answer.schemas import (
     ContentFeedback,
     ErrorType,
+    FeedbackSentiment,
     QueryBase,
     QueryResponse,
     QueryResponseError,
     ResponseFeedbackBase,
 )
-from app.schemas import FeedbackSentiment, QuerySearchResult
-from app.urgency_detection.models import (
+from app.urgency_detection.repository import (
     save_urgency_query_to_db,
     save_urgency_response_to_db,
 )
@@ -256,7 +257,7 @@ class TestUrgencyQueryDataAPI:
 
         for i, date in enumerate(dates):
             monkeypatch.setattr(
-                "app.urgency_detection.models.datetime",
+                "app.urgency_detection.repository.datetime",
                 MockDatetime(date=date),
             )
             urgency_query = UrgencyQuery(message_text=f"query {i}")
@@ -316,7 +317,7 @@ class TestUrgencyQueryDataAPI:
         days_ago = random.randrange(N_DAYS_HISTORY)
         date = datetime.now(timezone.utc) - relativedelta(days=days_ago)
         monkeypatch.setattr(
-            "app.urgency_detection.models.datetime",
+            "app.urgency_detection.repository.datetime",
             MockDatetime(date=date),
         )
         urgency_query = UrgencyQuery(message_text="query")
@@ -564,7 +565,7 @@ class TestQueryDataAPI:
 
         for i, date in enumerate(dates):
             monkeypatch.setattr(
-                "app.question_answer.models.datetime",
+                "app.question_answer.repository.datetime",
                 MockDatetime(date=date),
             )
             query = QueryBase(generate_llm_response=False, query_text=f"query {i}")
@@ -684,7 +685,7 @@ class TestQueryDataAPI:
         days_ago = random.randrange(N_DAYS_HISTORY)
         date = datetime.now(timezone.utc) - relativedelta(days=days_ago)
         monkeypatch.setattr(
-            "app.question_answer.models.datetime", MockDatetime(date=date)
+            "app.question_answer.repository.datetime", MockDatetime(date=date)
         )
         query = QueryBase(generate_llm_response=False, query_text="query")
         query_db = await save_user_query_to_db(

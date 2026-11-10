@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from ..users.schemas import UserRoles
+from app.users.schemas import UserRoles
 
 AccessLevel = Literal["fullaccess"]
 TokenType = Literal["bearer"]

@@ -23,8 +23,8 @@ if __name__ == "__main__":
         sys.path.append(str(PACKAGE_PATH))
 
 
-from app.core.config import PGVECTOR_VECTOR_SIZE
 from app.contents.models import ContentDB
+from app.core.config import PGVECTOR_VECTOR_SIZE
 from app.core.database import get_session
 from app.question_answer.models import (
     ContentFeedbackDB,
@@ -32,7 +32,11 @@ from app.question_answer.models import (
     QueryResponseContentDB,
     ResponseFeedbackDB,
 )
+from app.tags import models as _tags_models  # noqa: F401  (mapper registry)
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
+from app.urgency_rules import models as _ur_models  # noqa: F401
+from app.users import models as _users_models  # noqa: F401
+from app.workspaces import models as _ws_models  # noqa: F401
 
 # Admin user (first user is admin).
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")

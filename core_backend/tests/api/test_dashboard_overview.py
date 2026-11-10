@@ -9,9 +9,9 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import PGVECTOR_VECTOR_SIZE
 from app.contents.models import ContentDB
-from app.dashboard.models import (
+from app.core.config import PGVECTOR_VECTOR_SIZE
+from app.dashboard.repository import (
     get_content_feedback_stats,
     get_heatmap,
     get_overview_timeseries,
@@ -23,23 +23,20 @@ from app.dashboard.models import (
     get_urgency_stats,
 )
 from app.dashboard.schemas import OverviewTimeSeries, TimeFrequency
-from app.question_answer.models import (
-    ContentFeedbackDB,
-    QueryDB,
-    ResponseFeedbackDB,
+from app.question_answer.models import ContentFeedbackDB, QueryDB, ResponseFeedbackDB
+from app.question_answer.repository import (
     save_content_feedback_to_db,
     save_response_feedback_to_db,
     save_user_query_to_db,
 )
 from app.question_answer.schemas import (
     ContentFeedback,
+    FeedbackSentiment,
     QueryBase,
     ResponseFeedbackBase,
 )
-from app.schemas import FeedbackSentiment
-from app.urgency_detection.models import (
-    UrgencyQueryDB,
-    UrgencyResponseDB,
+from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
+from app.urgency_detection.repository import (
     save_urgency_query_to_db,
     save_urgency_response_to_db,
 )
@@ -242,7 +239,7 @@ class TestQueryStats:
         dates = [datetime.now(timezone.utc) - relativedelta(days=x) for x in range(16)]
         for i, date in enumerate(dates):
             monkeypatch.setattr(
-                "app.question_answer.models.datetime",
+                "app.question_answer.repository.datetime",
                 MockDatetime(date=date),
             )
             query = QueryBase(generate_llm_response=False, query_text="Test query")

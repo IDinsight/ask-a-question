@@ -7,11 +7,12 @@ from collections.abc import AsyncGenerator, Generator
 from functools import wraps
 from typing import Any, Callable, ContextManager
 
+from sqlalchemy import MetaData
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import DeclarativeBase, Session
 
-from .config import (
+from app.core.config import (
     DB_POOL_SIZE,
     POSTGRES_DB,
     POSTGRES_HOST,
@@ -193,3 +194,20 @@ def with_new_session(func: Callable) -> Callable:
             return await func(*args, asession=asession, **kwargs)
 
     return wrapper
+
+
+JSONDict = dict[str, str]
+
+
+class Base(DeclarativeBase):
+    """Base class for SQLAlchemy models."""
+
+    metadata = MetaData(
+        naming_convention={
+            "ix": "ix_%(column_0_label)s",
+            "uq": "uq_%(table_name)s_%(column_0_name)s",
+            "ck": "ck_%(table_name)s_%(constraint_name)s",
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+            "pk": "pk_%(table_name)s",
+        }
+    )

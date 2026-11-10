@@ -4,14 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from app.llm_call.llm_prompts import SafetyClassification
-from app.llm_call.process_input import _classify_safety
 from app.question_answer.schemas import (
     ErrorType,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
 )
+from app.question_answer.service import SafetyClassification, _classify_safety
 
 pytestmark = pytest.mark.rails
 

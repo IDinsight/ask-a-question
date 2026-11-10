@@ -10,9 +10,7 @@ import pytest
 import yaml
 
 from app.core.config import ALIGN_SCORE_THRESHOLD
-from app.llm_call.process_output import (
-    _get_llm_align_score,
-)
+from app.question_answer.service import _get_llm_align_score
 
 pytestmark = pytest.mark.rails
 

@@ -5,21 +5,21 @@ from typing import Dict, List, Union
 
 import boto3
 import pandas as pd
-from core_backend.add_users_to_db import ADMIN_API_KEY  # temp
 from dateutil import tz
 from fastapi.testclient import TestClient
 from litellm import embedding
 from sqlalchemy.orm import Session
 
+from app.contents.models import ContentDB
 from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
+    N_TOP_CONTENT,
 )
-from app.contents.models import ContentDB
-from app.question_answer.config import N_TOP_CONTENT
+from app.core.observability import setup_logger
 from app.question_answer.schemas import QueryBase
-from app.utils import setup_logger
+from core_backend.add_users_to_db import ADMIN_API_KEY  # temp
 
 logger = setup_logger()
 

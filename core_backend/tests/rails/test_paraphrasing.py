@@ -5,12 +5,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from app.llm_call.process_input import _paraphrase_question
 from app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,
     QueryResponseError,
 )
+from app.question_answer.service import _paraphrase_question
 
 pytestmark = pytest.mark.rails
 

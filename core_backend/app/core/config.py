@@ -1,5 +1,5 @@
-"""This module contains the main configuration parameters for the `core_backend`
-library. Note that there are other config files within each endpoint module.
+"""All environment-driven settings for `core_backend`, including the ones that
+used to live in per-feature `config.py` files (grouped at the bottom).
 """
 
 import os
@@ -126,3 +126,38 @@ HTTPX_TIMEOUT: float = 10.0
 
 # Turn.io
 TURNIO_API_BASE: str = os.environ.get("TURNIO_API_BASE", "https://whatsapp.turn.io/v1/")
+
+# ---- auth settings (moved from app/auth/config.py)
+ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
+JWT_SECRET = os.environ.get("JWT_SECRET", "jwt-secret")
+NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID = os.environ.get(
+    "NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID",
+    "update-me",
+)
+REDIS_KEY_EXPIRED = -2
+
+# ---- dashboard settings (moved from app/dashboard/config.py)
+DISABLE_DASHBOARD_LLM = (
+    os.environ.get("DISABLE_DASHBOARD_LLM", "false").lower() == "true"
+)
+MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY = os.environ.get(
+    "MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY", 100
+)
+MAX_FEEDBACK_RECORDS_FOR_TOP_CONTENT = os.environ.get(
+    "MAX_FEEDBACK_RECORDS_FOR_TOP_CONTENT", 7
+)
+TOPIC_MODELING_CONTEXT = os.environ.get("TOPIC_MODELING_CONTEXT", "maternal health")
+
+# ---- question_answer settings (moved from app/question_answer/config.py)
+# Functionality variables.
+N_TOP_CONTENT_TO_CROSSENCODER = os.environ.get("N_TOP_CONTENT_TO_CROSSENCODER", "10")
+N_TOP_CONTENT = os.environ.get("N_TOP_CONTENT", "4")
+
+# ---- urgency_detection settings (moved from app/urgency_detection/config.py)
+# cosine_distance_classifier, llm_entailment_classifier
+URGENCY_CLASSIFIER = os.environ.get("URGENCY_CLASSIFIER", "cosine_distance_classifier")
+URGENCY_DETECTION_MAX_DISTANCE = os.environ.get("URGENCY_DETECTION_MAX_DISTANCE", 0.5)
+URGENCY_DETECTION_MIN_PROBABILITY = os.environ.get(
+    "URGENCY_DETECTION_MIN_PROBABILITY", 0.5
+)

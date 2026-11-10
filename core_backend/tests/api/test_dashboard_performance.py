@@ -9,26 +9,21 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import delete
 
-from app.dashboard.models import get_content_details
-from app.dashboard.routers import (
-    DashboardTimeFilter,
-    get_freq_start_end_date,
-    retrieve_performance,
-)
+from app.contents.schemas import QuerySearchResult
+from app.dashboard.repository import get_content_details
+from app.dashboard.schemas import DashboardTimeFilter
+from app.dashboard.service import get_freq_start_end_date, retrieve_performance
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
     QueryResponseContentDB,
+)
+from app.question_answer.repository import (
     save_content_feedback_to_db,
     save_content_for_query_to_db,
     save_user_query_to_db,
 )
-from app.question_answer.schemas import (
-    ContentFeedback,
-    QueryBase,
-    QuerySearchResult,
-)
-from app.schemas import FeedbackSentiment
+from app.question_answer.schemas import ContentFeedback, FeedbackSentiment, QueryBase
 
 from .conftest import MockDatetime
 
@@ -119,7 +114,7 @@ async def content_with_query_history(
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta
         monkeypatch.setattr(
-            "app.question_answer.models.datetime",
+            "app.question_answer.repository.datetime",
             MockDatetime(date=time_of_record),
         )
         for i in range(n_response):
@@ -161,7 +156,7 @@ async def content_with_query_history(
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta - delta - delta
         monkeypatch.setattr(
-            "app.question_answer.models.datetime",
+            "app.question_answer.repository.datetime",
             MockDatetime(date=time_of_record),
         )
         for i in range(n_response // 2):
@@ -201,7 +196,7 @@ async def content_with_query_history(
             datetime.now(timezone.utc) - delta - delta - delta - delta - delta
         )
         monkeypatch.setattr(
-            "app.question_answer.models.datetime",
+            "app.question_answer.repository.datetime",
             MockDatetime(date=time_of_record),
         )
         for i in range(n_response // 3):
