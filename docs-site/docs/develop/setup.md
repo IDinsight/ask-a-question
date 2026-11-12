@@ -291,18 +291,15 @@ procedures.
 
 ## Step 4: Set up docs
 
----
-**Note**
-
-Ensure that you are in the `ask-a-question` project directory and that you have activated the
-`aaq` virtual environment before proceeding.
-
----
+The docs are a standalone [uv](https://docs.astral.sh/uv/) project in `docs/`, so you
+don't need the `aaq` environment or any backend dependencies.
 
 To host docs offline so that you can see documentation changes in real-time, run the
-following from `ask-a-question` repository root with an altered port (so that it doesn't
-interfere with the app's server):
+following with an altered port (so that it doesn't interfere with the app's server):
 
 ```shell
-mkdocs serve -a localhost:8080
+cd docs
+uv run mkdocs serve -a localhost:8080
 ```
+
+`uv run` installs the pinned docs dependencies on first use.

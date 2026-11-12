@@ -147,7 +147,10 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      # Paths are relative to docs/ (where mkdocs runs); snippets live at repo root
+      base_path: [".."]
+      check_paths: true
   - pymdownx.superfences
 
 plugins:

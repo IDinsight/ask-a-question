@@ -15,10 +15,6 @@ pytest-randomly==5.1.0
 pytest-xdist==3.8.0
 httpx>=0.28.1
 trio==0.22.2
-mkdocs-material==9.5.3
-pymdown-extensions==10.3
-mkdocs-glightbox==0.3.4
-mkdocs-open-in-new-tab==1.0.3
 types-PyYAML==6.0.12.12
 typer==0.29.0
 types-python-dateutil==2.9.0.20240315

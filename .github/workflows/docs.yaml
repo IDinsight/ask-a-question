@@ -11,35 +11,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
       - uses: actions/cache@v4
         with:
           key: mkdocs-material-${{ env.cache_id }}
-          path: .cache
+          path: docs/.cache
           restore-keys: |
             mkdocs-material-
 
+      # Docs are a standalone uv project in docs/ (see docs/pyproject.toml)
       - name: Install dependencies
-        run: pip install mkdocs-material==9.5.3 \
-          pymdown-extensions==10.3 \
-          mkdocs-glightbox==0.3.4 \
-          mkdocs-material-extensions==1.3.1 \
-          mkdocs-open-in-new-tab==1.0.3 \
-          mike==2.1.2
+        working-directory: docs
+        run: uv sync --locked
 
       - name: Build and push docs version
+        working-directory: docs
         run: |
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           git fetch origin gh-pages
-          mike deploy \
+          uv run mike deploy \
             --push \
             --title="${{ github.ref_name }}" \
             --update-aliases ${{ github.ref_name }} latest
-          mike set-default latest --allow-undefined --push
+          uv run mike set-default latest --allow-undefined --push
 
       - name: Add CNAME
         run: |
