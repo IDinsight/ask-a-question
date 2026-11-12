@@ -16,7 +16,7 @@ itsdangerous==2.2.0
 Jinja2==3.1.6
 locust==2.29.1
 MarkupSafe==2.1.5
-msgpack==1.0.8
+msgpack==1.2.3
 psutil==6.0.0
 pyzmq==26.0.3
 requests==2.32.4
