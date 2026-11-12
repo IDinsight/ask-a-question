@@ -291,14 +291,14 @@ procedures.
 
 ## Step 4: Set up docs
 
-The docs are a standalone [uv](https://docs.astral.sh/uv/) project in `docs/`, so you
+The docs are a standalone [uv](https://docs.astral.sh/uv/) project in `docs-site/`, so you
 don't need the `aaq` environment or any backend dependencies.
 
 To host docs offline so that you can see documentation changes in real-time, run the
 following with an altered port (so that it doesn't interfere with the app's server):
 
 ```shell
-cd docs
+cd docs-site
 uv run mkdocs serve -a localhost:8080
 ```
 

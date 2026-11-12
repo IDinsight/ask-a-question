@@ -1,6 +1,6 @@
 <p align="center">
-<img src="docs/docs/images/logo-light.png#gh-dark-mode-only" alt="logo" width=600/>
-<img src="docs/docs/images/logo-dark.png#gh-light-mode-only" alt="logo" width=600/>
+<img src="docs-site/docs/images/logo-light.png#gh-dark-mode-only" alt="logo" width=600/>
+<img src="docs-site/docs/images/logo-dark.png#gh-light-mode-only" alt="logo" width=600/>
 </p>
 
 <p align="center" style="text-align:center">
@@ -110,7 +110,7 @@ https://[DOMAIN]/
 We use docker-compose to orchestrate containers with a reverse proxy that manages all incoming traffic to the service. The database and LiteLLM proxy are only accessed by the core app.
 
 <p align="center">
-  <img src="docs/docs/images/architecture.png" alt="Flow"/>
+  <img src="docs-site/docs/images/architecture.png" alt="Flow"/>
 </p>
 
 ## Documentation
@@ -119,4 +119,4 @@ See [here](https://docs.ask-a-question.com/) for full documentation.
 
 ## Funders and Partners
 
-<img src="docs/docs/images/google_org.png" alt="google_dot_org" width=200/>
+<img src="docs-site/docs/images/google_org.png" alt="google_dot_org" width=200/>

@@ -1,7 +1,5 @@
 #!make
 
-PROJECT_NAME = aaq
-CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 ENDPOINT_URL = localhost:8000
 OPENAI_API_KEY := $(shell printenv OPENAI_API_KEY)
 
@@ -13,29 +11,8 @@ clean:
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	find . -type d -name ".ruff_cache" -exec rm -rf {} +
 
-# Note: Run `make fresh-env psycopg2-binary=true` to manually replace psycopg with psycopg2-binary
-fresh-env :
-	conda remove --name $(PROJECT_NAME) --all -y || true
-	conda create --name $(PROJECT_NAME) python==3.12 -y
-
-	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
-	pip install -r core_backend/requirements.txt --ignore-installed; \
-	pip install -r requirements-dev.txt --ignore-installed; \
-	pre-commit install
-
-	if [ "$(psycopg2-binary)" = "true" ]; then \
-		$(CONDA_ACTIVATE) $(PROJECT_NAME); \
-		pip uninstall -y psycopg2==2.9.9; \
-		pip install psycopg2-binary==2.9.9; \
-	fi
-
-# Linting
-lint-core-backend:
-	black core_backend/
-	ruff check core_backend/
-	mypy core_backend/app --ignore-missing-imports --explicit-package-base
-	mypy core_backend/tests --ignore-missing-imports --explicit-package-base
-	pylint core_backend/
+# Python envs and linting live in each sub-project (e.g. `cd core_backend && uv sync`,
+# `make -C core_backend lint`). This Makefile only runs the local dev infrastructure.
 
 # Dev requirements
 setup-dev: setup-db setup-redis setup-llm-proxy
@@ -163,7 +140,6 @@ teardown-embeddings:
 	@docker rm  huggingface-embeddings
 
 run-docker-compose-dev:
-	$(CONDA_ACTIVATE) $(PROJECT_NAME)
 	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev up --build -d --remove-orphans
 	@docker system prune -f
 

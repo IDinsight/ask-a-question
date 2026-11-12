@@ -55,11 +55,18 @@ dependencies = [
     "slowapi>=0.1.10",
 ]
 
-# Test tooling. uv installs the `dev` group by default on `uv sync` / `uv run`,
-# so `uv run pytest` always has the plugins. Docker images install from
-# requirements.txt and do not include these. Keep in sync with ../requirements-dev.txt.
+# Test and lint tooling. uv installs the `dev` group by default on `uv sync` /
+# `uv run`, so `uv run pytest` / `uv run ruff` always work. Docker images install
+# from requirements.txt and do not include these.
 [dependency-groups]
 dev = [
+    # Linting / formatting (pins match the pre-commit hook revs)
+    "black==24.3.0",
+    "ruff==0.5.4",
+    "pylint==3.2.5",
+    "pylint-pytest==1.1.9.post1",
+    "pre-commit==3.4.0",
+    # Tests
     "pytest==9.1.1",
     "pytest-alembic==0.13.2",
     "pytest-asyncio==1.4.1.post1",
@@ -77,6 +84,35 @@ dev = [
 
 [tool.fastapi]
 entrypoint = "app.main:app"
+
+# Lint config (moved here from the old repo-root pyproject.toml).
+[tool.mypy]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy",
+            "google.auth.transport", "google.oauth2",
+            "gtts", "google.cloud", "bertopic", "hdbscan", "pydub",
+            "sklearn", "umap", "bokeh.*", "uvicorn_worker"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[tool.ruff]
+lint.select = ["E", "F", "B", "Q", "I"]
+line-length = 88
+lint.ignore = ["B008"]  # Do not perform function calls in argument defaults.
+# The old root config had no requires-python, so ruff defaulted to py38. Pinned so
+# moving the config here doesn't switch on py>=3.10 rules (B905, Q003). Bump to py312
+# in a follow-up and fix the resulting violations.
+target-version = "py38"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
+
+[tool.ruff.lint.isort]
+# core_backend: validation/ imports it by package name (was first-party from repo root)
+known-first-party = ["app", "core_backend"]
 
 # Pytest config for core_backend. Native TOML table (pytest >= 9). Having it here
 # makes core_backend/ the rootdir, so the repo-root pyproject.toml is not used.

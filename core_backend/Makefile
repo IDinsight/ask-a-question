@@ -2,7 +2,14 @@
 
 SHELL := /bin/bash
 
-.PHONY : tests tests-alembic tests-rails teardown-test-containers
+.PHONY : lint tests tests-alembic tests-rails teardown-test-containers
+
+# Format, lint and type-check (config in pyproject.toml and .pylintrc).
+lint:
+	uv run black .
+	uv run ruff check .
+	uv run mypy app tests --ignore-missing-imports --explicit-package-base
+	uv run pylint app tests
 
 # `uv run pytest` is all you need. tests/__init__.py loads tests/test.env, and
 # tests/conftest.py starts the `testdb` / `redis-test` docker containers when they

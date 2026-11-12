@@ -7,7 +7,7 @@ project, so you don't need the backend's dependencies to work on it.
 ## Run locally
 
 ```bash
-cd docs
+cd docs-site
 uv run mkdocs serve
 ```
 
@@ -27,7 +27,7 @@ from the repo root.
 ## Build
 
 ```bash
-uv run mkdocs build --strict   # outputs to docs/site/
+uv run mkdocs build --strict   # outputs to docs-site/site/
 ```
 
 Versioned deploys to GitHub Pages run through `mike` in

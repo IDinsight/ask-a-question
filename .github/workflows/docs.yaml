@@ -18,17 +18,17 @@ jobs:
       - uses: actions/cache@v4
         with:
           key: mkdocs-material-${{ env.cache_id }}
-          path: docs/.cache
+          path: docs-site/.cache
           restore-keys: |
             mkdocs-material-
 
-      # Docs are a standalone uv project in docs/ (see docs/pyproject.toml)
+      # Docs are a standalone uv project in docs-site/ (see docs-site/pyproject.toml)
       - name: Install dependencies
-        working-directory: docs
+        working-directory: docs-site
         run: uv sync --locked
 
       - name: Build and push docs version
-        working-directory: docs
+        working-directory: docs-site
         run: |
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org

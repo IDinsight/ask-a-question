@@ -15,28 +15,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      # Lint tools and their config live in core_backend/pyproject.toml (dev group)
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: |
-            core_backend/requirements.txt
-            requirements-dev.txt
-      - run: |
-          python -m pip install --upgrade pip
-          pip install -r core_backend/requirements.txt
-          pip install -r requirements-dev.txt
+          enable-cache: true
+          cache-dependency-glob: core_backend/uv.lock
+
+      - name: Install dependencies
+        working-directory: core_backend
+        run: uv sync --locked
 
       - name: Run MyPy
-        run: |
-          mypy core_backend/app --ignore-missing-imports --explicit-package-base
+        working-directory: core_backend
+        run: uv run mypy app --ignore-missing-imports --explicit-package-base
 
       - name: Run ruff
-        run: |
-          ruff check --exclude "core_backend/migrations" .
+        working-directory: core_backend
+        run: uv run ruff check .
 
       - name: Check code formatting with Black
-        run: |
-          cd core_backend
-          black --check .
+        working-directory: core_backend
+        run: uv run black --check .
