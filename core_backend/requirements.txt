@@ -5,7 +5,7 @@ alembic==1.12.0
 pgvector==0.2.5
 psycopg2==2.9.9
 asyncpg==0.30.0
-litellm==1.61.15
+litellm==1.109.0.dev1
 sqlalchemy[asyncio]==2.0.20
 PyPDF2==3.0.1
 python-multipart==0.0.18
