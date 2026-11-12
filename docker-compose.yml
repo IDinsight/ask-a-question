@@ -1,0 +1,191 @@
+# Production stack: optimised images behind Caddy (automatic HTTPS).
+#
+#   docker compose -p aaq up -d --build                     # managed/external Postgres
+#   docker compose -p aaq --profile local-db up -d --build  # Postgres in a container
+#
+# Optional profiles (combine as needed):
+#   local-db                -> pgvector Postgres container (instead of a managed DB)
+#   huggingface-embeddings  -> self-hosted embeddings server
+#   speech                  -> in-house speech-to-text / text-to-speech service
+#
+# Required config in deployment/docker-compose/ (copy from the template.* files):
+#   .base.env           DOMAIN, BACKEND_ROOT_PATH, NEXT_PUBLIC_BACKEND_URL
+#   .core_backend.env   POSTGRES_*, ADMIN_*, JWT_SECRET, ... (use strong secrets)
+#   .litellm_proxy.env  LLM provider keys
+#   .gcp_credentials.json  (must exist; an empty placeholder if you don't use GCP)
+#
+# Only Caddy publishes ports. Everything else is reachable only on the internal
+# compose network. Caddy routes https://$DOMAIN$BACKEND_ROOT_PATH/* to the
+# backend (prefix stripped) and everything else to the admin app.
+#
+# To deploy prebuilt images instead of building on the server, set
+# AAQ_BACKEND_IMAGE / AAQ_ADMIN_APP_IMAGE and run `docker compose pull` then
+# `docker compose up -d --no-build`.
+
+# Rotate container logs so they can't fill the disk.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./deployment/docker-compose/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # TLS certificates; keep this volume
+      - caddy_config:/config
+    env_file:
+      - deployment/docker-compose/.base.env
+    depends_on:
+      - core_backend
+      - admin_app
+    logging: *default-logging
+
+  core_backend:
+    image: ${AAQ_BACKEND_IMAGE:-idinsight/aaq-backend:latest}
+    build:
+      context: core_backend
+      dockerfile: Dockerfile
+    # The image's startup.sh runs `alembic upgrade head` then gunicorn
+    # (4 uvicorn workers, root_path taken from BACKEND_ROOT_PATH).
+    restart: unless-stopped
+    volumes:
+      - backend_temp:/usr/src/aaq_backend/temp
+      - ./deployment/docker-compose/.gcp_credentials.json:/app/credentials.json:ro
+    env_file:
+      - deployment/docker-compose/.base.env
+      - deployment/docker-compose/.core_backend.env
+      - deployment/docker-compose/.litellm_proxy.env
+    # Point the backend at the compose services. POSTGRES_HOST is NOT set here,
+    # so it comes from .core_backend.env: your managed DB host, or
+    # `relational_db` when using the local-db profile.
+    environment:
+      REDIS_HOST: redis://redis:6379
+      LITELLM_ENDPOINT: http://litellm_proxy:4000
+    depends_on:
+      redis:
+        condition: service_healthy
+      litellm_proxy:
+        condition: service_started
+      # Only waited on when the local-db profile is active.
+      relational_db:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      # The slim image has no curl, so use Python. Caddy strips the root path,
+      # so the route is at /healthcheck inside the container.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s # migrations + model loading
+    logging: *default-logging
+
+  admin_app:
+    image: ${AAQ_ADMIN_APP_IMAGE:-idinsight/aaq-admin-app:latest}
+    build:
+      context: admin_app
+      dockerfile: Dockerfile
+    # NEXT_PUBLIC_* values are read at runtime (next-runtime-env), so the same
+    # image works for any domain. No rebuild needed when .base.env changes.
+    restart: unless-stopped
+    env_file:
+      - deployment/docker-compose/.base.env
+    depends_on:
+      - core_backend
+    logging: *default-logging
+
+  litellm_proxy:
+    image: ghcr.io/berriai/litellm:v1.97.0
+    restart: unless-stopped
+    env_file:
+      - deployment/docker-compose/.litellm_proxy.env
+    volumes:
+      - ./deployment/docker-compose/litellm_proxy_config.yaml:/app/config.yaml:ro
+      - ./deployment/docker-compose/.gcp_credentials.json:/app/credentials.json:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
+    logging: *default-logging
+
+  redis:
+    image: redis:6.0-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    logging: *default-logging
+
+  # --- Optional services (enable with --profile) ---
+
+  relational_db:
+    image: pgvector/pgvector:pg16
+    profiles:
+      - local-db
+    restart: unless-stopped
+    env_file:
+      - deployment/docker-compose/.core_backend.env
+    volumes:
+      - db_volume:/var/lib/postgresql/data # back this volume up
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+
+  huggingface-embeddings:
+    image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
+    profiles:
+      - huggingface-embeddings
+      - optional-components
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    command:
+      [
+        "--model-id",
+        "${HUGGINGFACE_MODEL:-}",
+        "--api-key",
+        "${HUGGINGFACE_EMBEDDINGS_API_KEY:-}",
+      ]
+    env_file:
+      - deployment/docker-compose/.litellm_proxy.env
+    logging: *default-logging
+
+  speech_service:
+    image: ${AAQ_SPEECH_IMAGE:-idinsight/speech-service:latest}
+    build:
+      context: optional_components/speech_api
+      dockerfile: Dockerfile
+      args:
+        PREFERRED_MODEL: "small"
+    profiles:
+      - speech
+      - optional-components
+    # Set CUSTOM_STT_ENDPOINT / CUSTOM_TTS_ENDPOINT in .core_backend.env to
+    # http://speech_service:8001/... for the backend to use this service.
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+    restart: unless-stopped
+    volumes:
+      - backend_temp:/usr/src/speech_service/temp
+    logging: *default-logging
+
+volumes:
+  caddy_data:
+  caddy_config:
+  backend_temp:
+  db_volume:

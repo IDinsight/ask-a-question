@@ -1,0 +1,165 @@
+# Local development stack: every service with live reload, no Caddy/TLS.
+#
+#   docker compose -f docker-compose-dev.yml -p aaq-dev up --build
+#
+#   Admin app  -> http://localhost:3000   (next dev, HMR)
+#   Backend    -> http://localhost:8000   (uvicorn --reload; API docs at /docs)
+#   Docs site  -> http://localhost:8001   (mkdocs serve, live reload)
+#   Postgres   -> localhost:5434   Redis -> localhost:6380   LiteLLM -> localhost:4001
+#
+# Prerequisites (same as the deployment stack), in deployment/docker-compose/:
+#   cp template.base.env .base.env
+#   cp template.core_backend.env .core_backend.env
+#   cp template.litellm_proxy.env .litellm_proxy.env   # then add your LLM keys
+#   .gcp_credentials.json  (only needed for Vertex AI / GCS; see note on litellm_proxy)
+#
+# Source folders are bind-mounted, so edits on the host trigger reloads in the
+# containers. Rebuild (`up --build`) only when dependencies change
+# (requirements.txt, pnpm-lock.yaml, docs-site/uv.lock).
+
+services:
+  core_backend:
+    build:
+      context: core_backend
+      dockerfile: Dockerfile.dev
+    # Apply migrations, then serve with auto-reload on changes under app/.
+    # BACKEND_ROOT_PATH is blanked below because there is no reverse proxy
+    # stripping an /api prefix in this stack.
+    command: >
+      /bin/sh -c "
+      python -m alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app"
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./core_backend:/usr/src/aaq_backend
+      - backend_temp:/usr/src/aaq_backend/temp
+      - ./deployment/docker-compose/.gcp_credentials.json:/app/credentials.json
+    env_file:
+      - deployment/docker-compose/.base.env
+      - deployment/docker-compose/.core_backend.env
+      - deployment/docker-compose/.litellm_proxy.env
+    # These win over the env files: they point the backend at the compose
+    # service names instead of localhost.
+    environment:
+      BACKEND_ROOT_PATH: ""
+      POSTGRES_HOST: relational_db
+      POSTGRES_PORT: "5432"
+      REDIS_HOST: redis://redis:6379
+      LITELLM_ENDPOINT: http://litellm_proxy:4000
+    depends_on:
+      relational_db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      litellm_proxy:
+        condition: service_started
+
+  admin_app:
+    build:
+      context: admin_app
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./admin_app:/app
+      # Anonymous volumes keep the container's Linux node_modules and Next
+      # build cache from being shadowed by (or leaking into) the host folder.
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - deployment/docker-compose/.base.env
+    environment:
+      # The browser calls the backend directly (no Caddy), so override the
+      # https://localhost/api value from .base.env.
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+    depends_on:
+      - core_backend
+
+  docs:
+    # uv image with Python 3.12; installs docs-site's locked deps on first run.
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /repo/docs-site
+    # mkdocs.yml resolves --8<-- snippets from the repo root (base_path ".."),
+    # so mount the whole repo, read-only.
+    command: uv run --frozen mkdocs serve --dev-addr 0.0.0.0:8000
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./:/repo:ro
+      - docs_venv:/opt/venv
+      - uv_cache:/root/.cache/uv
+    environment:
+      # Keep the venv out of the read-only bind mount (and away from any
+      # macOS .venv in docs-site/).
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+      UV_LINK_MODE: copy
+
+  litellm_proxy:
+    image: ghcr.io/berriai/litellm:v1.97.0
+    restart: unless-stopped
+    ports:
+      - "4001:4000"
+    env_file:
+      - deployment/docker-compose/.litellm_proxy.env
+    volumes:
+      - ./deployment/docker-compose/litellm_proxy_config.yaml:/app/config.yaml
+      # If this file doesn't exist, Docker creates an empty directory in its
+      # place. Create the file (even an empty placeholder) before first run.
+      - ./deployment/docker-compose/.gcp_credentials.json:/app/credentials.json
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+
+  redis:
+    image: redis:6.0-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  relational_db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    ports:
+      # 5434 avoids clashing with `make setup-db` (5432) and the test DB.
+      - "5434:5432"
+    env_file:
+      - deployment/docker-compose/.core_backend.env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Optional: local embeddings server. Start with `--profile huggingface-embeddings`.
+  huggingface-embeddings:
+    image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
+    profiles:
+      - huggingface-embeddings
+      - optional-components
+    volumes:
+      - ./data:/data
+    command:
+      [
+        "--model-id",
+        "${HUGGINGFACE_MODEL}",
+        "--api-key",
+        "${HUGGINGFACE_EMBEDDINGS_API_KEY}",
+      ]
+    restart: unless-stopped
+    env_file:
+      - deployment/docker-compose/.litellm_proxy.env
+
+volumes:
+  backend_temp:
+  db_volume:
+  docs_venv:
+  uv_cache:
