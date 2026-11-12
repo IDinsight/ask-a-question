@@ -55,10 +55,12 @@ const UserCard: React.FC<UserCardProps> = ({
         </AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="flex items-center gap-2 text-sm font-medium break-words">
+        <span className="flex items-center gap-2 text-sm font-medium wrap-break-word">
           {username}
           {isYou && (
-            <span className="text-xs font-normal text-muted-foreground">(You)</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              (You)
+            </span>
           )}
         </span>
         <span className="text-xs text-muted-foreground">
@@ -96,7 +98,10 @@ const UserCard: React.FC<UserCardProps> = ({
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
               If this is the user’s only workspace, they will be{" "}
-              <b className="font-semibold text-foreground">deleted from the system</b>.
+              <b className="font-semibold text-foreground">
+                deleted from the system
+              </b>
+              .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

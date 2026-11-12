@@ -1,5 +1,10 @@
 "use client";
-import { IconLock, IconPencil, IconUserPlus, IconUsersPlus } from "@tabler/icons-react";
+import {
+  IconLock,
+  IconPencil,
+  IconUserPlus,
+  IconUsersPlus,
+} from "@tabler/icons-react";
 import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -55,8 +60,11 @@ const UserManagement: React.FC = () => {
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
   const [openEditWorkspaceModal, setOpenEditWorkspaceModal] =
     React.useState<boolean>(false);
-  const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
-  const [formType, setFormType] = React.useState<"add" | "create" | "edit">("add");
+  const [showConfirmationModal, setShowConfirmationModal] =
+    React.useState(false);
+  const [formType, setFormType] = React.useState<"add" | "create" | "edit">(
+    "add",
+  );
   const [adminUsername] = React.useState<string>(
     username || localStorage.getItem("username") || "",
   );
@@ -79,7 +87,12 @@ const UserManagement: React.FC = () => {
   // Role in this workspace + sort (current admin first). Memoised so the
   // modal's `users` prop keeps its identity between renders.
   const users = React.useMemo(
-    () => toWorkspaceUsers(userRows, currentWorkspace?.workspace_name, adminUsername),
+    () =>
+      toWorkspaceUsers(
+        userRows,
+        currentWorkspace?.workspace_name,
+        adminUsername,
+      ),
     [userRows, currentWorkspace?.workspace_name, adminUsername],
   );
 
@@ -133,8 +146,8 @@ const UserManagement: React.FC = () => {
     const isOnlyAdmin =
       users.filter(
         (user) =>
-          getUserRoleInWorkspace(user.user_workspaces!, workspaceName) === "admin" &&
-          user.user_id !== userId,
+          getUserRoleInWorkspace(user.user_workspaces!, workspaceName) ===
+            "admin" && user.user_id !== userId,
       ).length === 0;
 
     if (isOnlyAdmin) {
@@ -202,7 +215,7 @@ const UserManagement: React.FC = () => {
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-2">
             <div className="flex items-center gap-1">
-              <h1 className="text-2xl font-semibold tracking-tight break-words">
+              <h1 className="text-2xl font-semibold tracking-tight wrap-break-word">
                 {currentWorkspace?.workspace_name ?? "Workspace"}
               </h1>
               <Button
@@ -244,7 +257,10 @@ const UserManagement: React.FC = () => {
           </div>
         </header>
 
-        <section aria-labelledby="users-heading" className="border bg-card shadow-xs">
+        <section
+          aria-labelledby="users-heading"
+          className="border bg-card shadow-xs"
+        >
           <h2
             id="users-heading"
             className="border-b px-4 py-3 text-base font-semibold tracking-tight"
@@ -315,7 +331,9 @@ const UserManagement: React.FC = () => {
           open={showCreateModal}
           onClose={handleCreateModalClose}
           adminUsername={adminUsername}
-          checkUserExists={(username: string) => checkUsername.mutateAsync(username)}
+          checkUserExists={(username: string) =>
+            checkUsername.mutateAsync(username)
+          }
           addUserToWorkspace={(username: string, role: UserRole) =>
             addUser.mutateAsync({
               username,

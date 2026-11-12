@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { IconAlertCircle, IconChevronDown, IconFileOff } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconChevronDown,
+  IconFileOff,
+} from "@tabler/icons-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -44,7 +48,7 @@ const COLUMNS = [
   { key: "errorTrace", label: "Error trace", className: "w-[15%]" },
 ] as const;
 
-const WRAP = "whitespace-normal break-words";
+const WRAP = "whitespace-normal wrap-break-word";
 
 const handleEmptyDate = (dateString: string) => {
   if (!dateString) return "—";
@@ -71,7 +75,9 @@ const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
   const [open, setOpen] = useState(false);
   const hasMultipleTasks = entry.tasks.length > 1;
   // For a single-task upload the row's error colour follows that task.
-  const effectiveStatus = hasMultipleTasks ? entry.status : entry.tasks[0]?.task_status;
+  const effectiveStatus = hasMultipleTasks
+    ? entry.status
+    : entry.tasks[0]?.task_status;
 
   return (
     <>
@@ -97,7 +103,9 @@ const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
             </Button>
           )}
         </TableCell>
-        <TableCell className={cn(WRAP, "font-medium")}>{entry.fileName}</TableCell>
+        <TableCell className={cn(WRAP, "font-medium")}>
+          {entry.fileName}
+        </TableCell>
         <TableCell className={cn("font-medium", statusClassName(entry.status))}>
           {entry.status}
         </TableCell>
@@ -105,7 +113,10 @@ const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
         <TableCell>{handleEmptyDate(entry.created_at)}</TableCell>
         <TableCell>{handleEmptyDate(entry.finished_at)}</TableCell>
         <TableCell
-          className={cn(WRAP, effectiveStatus === "Failed" && "text-destructive")}
+          className={cn(
+            WRAP,
+            effectiveStatus === "Failed" && "text-destructive",
+          )}
         >
           {entry.errorTrace}
         </TableCell>
@@ -128,7 +139,10 @@ const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
               {handleEmptyDate(formatDate(task.finished_datetime_utc))}
             </TableCell>
             <TableCell
-              className={cn(WRAP, task.task_status === "Failed" && "text-destructive")}
+              className={cn(
+                WRAP,
+                task.task_status === "Failed" && "text-destructive",
+              )}
             >
               {task.error_trace}
             </TableCell>
@@ -184,15 +198,17 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                     </EmptyMedia>
                     <EmptyTitle>No PDF uploads yet</EmptyTitle>
                     <EmptyDescription>
-                      Files you upload with &quot;Generate cards from PDF&quot; will
-                      show their processing status here.
+                      Files you upload with &quot;Generate cards from PDF&quot;
+                      will show their processing status here.
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               </TableCell>
             </TableRow>
           ) : (
-            indexEntries.map((entry, index) => <Row key={index} entry={entry} />)
+            indexEntries.map((entry, index) => (
+              <Row key={index} entry={entry} />
+            ))
           )}
         </TableBody>
       </Table>

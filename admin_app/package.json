@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "next lint",
     "test:ui": "playwright test --ui",
-    "format": "prettier --write . --print-width 88"
+    "format": "prettier --write . --print-width 88",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -43,6 +47,7 @@
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.9",
     "@types/google.accounts": "^0.0.14",
@@ -51,8 +56,11 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@typescript-eslint/parser": "^8.72.1",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "5.1.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
+    "jsdom": "^31.0.0",
     "prettier": "3.0.3",
     "shadcn": "^4.23.0",
     "typescript": "^5",

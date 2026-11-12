@@ -52,7 +52,8 @@ import { UDSidebar } from "./components/UDSidebar";
 const NO_RULES: UrgencyRule[] = [];
 
 /** Show an error toast. Rendered by the Toaster in urgency-rules/layout.tsx. */
-const showError = (message: string) => toast.add({ title: message, type: "error" });
+const showError = (message: string) =>
+  toast.add({ title: message, type: "error" });
 
 /** The three steps shown under the empty state (copy from the design board). */
 const HOW_IT_WORKS = [
@@ -95,7 +96,8 @@ const UrgencyRulesPage = () => {
   // Show the spinner on first load and while "Retry" refetches after an error,
   // so we don't flash the "no rules yet" empty state or a stale error.
   const loadingRules =
-    !!token && (rulesQuery.isPending || (rulesQuery.isError && rulesQuery.isFetching));
+    !!token &&
+    (rulesQuery.isPending || (rulesQuery.isError && rulesQuery.isFetching));
   const loadError = rulesQuery.isError
     ? (rulesQuery.error as unknown as CustomError)?.message ||
       "Failed to fetch urgency rules"
@@ -108,7 +110,8 @@ const UrgencyRulesPage = () => {
   const [draft, setDraft] = useState<UrgencyRule | null>(null);
   const savedRules = rulesQuery.data ?? NO_RULES;
   const items = draft ? [...savedRules, draft] : savedRules;
-  const isDraft = (index: number) => draft !== null && index === savedRules.length;
+  const isDraft = (index: number) =>
+    draft !== null && index === savedRules.length;
 
   const [editableIndex, setEditableIndex] = useState(-1);
   // Text being typed for a saved rule; the cached rule only changes on save,
@@ -139,18 +142,25 @@ const UrgencyRulesPage = () => {
       addRule.mutate(items[index].urgency_rule_text, {
         // The saved rule is now in the list (see queries.ts); drop the draft.
         onSuccess: () => setDraft(null),
-        onError: (error) => handleCustomError(error, "Error adding urgency rule"),
+        onError: (error) =>
+          handleCustomError(error, "Error adding urgency rule"),
       });
     } else {
       updateRule.mutate(
         { id: items[index].urgency_rule_id!, text: editText },
-        { onError: (error) => handleCustomError(error, "Error updating urgency rule") },
+        {
+          onError: (error) =>
+            handleCustomError(error, "Error updating urgency rule"),
+        },
       );
     }
   };
 
   // Enter saves. Escape cancels, and drops a new rule that was never saved.
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
     if (e.key === "Enter") {
       addOrUpdateItem(index);
       setEditableIndex(-1);
@@ -177,7 +187,10 @@ const UrgencyRulesPage = () => {
   // Bring the rule being edited into view (e.g. a new rule at the bottom).
   // DOM sync only; no data fetching here.
   useEffect(() => {
-    editingItemRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    editingItemRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   }, [editableIndex]);
 
   const deleteItem = (index: number) => () => {
@@ -186,7 +199,8 @@ const UrgencyRulesPage = () => {
       return;
     }
     deleteRule.mutate(items[index].urgency_rule_id!, {
-      onError: (error) => handleCustomError(error, "Error deleting urgency rule"),
+      onError: (error) =>
+        handleCustomError(error, "Error deleting urgency rule"),
     });
   };
 
@@ -218,8 +232,8 @@ const UrgencyRulesPage = () => {
                 Urgency detection
               </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                Messages sent to the urgency detection service are flagged as urgent if
-                any rule matches.
+                Messages sent to the urgency detection service are flagged as
+                urgent if any rule matches.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -284,13 +298,18 @@ const UrgencyRulesPage = () => {
                     No urgency rules yet
                   </EmptyTitle>
                   <EmptyDescription className="text-sm">
-                    Rules help you spot messages that need a human right away. Create
-                    your first rule and test it on sample messages before it goes live.
+                    Rules help you spot messages that need a human right away.
+                    Create your first rule and test it on sample messages before
+                    it goes live.
                   </EmptyDescription>
                 </EmptyHeader>
                 {editAccess && (
                   <EmptyContent className="mt-2">
-                    <Button size="lg" disabled={saving} onClick={createNewRecord}>
+                    <Button
+                      size="lg"
+                      disabled={saving}
+                      onClick={createNewRecord}
+                    >
                       <IconPlus data-icon="inline-start" />
                       Create your first rule
                     </Button>
@@ -321,9 +340,13 @@ const UrgencyRulesPage = () => {
                           placeholder="Describe a message that should be flagged as urgent"
                           className="text-sm md:text-sm"
                           value={
-                            isDraft(index) ? urgencyRule.urgency_rule_text : editText
+                            isDraft(index)
+                              ? urgencyRule.urgency_rule_text
+                              : editText
                           }
-                          onChange={(e) => handleTextChange(e.target.value, index)}
+                          onChange={(e) =>
+                            handleTextChange(e.target.value, index)
+                          }
                           onKeyDown={(e) => handleKeyDown(e, index)}
                           onBlur={() => onBlur(index)}
                         />
@@ -344,23 +367,22 @@ const UrgencyRulesPage = () => {
                       </InputGroup>
                     ) : (
                       <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
-                        <p className="text-sm break-words whitespace-pre-wrap hyphens-auto">
+                        <p className="text-sm wrap-break-word whitespace-pre-wrap hyphens-auto">
                           {urgencyRule.urgency_rule_text}
                         </p>
                         {urgencyRule.updated_datetime_utc ? (
                           <span className="text-xs text-muted-foreground">
                             Last updated:{" "}
-                            {new Date(urgencyRule.updated_datetime_utc).toLocaleString(
-                              undefined,
-                              {
-                                day: "numeric",
-                                month: "numeric",
-                                year: "numeric",
-                                hour: "numeric",
-                                minute: "numeric",
-                                hour12: true,
-                              },
-                            )}
+                            {new Date(
+                              urgencyRule.updated_datetime_utc,
+                            ).toLocaleString(undefined, {
+                              day: "numeric",
+                              month: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "numeric",
+                              hour12: true,
+                            })}
                           </span>
                         ) : (
                           // No timestamp yet means the rule is still being saved

@@ -37,7 +37,7 @@ import { Content, Tag } from "../types";
  * restores paragraph spacing, list bullets and link underlines.
  */
 export const MARKDOWN_CLASSES =
-  "break-words hyphens-auto [&_a]:underline [&_a]:underline-offset-2 [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p:not(:last-child)]:mb-2 [&_ul]:list-disc [&_ul]:pl-5";
+  "wrap-break-word hyphens-auto [&_a]:underline [&_a]:underline-offset-2 [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p:not(:last-child)]:mb-2 [&_ul]:list-disc [&_ul]:pl-5";
 
 /**
  * "Edit" button that links to the content editor.
@@ -79,7 +79,10 @@ export const EditContentButton = ({
       className={className}
       nativeButton={false}
       render={
-        <Link href={`/content/edit?content_id=${content_id}`} onClick={onClick} />
+        <Link
+          href={`/content/edit?content_id=${content_id}`}
+          onClick={onClick}
+        />
       }
     >
       {children}
@@ -181,7 +184,10 @@ const ContentViewModal = ({
         <DialogFooter className="flex-col-reverse items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           {validation_mode ? (
             <div className="flex gap-2">
-              <Button disabled={!editAccess} onClick={() => onApprove?.(content_id)}>
+              <Button
+                disabled={!editAccess}
+                onClick={() => onApprove?.(content_id)}
+              >
                 <IconCheck data-icon="inline-start" />
                 Approve
               </Button>
@@ -195,7 +201,10 @@ const ContentViewModal = ({
               </Button>
             </div>
           ) : (
-            <EditContentButton content_id={content_id} editAccess={editAccess} />
+            <EditContentButton
+              content_id={content_id}
+              editAccess={editAccess}
+            />
           )}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>
@@ -253,7 +262,10 @@ const ArchiveContentModal: React.FC<ArchiveContentModalProps> = ({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => !nextOpen && onClose()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-destructive/10 text-destructive">
@@ -266,7 +278,11 @@ const ArchiveContentModal: React.FC<ArchiveContentModalProps> = ({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={handleRemove} autoFocus>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={handleRemove}
+            autoFocus
+          >
             Remove
           </AlertDialogAction>
         </AlertDialogFooter>

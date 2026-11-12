@@ -94,7 +94,8 @@ const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
           <IconAlertTriangle />
           <AlertTitle className="text-sm">Urgent</AlertTitle>
           <AlertDescription>
-            {count === 1 ? "1 rule matched" : `${count} rules matched`} this message.
+            {count === 1 ? "1 rule matched" : `${count} rules matched`} this
+            message.
           </AlertDescription>
         </Alert>
       ) : (
@@ -120,7 +121,7 @@ const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
                   className="mt-0.5 size-3.5 shrink-0 text-urgent"
                   aria-hidden="true"
                 />
-                <span className="min-w-0 text-sm break-words whitespace-pre-wrap">
+                <span className="min-w-0 text-sm wrap-break-word whitespace-pre-wrap">
                   {text}
                 </span>
               </li>
@@ -132,7 +133,10 @@ const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
   );
 };
 
-const UDResponseBox: React.FC<UDResponseBoxProps> = ({ loading, responseBoxData }) => {
+const UDResponseBox: React.FC<UDResponseBoxProps> = ({
+  loading,
+  responseBoxData,
+}) => {
   // Hooks must run before any early return.
   const [jsonModalOpen, setJsonModalOpen] = useState<boolean>(false);
 
