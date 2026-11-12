@@ -27,7 +27,8 @@ interface WorkspaceCreateProps {
   onClose: () => void;
   isEdit: boolean;
   existingWorkspace?: Workspace;
-  onCreate: (workspace: Workspace) => Promise<Workspace>;
+  /** Resolves with the saved workspace, or a list (create; empty when the name is taken). */
+  onCreate: (workspace: Workspace) => Promise<Workspace | Workspace[]>;
   loginWorkspace: (workspace: Workspace) => void;
   /** Optional success notice (the workspace page shows it as a toast). */
   setSnackMessage?: (message: SnackMessage) => void;
@@ -74,7 +75,10 @@ const WorkspaceCreateModal = ({
     try {
       const response = await onCreate({ workspace_name: workspaceName });
       // The API returns the workspace, or a list (empty when the name is taken).
-      if ((Array.isArray(response) && response.length > 0) || response.workspace_name) {
+      if (
+        (Array.isArray(response) && response.length > 0) ||
+        (!Array.isArray(response) && response.workspace_name)
+      ) {
         const workspace = Array.isArray(response) ? response[0] : response;
         loginWorkspace(workspace);
         setSnackMessage?.({

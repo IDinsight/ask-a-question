@@ -34,7 +34,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "cn";
-import { DocIndexingStatusRow, formatDate } from "../api";
+import { formatDate } from "../queries";
+import type { DocIndexingStatusRow } from "../types";
 
 // Column headers and widths, shared by the header and every row so the
 // nested task rows line up with their parent.

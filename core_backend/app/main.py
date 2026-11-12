@@ -199,6 +199,11 @@ validate_security_settings()
 app = FastAPI(
     debug=DEBUG,
     description=page_description,
+    # Use the route function's name as the OpenAPI operationId (e.g. "retrieve_content"
+    # instead of "retrieve_content_content__get"). admin_app generates its typed API
+    # client from this spec, so these become readable SDK function names. Route
+    # function names must therefore stay unique across all routers.
+    generate_unique_id_function=lambda route: route.name,
     openapi_tags=tags_metadata,
     lifespan=lifespan,
     title="Ask A Question APIs",

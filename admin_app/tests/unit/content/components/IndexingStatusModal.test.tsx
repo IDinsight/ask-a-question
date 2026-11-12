@@ -5,7 +5,7 @@ import { vi } from "vitest";
 import type {
   DocIndexingStatusRow,
   DocIndexingTask,
-} from "@/components/features/content/api";
+} from "@/components/features/content/types";
 import { IndexingStatusModal } from "@/components/features/content/components/IndexingStatusModal";
 
 const task = (overrides: Partial<DocIndexingTask> = {}): DocIndexingTask => ({

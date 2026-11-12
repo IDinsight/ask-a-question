@@ -9,7 +9,7 @@ import {
   IconSettings,
   IconStar,
 } from "@tabler/icons-react";
-import type { UserBodyUpdate } from "@/components/features/workspace-management/api";
+import type { UserBodyUpdate } from "@/components/features/workspace-management/types";
 import {
   DropdownMenu,
   DropdownMenuContent,

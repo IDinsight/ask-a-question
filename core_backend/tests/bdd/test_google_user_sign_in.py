@@ -4,11 +4,10 @@ from typing import Any
 from unittest.mock import patch
 
 import httpx
+from app.users.schemas import UserRoles
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
-
-from app.users.schemas import UserRoles
 
 # Define scenario(s).
 scenarios("google_user_sign_in.feature")
@@ -17,7 +16,7 @@ scenarios("google_user_sign_in.feature")
 # Backgrounds.
 @given("Multiple workspaces are setup", target_fixture="user_workspace_responses")
 def reset_databases(
-    setup_multiple_workspaces: dict[str, dict[str, Any]]
+    setup_multiple_workspaces: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     """Setup multiple workspaces.
 

@@ -1,57 +1,84 @@
 import type { Page, Route } from "@playwright/test";
 
+import type {
+  AiFeedbackSummary,
+  ContentRetrieve,
+  DashboardOverview,
+  DashboardPerformance,
+  DetailsDrawer,
+  Heatmap,
+  TagRetrieve,
+  TopContent,
+  TopContentTimeSeries,
+  TopicsData,
+  UrgencyResponse,
+  UrgencyRuleRetrieve,
+  UserCreateWithCode,
+  UserRemoveResponse,
+  UserRetrieve,
+  UserRoles,
+  WorkspaceKeyResponse,
+  WorkspaceRetrieve,
+  WorkspaceUpdate,
+} from "@/client";
+import { BFF_ROUTES } from "@/lib/bff/routes.gen";
+
 /**
  * Test helpers that let the admin app run without a backend or a real login.
  *
  * - `mockAuth` seeds the localStorage keys AuthProvider reads on load, so
  *   ProtectedComponent treats the browser as logged in.
- * - `mockBackend` intercepts every request to the backend URL and answers
- *   from an in-memory store, so tests can create/delete tags and contents.
+ * - `mockBackend` intercepts every call the browser makes to the BFF (/bff/*)
+ *   and answers from an in-memory store, so tests can create/delete tags and
+ *   contents. The Next.js BFF and core_backend are never reached.
  *
- * Assumption: the app talks to the default backend URL (http://localhost:8000).
- * Set BACKEND_URL when running the tests if NEXT_PUBLIC_BACKEND_URL differs.
+ * It is still a mock, but it is checked against the codegen output:
+ * - Every record and response is typed with the generated API types
+ *   (src/client/types.gen.ts), so a spec change that breaks a mock shape fails
+ *   `tsc` instead of silently drifting.
+ * - Every request must match an operation in the generated BFF allowlist
+ *   (src/lib/bff/routes.gen.ts); anything else fails the test, the same way
+ *   the real BFF would reject it.
  */
 
-export const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8000";
+/** URL prefix of the BFF; mocked paths below are backend paths without it. */
+const BFF_PREFIX = "/bff";
 
-export type MockTag = { tag_id: number; tag_name: string };
-
-export type MockContent = {
-  content_id: number;
-  display_number: number;
-  content_title: string;
-  content_text: string;
+export type MockTag = TagRetrieve;
+/** Tags are numeric IDs in practice; the spec types them as unknown[]. */
+export type MockContent = Omit<ContentRetrieve, "content_tags"> & {
   content_tags: number[];
-  related_contents_id: number[];
-  content_metadata: Record<string, unknown>;
-  positive_votes: number;
-  negative_votes: number;
-  created_datetime_utc: string;
-  updated_datetime_utc: string;
+};
+export type MockUrgencyRule = UrgencyRuleRetrieve;
+export type MockUser = UserRetrieve;
+/** A topics response, plus the unclustered queries the UI reads (not in the spec). */
+export type MockInsights = TopicsData & {
+  unclustered_queries: { query_text: string; query_datetime_utc: string }[];
 };
 
-export type MockUrgencyRule = {
-  urgency_rule_id: number;
-  urgency_rule_text: string;
-  created_datetime_utc: string;
-  updated_datetime_utc: string;
-};
+const TIMESTAMP = "2026-01-15T10:00:00Z";
 
-export type MockUser = {
-  user_id: number;
-  username: string;
-  user_workspaces: { workspace_name: string; user_role: "admin" | "read_only" }[];
-};
+/** Build a tag record. */
+export const makeTag = (id: number, name: string): MockTag => ({
+  tag_id: id,
+  tag_name: name,
+  workspace_id: 1,
+  created_datetime_utc: TIMESTAMP,
+  updated_datetime_utc: TIMESTAMP,
+});
 
 /** A user with one role in the mocked "Test workspace". */
 export const makeUser = (
   id: number,
   username: string,
-  role: "admin" | "read_only" = "read_only",
+  role: UserRoles = "read_only",
 ): MockUser => ({
   user_id: id,
   username,
-  user_workspaces: [{ workspace_name: "Test workspace", user_role: role }],
+  user_workspaces: [{ workspace_id: 1, workspace_name: "Test workspace", user_role: role }],
+  is_default_workspace: [true],
+  created_datetime_utc: TIMESTAMP,
+  updated_datetime_utc: TIMESTAMP,
 });
 
 export type MockState = {
@@ -59,21 +86,20 @@ export type MockState = {
   contents: MockContent[];
   urgencyRules: MockUrgencyRule[];
   /** Response for GET /dashboard/overview/<period>; see `makeOverview`. */
-  overview: unknown;
+  overview: DashboardOverview;
   /** Rows for GET /dashboard/performance/<period>; see `makePerformanceRow`. */
   performance: ReturnType<typeof makePerformanceRow>[];
   /** Response for GET /dashboard/insights/<period>. Refreshing swaps in `insightsAfterRefresh`. */
-  insights: unknown;
-  insightsAfterRefresh: unknown;
+  insights: MockInsights;
+  insightsAfterRefresh: MockInsights;
   /** Users for /user/ endpoints; each has a role in "Test workspace". */
   users: MockUser[];
   /** Current workspace (GET /workspace/current-workspace). Rotating the key updates it. */
-  workspace: {
-    api_key_first_characters: string | null;
-    api_key_updated_datetime_utc: string | null;
-    api_daily_quota: number | null;
-  };
-  /** Every request the mock answered, for asserting on API calls. */
+  workspace: Pick<
+    WorkspaceRetrieve,
+    "api_key_first_characters" | "api_key_updated_datetime_utc" | "api_daily_quota"
+  >;
+  /** Every request the mock answered (backend paths, no /bff prefix). */
   requests: { method: string; path: string; body: unknown }[];
 };
 
@@ -91,8 +117,11 @@ export const makeContent = (
   content_metadata: {},
   positive_votes: 0,
   negative_votes: 0,
-  created_datetime_utc: "2026-01-15T10:00:00Z",
-  updated_datetime_utc: "2026-01-15T10:00:00Z",
+  is_archived: false,
+  is_validated: true,
+  workspace_id: 1,
+  created_datetime_utc: TIMESTAMP,
+  updated_datetime_utc: TIMESTAMP,
   ...overrides,
 });
 
@@ -100,8 +129,10 @@ export const makeContent = (
 export const makeUrgencyRule = (id: number, text: string): MockUrgencyRule => ({
   urgency_rule_id: id,
   urgency_rule_text: text,
-  created_datetime_utc: "2026-01-15T10:00:00Z",
-  updated_datetime_utc: "2026-01-15T10:00:00Z",
+  urgency_rule_metadata: {},
+  workspace_id: 1,
+  created_datetime_utc: TIMESTAMP,
+  updated_datetime_utc: TIMESTAMP,
 });
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -116,14 +147,8 @@ const HOURS = Array.from(
  */
 export const makeOverview = ({
   queriesPerDay = 0,
-  topContent = [] as {
-    title: string;
-    query_count: number;
-    positive_votes: number;
-    negative_votes: number;
-    last_updated: string;
-  }[],
-} = {}) => {
+  topContent = [] as TopContent[],
+} = {}): DashboardOverview => {
   const days = Array.from({ length: 7 }, (_, i) => `2026-11-0${i + 1}T00:00:00`);
   const series = (n: number) => Object.fromEntries(days.map((d) => [d, n]));
   return {
@@ -146,12 +171,13 @@ export const makeOverview = ({
         percentage_negative_increase: 0,
       },
     },
+    // HOURS are exactly the spec's 2-hour buckets ("00:00" ... "22:00").
     heatmap: Object.fromEntries(
       HOURS.map((h, i) => [
         h,
         Object.fromEntries(DAYS.map((d, j) => [d, queriesPerDay ? (i + j) % 5 : 0])),
       ]),
-    ),
+    ) as Heatmap,
     time_series: {
       normal: series(queriesPerDay),
       downvoted: series(queriesPerDay ? 1 : 0),
@@ -167,7 +193,7 @@ export const makePerformanceRow = (
   title: string,
   perDay: number[] = [1, 2, 3, 2, 4, 5, 6],
   votes: { up?: number; down?: number } = {},
-) => ({
+): TopContentTimeSeries => ({
   id,
   title,
   total_query_count: perDay.reduce((a, b) => a + b, 0),
@@ -181,7 +207,7 @@ export const makePerformanceRow = (
 /** A topic-discovery response. With no topics the status is "not_started". */
 export const makeInsights = (
   topics: { id: number; name: string; queries: string[] }[] = [],
-) => ({
+): MockInsights => ({
   status: topics.length ? "completed" : "not_started",
   refreshTimeStamp: topics.length ? "2026-11-05T09:00:00Z" : "",
   data: topics.map((t) => ({
@@ -215,20 +241,20 @@ export async function mockAuth(
   }, role);
 }
 
-// The page (localhost:3000) calls the backend (localhost:8000) cross-origin,
-// so every mocked response needs CORS headers or the browser drops it.
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "*",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-};
-
-const json = (route: Route, body: unknown, status = 200) =>
+/**
+ * Reply with JSON. The type parameter pins the body to a generated response
+ * type at each call site, e.g. `json<TagRetrieve[]>(route, state.tags)`.
+ */
+const json = <T>(route: Route, body: T, status = 200) =>
   route.fulfill({
     status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+/** Is this "METHOD /backend/path" an operation in the generated BFF allowlist? */
+const isSpecOperation = (method: string, path: string) =>
+  BFF_ROUTES.some((route) => route.method === method && route.pattern.test(path));
 
 /**
  * Answer backend calls from an in-memory store. Returns the store so tests
@@ -240,10 +266,10 @@ export async function mockBackend(
     tags?: MockTag[];
     contents?: MockContent[];
     urgencyRules?: MockUrgencyRule[];
-    overview?: unknown;
+    overview?: DashboardOverview;
     performance?: ReturnType<typeof makePerformanceRow>[];
-    insights?: unknown;
-    insightsAfterRefresh?: unknown;
+    insights?: MockInsights;
+    insightsAfterRefresh?: MockInsights;
     workspace?: Partial<MockState["workspace"]>;
     users?: MockUser[];
   } = {},
@@ -270,16 +296,20 @@ export async function mockBackend(
   // The root layout loads Google sign-in; it isn't needed and slows tests down.
   await page.route("https://accounts.google.com/**", (route) => route.abort());
 
+  // The browser only ever calls the BFF on the app's own origin.
   await page.route(
-    (url) => url.href.startsWith(BACKEND_URL),
+    (url) => url.pathname.startsWith(`${BFF_PREFIX}/`),
     async (route) => {
       const request = route.request();
       const method = request.method();
-      const path = new URL(request.url()).pathname;
+      // The backend path the BFF would forward, e.g. "/content/" (slash kept).
+      const path = new URL(request.url()).pathname.slice(BFF_PREFIX.length);
 
-      // CORS preflight for requests carrying an Authorization header.
-      if (method === "OPTIONS") {
-        return route.fulfill({ status: 204, headers: CORS_HEADERS });
+      // The real BFF rejects anything outside the spec; so does the mock.
+      if (!isSpecOperation(method, path)) {
+        const message = `[mockBackend] ${method} ${path} is not an operation in openapi.json`;
+        console.error(message);
+        return json(route, { detail: message }, 404);
       }
 
       let body: unknown = null;
@@ -292,22 +322,15 @@ export async function mockBackend(
 
       // --- Current user (workspace switcher in the app sidebar) ---
       if (method === "GET" && path === "/user/current-user") {
-        return json(route, {
-          user_id: 1,
-          username: "test-admin",
-          user_workspaces: [
-            { workspace_id: 1, workspace_name: "Test workspace", user_role: "admin" },
-          ],
-          is_default_workspace: [true],
-        });
+        return json<UserRetrieve>(route, makeUser(1, "test-admin", "admin"));
       }
 
       // --- Tags ---
-      if (method === "GET" && path === "/tag/") return json(route, state.tags);
+      if (method === "GET" && path === "/tag/") return json<TagRetrieve[]>(route, state.tags);
       if (method === "POST" && path === "/tag/") {
-        const tag = { tag_id: nextTagId++, tag_name: (body as any).tag_name };
+        const tag = makeTag(nextTagId++, (body as any).tag_name);
         state.tags.push(tag);
-        return json(route, tag);
+        return json<TagRetrieve>(route, tag);
       }
       const tagMatch = path.match(/^\/tag\/(\d+)$/);
       if (method === "DELETE" && tagMatch) {
@@ -320,16 +343,17 @@ export async function mockBackend(
       }
 
       // --- Content ---
-      if (method === "GET" && path === "/content/") return json(route, state.contents);
+      if (method === "GET" && path === "/content/")
+        return json<ContentRetrieve[]>(route, state.contents);
       if (method === "GET" && path === "/content/unvalidated-count")
-        return json(route, 0);
+        return json<number>(route, 0);
       if (method === "GET" && path === "/content/next-unvalidated")
         return json(route, null);
       if (method === "POST" && path === "/content/") {
         const id = Math.max(0, ...state.contents.map((c) => c.content_id)) + 1;
         const created = makeContent(id, body as Partial<MockContent>);
         state.contents.push(created);
-        return json(route, created);
+        return json<ContentRetrieve>(route, created);
       }
       const contentMatch = path.match(/^\/content\/(\d+)$/);
       if (contentMatch) {
@@ -337,12 +361,12 @@ export async function mockBackend(
         const existing = state.contents.find((c) => c.content_id === id);
         if (method === "GET") {
           return existing
-            ? json(route, existing)
+            ? json<ContentRetrieve>(route, existing)
             : json(route, { detail: "Not found" }, 404);
         }
         if (method === "PUT" && existing) {
           Object.assign(existing, body);
-          return json(route, existing);
+          return json<ContentRetrieve>(route, existing);
         }
         // The app "deletes" content by archiving it with a PATCH.
         if (method === "PATCH" || method === "DELETE") {
@@ -353,7 +377,7 @@ export async function mockBackend(
 
       // --- PDF processing (docmuncher) ---
       if (method === "GET" && path === "/docmuncher/status/is_job_running") {
-        return json(route, false);
+        return json<boolean>(route, false);
       }
       if (method === "GET" && path === "/docmuncher/status/data")
         return json(route, []);
@@ -363,11 +387,11 @@ export async function mockBackend(
         method === "GET" &&
         /^\/dashboard\/overview\/(day|week|month|year|custom)$/.test(path)
       ) {
-        return json(route, state.overview);
+        return json<DashboardOverview>(route, state.overview);
       }
 
       // --- Users (workspace management) ---
-      if (method === "GET" && path === "/user/") return json(route, state.users);
+      if (method === "GET" && path === "/user/") return json<UserRetrieve[]>(route, state.users);
       if (method === "POST" && path === "/user/") {
         const b = body as { username: string; role: "admin" | "read_only" };
         const user = makeUser(
@@ -377,8 +401,10 @@ export async function mockBackend(
         );
         state.users.push(user);
         // Placeholder codes for the test only
-        return json(route, {
+        return json<UserCreateWithCode>(route, {
           username: b.username,
+          role: b.role,
+          workspace_name: "Test workspace",
           recovery_codes: ["code-1111", "code-2222"],
         });
       }
@@ -391,7 +417,12 @@ export async function mockBackend(
             b.role,
           ),
         );
-        return json(route, {});
+        return json<UserCreateWithCode>(route, {
+          username: b.username,
+          role: b.role,
+          workspace_name: "Test workspace",
+          recovery_codes: [],
+        });
       }
       const userIdMatch = path.match(/^\/user\/(\d+)$/);
       if (userIdMatch) {
@@ -402,11 +433,17 @@ export async function mockBackend(
             u.user_workspaces[0].user_role = (
               body as { role: "admin" | "read_only" }
             ).role;
-          return json(route, u ?? {});
+          return u
+            ? json<UserRetrieve>(route, u)
+            : json(route, { detail: "User not found" }, 404);
         }
         if (method === "DELETE") {
           state.users = state.users.filter((x) => x.user_id !== id);
-          return json(route, { require_workspace_switch: false });
+          return json<UserRemoveResponse>(route, {
+            removed_from_workspace_name: "Test workspace",
+            require_authentication: false,
+            require_workspace_switch: false,
+          });
         }
       }
       // HEAD /user/<username>: 200 if the user exists anywhere. "outsider" exists in another workspace.
@@ -415,21 +452,22 @@ export async function mockBackend(
         const name = decodeURIComponent(userNameMatch[1]);
         const exists =
           name === "outsider" || state.users.some((u) => u.username === name);
-        return route.fulfill({ status: exists ? 200 : 404, headers: CORS_HEADERS });
+        return route.fulfill({ status: exists ? 200 : 404 });
       }
       const wsMatch = path.match(/^\/workspace\/(\d+)$/);
       if (method === "PUT" && wsMatch) {
-        return json(route, {
-          workspace_id: 1,
+        return json<WorkspaceUpdate>(route, {
           workspace_name: (body as { workspace_name: string }).workspace_name,
         });
       }
 
       // --- Workspace / API key ---
       if (method === "GET" && path === "/workspace/current-workspace") {
-        return json(route, {
+        return json<WorkspaceRetrieve>(route, {
           workspace_id: 1,
           workspace_name: "Test workspace",
+          doc_language: "ENGLISH",
+          created_datetime_utc: TIMESTAMP,
           ...state.workspace,
         });
       }
@@ -438,7 +476,10 @@ export async function mockBackend(
         const newKey = "NEWKEY" + "x".repeat(26);
         state.workspace.api_key_first_characters = newKey.slice(0, 5);
         state.workspace.api_key_updated_datetime_utc = "2026-11-07T10:00:00";
-        return json(route, { new_api_key: newKey });
+        return json<WorkspaceKeyResponse>(route, {
+          new_api_key: newKey,
+          workspace_name: "Test workspace",
+        });
       }
 
       // --- Dashboard content performance ---
@@ -447,11 +488,19 @@ export async function mockBackend(
       );
       if (method === "GET" && perfMatch) {
         const [, , id, ai] = perfMatch;
-        if (!id) return json(route, { content_time_series: state.performance });
+        if (!id) {
+          return json<DashboardPerformance>(route, {
+            content_time_series: state.performance,
+          });
+        }
         const row = state.performance.find((r) => r.id === Number(id));
-        if (ai) return json(route, { ai_summary: `Summary for ${row?.title}.` });
-        return json(route, {
-          title: row?.title,
+        if (ai) {
+          return json<AiFeedbackSummary>(route, {
+            ai_summary: `Summary for ${row?.title}.`,
+          });
+        }
+        return json<DetailsDrawer>(route, {
+          title: row?.title ?? "",
           query_count: row?.total_query_count ?? 0,
           positive_votes: row?.positive_votes ?? 0,
           negative_votes: row?.negative_votes ?? 0,
@@ -481,18 +530,18 @@ export async function mockBackend(
           state.insights = state.insightsAfterRefresh;
           return json(route, { detail: "Started topic discovery." });
         }
-        return json(route, state.insights);
+        return json<MockInsights>(route, state.insights);
       }
 
       // --- Urgency rules ---
       if (method === "GET" && path === "/urgency-rules/") {
-        return json(route, state.urgencyRules);
+        return json<UrgencyRuleRetrieve[]>(route, state.urgencyRules);
       }
       if (method === "POST" && path === "/urgency-rules/") {
         const id = Math.max(0, ...state.urgencyRules.map((r) => r.urgency_rule_id)) + 1;
         const rule = makeUrgencyRule(id, (body as any).urgency_rule_text);
         state.urgencyRules.push(rule);
-        return json(route, rule);
+        return json<UrgencyRuleRetrieve>(route, rule);
       }
       const ruleMatch = path.match(/^\/urgency-rules\/(\d+)$/);
       if (ruleMatch) {
@@ -501,7 +550,7 @@ export async function mockBackend(
         if (method === "PUT" && existing) {
           existing.urgency_rule_text = (body as any).urgency_rule_text;
           existing.updated_datetime_utc = "2026-02-01T09:30:00Z";
-          return json(route, existing);
+          return json<UrgencyRuleRetrieve>(route, existing);
         }
         if (method === "DELETE") {
           state.urgencyRules = state.urgencyRules.filter(
@@ -516,10 +565,14 @@ export async function mockBackend(
         const matched = state.urgencyRules
           .filter((r) => text.includes(r.urgency_rule_text.split(" ")[0].toLowerCase()))
           .map((r) => r.urgency_rule_text);
-        return json(route, { is_urgent: matched.length > 0, matched_rules: matched });
+        return json<UrgencyResponse>(route, {
+          is_urgent: matched.length > 0,
+          matched_rules: matched,
+          details: {},
+        });
       }
 
-      // Anything else: fail loudly so missing mocks are easy to spot.
+      // A real operation this mock doesn't implement yet: fail loudly.
       console.warn(`[mockBackend] unhandled ${method} ${path}`);
       return json(route, { detail: `Unmocked endpoint ${method} ${path}` }, 404);
     },

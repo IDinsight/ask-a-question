@@ -8,56 +8,58 @@
  *   a workspace.
  * Both read the same query keys, so a mutation on one side updates the other.
  *
- * Conventions (same as dashboard/queries.ts):
- * - Hooks read the auth token themselves and stay disabled until it exists.
- * - The token is NOT part of the query key; AuthProvider clears the whole cache
+ * Conventions (shared by every feature's queries.ts):
+ * - Requests go through the generated client (src/client, from core_backend's
+ *   OpenAPI spec) to the /bff proxy. Reads spread the generated `*Options()`;
+ *   keys come from the generated `*QueryKey()` functions.
+ * - Hooks stay disabled until the user has a token (the client attaches it).
+ *   The token is NOT part of the query key; AuthProvider clears the whole cache
  *   when the user or workspace changes.
  * - Responses are reshaped with `select` (module-level, so the reference is stable).
  * - Mutations invalidate the keys whose data they change.
+ * - Errors are CustomError (4xx) or Error (5xx/network); see utils/api.ts.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useAuth } from "@/utils/auth";
 import {
-  addUserToWorkspace,
+  addExistingUser,
   checkIfUsernameExists,
   createNewUser,
-  createWorkspace,
-  editUser,
-  editWorkspace,
-  getCurrentWorkspace,
-  getUser,
-  getUserList,
+  createWorkspaces,
   removeUserFromWorkspace,
-} from "./api";
-import type { UserBody, UserBodyUpdate } from "./api";
-import type { UserRole, Workspace } from "./types";
+  updateUser,
+  updateWorkspace,
+} from "@/client";
+import {
+  getUserOptions,
+  getUserQueryKey,
+  retrieveAllUsersInCurrentWorkspaceOptions,
+  retrieveAllUsersInCurrentWorkspaceQueryKey,
+  retrieveCurrentWorkspaceOptions,
+  retrieveCurrentWorkspaceQueryKey,
+} from "@/client/@tanstack/react-query.gen";
+import type { UserRetrieve, WorkspaceRetrieve } from "@/client";
+import { isCustomError, type CustomError } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
+import type { UserBody, UserBodyUpdate, UserRole, Workspace } from "./types";
 
 /* ------------------------------------------------------------------ */
 /* Query keys                                                          */
 /* ------------------------------------------------------------------ */
 
+/** Named aliases for the generated keys, shared with the integrations page. */
 export const workspaceKeys = {
-  all: ["workspace-management"] as const,
   /** GET /user/current-user: the signed-in user and their workspaces. */
-  currentUser: () => [...workspaceKeys.all, "current-user"] as const,
+  currentUser: () => getUserQueryKey(),
   /** GET /workspace/current-workspace */
-  currentWorkspace: () => [...workspaceKeys.all, "current-workspace"] as const,
+  currentWorkspace: () => retrieveCurrentWorkspaceQueryKey(),
   /** GET /user/: users of the current workspace. */
-  users: () => [...workspaceKeys.all, "users"] as const,
+  users: () => retrieveAllUsersInCurrentWorkspaceQueryKey(),
 };
 
 /* ------------------------------------------------------------------ */
 /* Current user (sidebar workspace switcher)                           */
 /* ------------------------------------------------------------------ */
-
-/** Raw /user/current-user response. Default flags are a list parallel to user_workspaces. */
-type CurrentUserResponse = {
-  user_id: number;
-  username: string;
-  user_workspaces?: Workspace[];
-  is_default_workspace?: boolean[];
-};
 
 export type CurrentUser = {
   user: { user_id: number; username: string };
@@ -65,7 +67,8 @@ export type CurrentUser = {
   workspaces: Workspace[];
 };
 
-const parseCurrentUser = (data: CurrentUserResponse): CurrentUser => ({
+/** Default flags come back as a list parallel to user_workspaces. */
+const parseCurrentUser = (data: UserRetrieve): CurrentUser => ({
   user: { user_id: data.user_id, username: data.username },
   // Copy each workspace rather than mutating the cached response.
   workspaces: (data.user_workspaces ?? []).map((workspace, index) => ({
@@ -77,8 +80,7 @@ const parseCurrentUser = (data: CurrentUserResponse): CurrentUser => ({
 export const useCurrentUserQuery = () => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: workspaceKeys.currentUser(),
-    queryFn: (): Promise<CurrentUserResponse> => getUser(token!),
+    ...getUserOptions(),
     select: parseCurrentUser,
     enabled: !!token,
   });
@@ -90,15 +92,11 @@ export const useCurrentUserQuery = () => {
 
 export const useCurrentWorkspaceQuery = () => {
   const { token } = useAuth();
-  return useQuery({
-    queryKey: workspaceKeys.currentWorkspace(),
-    queryFn: (): Promise<Workspace> => getCurrentWorkspace(token!),
-    enabled: !!token,
-  });
+  return useQuery({ ...retrieveCurrentWorkspaceOptions(), enabled: !!token });
 };
 
 /** Raw /user/ row: the user plus every workspace they belong to. */
-type UserListRow = { user_id: number; username: string; user_workspaces: Workspace[] };
+type UserListRow = Pick<UserRetrieve, "user_id" | "username" | "user_workspaces">;
 
 /**
  * Users of the current workspace. Raw rows are cached; the Wrapper turns them
@@ -107,11 +105,7 @@ type UserListRow = { user_id: number; username: string; user_workspaces: Workspa
  */
 export const useUserListQuery = () => {
   const { token } = useAuth();
-  return useQuery({
-    queryKey: workspaceKeys.users(),
-    queryFn: (): Promise<UserListRow[]> => getUserList(token!),
-    enabled: !!token,
-  });
+  return useQuery({ ...retrieveAllUsersInCurrentWorkspaceOptions(), enabled: !!token });
 };
 
 /**
@@ -146,42 +140,62 @@ export const toWorkspaceUsers = (
  * "Verify" in the add-user dialog: does this username exist anywhere?
  * A mutation rather than a query because it runs on a button click and the
  * answer should come from the server every time (no cached result).
+ * HEAD /user/{username}: 200 = exists, 404 = free, anything else is an error.
  */
-export const useCheckUsernameMutation = () => {
-  const { token } = useAuth();
-  return useMutation({
-    mutationFn: (username: string) => checkIfUsernameExists(username, token!),
+export const useCheckUsernameMutation = () =>
+  useMutation({
+    mutationFn: async (username: string): Promise<boolean> => {
+      try {
+        await checkIfUsernameExists({ path: { username } });
+        return true;
+      } catch (error) {
+        if (isCustomError(error) && error.status === 404) return false;
+        throw new Error("Error checking username");
+      }
+    },
   });
-};
 
 /** Create a brand-new user in the given workspace. Resolves with their recovery codes. */
 export const useCreateUserMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: {
+    mutationFn: async (vars: {
       username: string;
       password: string;
       workspaceName: string;
       role: UserRole;
-    }): Promise<{ recovery_codes?: string[] }> =>
-      createNewUser(
-        vars.username,
-        vars.password,
-        vars.workspaceName,
-        vars.role,
-        token!,
-      ),
+    }) => {
+      const { data } = await createNewUser({
+        body: {
+          username: vars.username,
+          password: vars.password,
+          workspace_name: vars.workspaceName,
+          role: vars.role,
+        },
+      });
+      return data;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
   });
 };
 
 export const useAddUserToWorkspaceMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { username: string; workspaceName: string; role: UserRole }) =>
-      addUserToWorkspace(vars.username, vars.workspaceName, vars.role, token!),
+    mutationFn: async (vars: {
+      username: string;
+      workspaceName: string;
+      role: UserRole;
+    }): Promise<void> => {
+      await addExistingUser({
+        body: {
+          username: vars.username,
+          role: vars.role,
+          workspace_name: vars.workspaceName,
+          is_default_workspace: true,
+        },
+      });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
   });
 };
@@ -191,11 +205,15 @@ export const useAddUserToWorkspaceMutation = () => {
  * user list and the sidebar's current-user data can change, so refresh both.
  */
 export const useEditUserMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { userId: number; user: UserBodyUpdate }) =>
-      editUser(vars.userId, vars.user, token!),
+    mutationFn: async (vars: { userId: number; user: UserBodyUpdate }) => {
+      const { data } = await updateUser({
+        path: { user_id: vars.userId },
+        body: vars.user,
+      });
+      return data;
+    },
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
@@ -208,18 +226,30 @@ export const useEditUserMutation = () => {
  * Remove a user from a workspace. The list is refreshed whether or not this
  * worked (the old code refetched in `.finally`). Removing yourself also
  * changes your own workspaces, so the sidebar data is refreshed too.
+ *
+ * A 403 means the user is the workspace's last admin; it gets a friendlier
+ * message than the backend's.
  */
 export const useRemoveUserMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: {
-      userId: number;
-      workspaceName: string;
-    }): Promise<{
-      require_workspace_switch?: boolean;
-      default_workspace_name: string;
-    }> => removeUserFromWorkspace(vars.userId, vars.workspaceName, token!),
+    mutationFn: async (vars: { userId: number; workspaceName: string }) => {
+      try {
+        const { data } = await removeUserFromWorkspace({
+          path: { user_id: vars.userId },
+          query: { remove_from_workspace_name: vars.workspaceName },
+        });
+        return data;
+      } catch (error) {
+        if (isCustomError(error) && error.status === 403) {
+          throw {
+            status: 403,
+            message: "You cannot remove the last admin from the workspace.",
+          } as CustomError;
+        }
+        throw error;
+      }
+    },
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
@@ -234,14 +264,21 @@ export const useRemoveUserMutation = () => {
 
 /**
  * Create a workspace (sidebar). It shows up in the sidebar's workspace list.
- * The API returns the workspace, or an empty list when the name is taken.
+ * The API returns the created workspaces, or an empty list when the name is taken.
  */
 export const useCreateWorkspaceMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workspace: Workspace): Promise<Workspace> =>
-      createWorkspace(workspace, token!),
+    mutationFn: async (workspace: Workspace): Promise<WorkspaceRetrieve[]> => {
+      const { data } = await createWorkspaces({
+        body: {
+          workspace_name: workspace.workspace_name,
+          content_quota: workspace.content_quota,
+          api_daily_quota: workspace.api_daily_quota,
+        },
+      });
+      return data;
+    },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: workspaceKeys.currentUser() }),
   });
@@ -249,13 +286,27 @@ export const useCreateWorkspaceMutation = () => {
 
 /** Rename a workspace. The page heading and the sidebar list both show the name. */
 export const useEditWorkspaceMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: {
+    mutationFn: async (vars: {
       workspaceId: number;
       workspace: Workspace;
-    }): Promise<Workspace> => editWorkspace(vars.workspaceId, vars.workspace, token!),
+    }): Promise<Workspace> => {
+      const { data } = await updateWorkspace({
+        path: { workspace_id: vars.workspaceId },
+        body: {
+          workspace_name: vars.workspace.workspace_name,
+          content_quota: vars.workspace.content_quota,
+          api_daily_quota: vars.workspace.api_daily_quota,
+        },
+      });
+      // The response echoes the update; fall back to the requested name.
+      return {
+        ...vars.workspace,
+        ...data,
+        workspace_name: data.workspace_name ?? vars.workspace.workspace_name,
+      };
+    },
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: workspaceKeys.currentWorkspace() }),

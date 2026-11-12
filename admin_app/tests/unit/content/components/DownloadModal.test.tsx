@@ -94,12 +94,9 @@ describe("DownloadModal", () => {
 
   it("reports the backend's detail for a 4xx error", async () => {
     const user = userEvent.setup();
-    // Shape axios.isAxiosError() recognises.
-    const axiosError = {
-      isAxiosError: true,
-      response: { status: 403, data: { detail: "Not allowed" } },
-    };
-    const props = renderModal(() => Promise.reject(axiosError));
+    // A CustomError, as the API client's interceptor produces for 4xx.
+    const customError = { status: 403, message: "Not allowed" };
+    const props = renderModal(() => Promise.reject(customError));
 
     await user.click(screen.getByRole("button", { name: "Download" }));
 

@@ -56,7 +56,13 @@ async def get_contents(
     )
 
 
-@router.get("/urgency-rules", response_model=list[UrgencyRuleRetrieve])
+@router.get(
+    "/urgency-rules",
+    response_model=list[UrgencyRuleRetrieve],
+    # Explicit ID: the function name clashes with the /urgency-rules/ router's
+    # `get_urgency_rules`, and operationIds must be unique (see app/main.py).
+    operation_id="get_data_api_urgency_rules",
+)
 async def get_urgency_rules(
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),

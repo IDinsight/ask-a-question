@@ -2,10 +2,8 @@
  * TanStack Query hooks for the urgency rules page. UrgencyRulesWrapper is the
  * only caller.
  *
- * Conventions (same as dashboard/queries.ts):
- * - Hooks read the auth token themselves and stay disabled until it exists.
- * - The token is NOT part of the query key; AuthProvider clears the whole cache
- *   when the user or workspace changes.
+ * Conventions: see workspace-management/queries.ts (generated client via
+ * /bff, hooks disabled until there is a token, generated query keys).
  * - Rule mutations write their result into the cached list straight away (so
  *   the row updates without waiting for a refetch, as the page did before),
  *   then invalidate the list so it re-syncs with the backend.
@@ -13,23 +11,26 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useAuth } from "@/utils/auth";
 import {
-  addUrgencyRule,
+  classifyText,
+  createUrgencyRule,
   deleteUrgencyRule,
-  getUrgencyDetection,
-  getUrgencyRuleList,
   updateUrgencyRule,
-} from "./api";
-import type { UrgencyDetectionResponse, UrgencyRule } from "./types";
+  type UrgencyRuleRetrieve,
+} from "@/client";
+import {
+  getUrgencyRulesOptions,
+  getUrgencyRulesQueryKey,
+} from "@/client/@tanstack/react-query.gen";
+import { useAuth } from "@/utils/auth";
+import type { UrgencyDetectionResponse } from "./types";
 
 /* ------------------------------------------------------------------ */
 /* Query keys                                                          */
 /* ------------------------------------------------------------------ */
 
 export const urgencyRuleKeys = {
-  all: ["urgency-rules"] as const,
-  list: () => [...urgencyRuleKeys.all, "list"] as const,
+  list: () => getUrgencyRulesQueryKey(),
 };
 
 /* ------------------------------------------------------------------ */
@@ -38,11 +39,7 @@ export const urgencyRuleKeys = {
 
 export const useUrgencyRulesQuery = () => {
   const { token } = useAuth();
-  return useQuery({
-    queryKey: urgencyRuleKeys.list(),
-    queryFn: (): Promise<UrgencyRule[]> => getUrgencyRuleList(token!),
-    enabled: !!token,
-  });
+  return useQuery({ ...getUrgencyRulesOptions(), enabled: !!token });
 };
 
 /** Shared by the three rule mutations: patch the cached list, then re-sync. */
@@ -51,8 +48,8 @@ const useRuleListCache = () => {
   return {
     /** Stop an in-flight refetch from overwriting an optimistic patch. */
     cancel: () => queryClient.cancelQueries({ queryKey: urgencyRuleKeys.list() }),
-    patch: (fn: (rules: UrgencyRule[]) => UrgencyRule[]) =>
-      queryClient.setQueryData<UrgencyRule[]>(urgencyRuleKeys.list(), (old) =>
+    patch: (fn: (rules: UrgencyRuleRetrieve[]) => UrgencyRuleRetrieve[]) =>
+      queryClient.setQueryData<UrgencyRuleRetrieve[]>(urgencyRuleKeys.list(), (old) =>
         fn(old ?? []),
       ),
     // Not awaited, so the mutation settles as soon as the request does.
@@ -64,11 +61,10 @@ const useRuleListCache = () => {
 
 /** Create a rule; the saved rule is appended to the list. */
 export const useAddUrgencyRuleMutation = () => {
-  const { token } = useAuth();
   const cache = useRuleListCache();
   return useMutation({
-    mutationFn: (ruleText: string): Promise<UrgencyRule> =>
-      addUrgencyRule(ruleText, token!),
+    mutationFn: async (ruleText: string) =>
+      (await createUrgencyRule({ body: { urgency_rule_text: ruleText } })).data,
     onSuccess: (saved) => {
       cache.patch((rules) => [...rules, saved]);
       cache.invalidate();
@@ -82,11 +78,15 @@ export const useAddUrgencyRuleMutation = () => {
  * invalidation brings back the saved text.
  */
 export const useUpdateUrgencyRuleMutation = () => {
-  const { token } = useAuth();
   const cache = useRuleListCache();
   return useMutation({
-    mutationFn: ({ id, text }: { id: number; text: string }): Promise<UrgencyRule> =>
-      updateUrgencyRule(id, text, token!),
+    mutationFn: async ({ id, text }: { id: number; text: string }) =>
+      (
+        await updateUrgencyRule({
+          path: { urgency_rule_id: id },
+          body: { urgency_rule_text: text },
+        })
+      ).data,
     onMutate: async ({ id, text }) => {
       await cache.cancel();
       cache.patch((rules) =>
@@ -106,10 +106,10 @@ export const useUpdateUrgencyRuleMutation = () => {
 
 /** Delete a rule; it leaves the list once the backend confirms. */
 export const useDeleteUrgencyRuleMutation = () => {
-  const { token } = useAuth();
   const cache = useRuleListCache();
   return useMutation({
-    mutationFn: (id: number) => deleteUrgencyRule(id, token!),
+    mutationFn: async (id: number) =>
+      (await deleteUrgencyRule({ path: { urgency_rule_id: id } })).data,
     onSuccess: (_data, id) => {
       cache.patch((rules) => rules.filter((r) => r.urgency_rule_id !== id));
       cache.invalidate();
@@ -125,10 +125,8 @@ export const useDeleteUrgencyRuleMutation = () => {
  * Classify a sample message against the workspace's rules. A mutation, not a
  * query: each "send" is a one-off request whose result the test panel keeps.
  */
-export const useUrgencyDetectionMutation = () => {
-  const { token } = useAuth();
-  return useMutation({
-    mutationFn: (message: string): Promise<UrgencyDetectionResponse> =>
-      getUrgencyDetection(message, token!),
+export const useUrgencyDetectionMutation = () =>
+  useMutation({
+    mutationFn: async (message: string): Promise<UrgencyDetectionResponse> =>
+      (await classifyText({ body: { message_text: message } })).data,
   });
-};

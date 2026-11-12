@@ -2,21 +2,19 @@
  * TanStack Query hooks for the integrations page. IntegrationsWrapper is the
  * only caller.
  *
- * Conventions (same as dashboard/queries.ts):
- * - Hooks read the auth token themselves and stay disabled until it exists.
- * - The token is NOT part of the query key; AuthProvider clears the whole cache
- *   when the user or workspace changes.
+ * Conventions: see workspace-management/queries.ts (generated client via
+ * /bff, hooks disabled until there is a token, generated query keys).
  */
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 
+import { getNewApiKey } from "@/client";
+import { retrieveCurrentWorkspaceOptions } from "@/client/@tanstack/react-query.gen";
 import { toast } from "@/components/ui/toast";
-import { getCurrentWorkspace } from "@/components/features/workspace-management/api";
 import { workspaceKeys } from "@/components/features/workspace-management/queries";
 import type { CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { createNewApiKey } from "./api";
 
 /* ------------------------------------------------------------------ */
 /* Query keys                                                          */
@@ -24,8 +22,8 @@ import { createNewApiKey } from "./api";
 
 // The current workspace is shared with workspace management: both features
 // read workspaceKeys.currentWorkspace(), so renaming the workspace or rotating
-// the key there/here refreshes the other page too. Keep the queryFn identical
-// (plain getCurrentWorkspace) so the cached shape is the same for both.
+// the key there/here refreshes the other page too. Both use the same generated
+// retrieveCurrentWorkspaceOptions(), so the cached shape is the same.
 
 /* ------------------------------------------------------------------ */
 /* Current workspace (API key preview + daily quota)                   */
@@ -69,9 +67,8 @@ const NO_WORKSPACE: WorkspaceKeyInfo = {
 export const useCurrentWorkspaceQuery = () => {
   const { token } = useAuth();
   const query = useQuery({
-    queryKey: workspaceKeys.currentWorkspace(),
-    queryFn: () => getCurrentWorkspace(token!),
-    select: (data) => parseWorkspace(data as CurrentWorkspaceResponse),
+    ...retrieveCurrentWorkspaceOptions(),
+    select: parseWorkspace,
     enabled: !!token,
   });
 
@@ -98,10 +95,9 @@ export const useCurrentWorkspaceQuery = () => {
  * Callers handle showing the new key and any error toast.
  */
 export const useRotateApiKeyMutation = () => {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (): Promise<{ new_api_key: string }> => createNewApiKey(token!),
+    mutationFn: async () => (await getNewApiKey()).data,
     // Not awaited: the new-key dialog should open straight away, as before,
     // while the preview refetches in the background.
     onSuccess: () => {

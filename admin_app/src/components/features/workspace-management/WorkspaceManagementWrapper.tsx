@@ -24,7 +24,7 @@ import type {
 import { CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import React from "react";
-import type { UserBody, UserBodyUpdate } from "./api";
+import type { UserBody, UserBodyUpdate } from "./types";
 import {
   toWorkspaceUsers,
   useAddUserToWorkspaceMutation,
@@ -163,7 +163,7 @@ const UserManagement: React.FC = () => {
       { userId, workspaceName },
       {
         onSuccess: (data) => {
-          if (data.require_workspace_switch) {
+          if (data.require_workspace_switch && data.default_workspace_name) {
             loginWorkspace(data.default_workspace_name);
           }
 

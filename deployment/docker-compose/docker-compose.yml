@@ -32,6 +32,10 @@ services:
       dockerfile: Dockerfile
     command: >
       node server.js
+    environment:
+      # Server-side URL the admin app's BFF (/bff/*) uses to reach core_backend.
+      # The browser no longer calls the backend directly.
+      BACKEND_INTERNAL_URL: http://core_backend:8000
     depends_on:
       - core_backend
     restart: always

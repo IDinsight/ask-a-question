@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Spinner } from "@/components/ui/spinner";
 
-import { UserBody } from "../api";
+import type { UserBody } from "../types";
 import { CustomError } from "@/utils/api";
 import type { UserRole } from "@/components/features/workspace-management/types";
 

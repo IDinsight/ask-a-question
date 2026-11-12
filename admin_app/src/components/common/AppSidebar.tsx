@@ -40,7 +40,7 @@ import { SidebarMenuTrigger } from "@/components/common/SidebarMenuTrigger";
 import WorkspaceMenu from "@/components/common/WorkspaceMenu";
 import type { Workspace } from "@/components/features/workspace-management/types";
 import WorkspaceCreateModal from "@/components/features/workspace-management/components/WorkspaceCreateModal";
-import type { UserBodyUpdate } from "@/components/features/workspace-management/api";
+import type { UserBodyUpdate } from "@/components/features/workspace-management/types";
 import {
   useCreateWorkspaceMutation,
   useCurrentUserQuery,

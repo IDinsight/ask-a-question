@@ -72,9 +72,10 @@ services:
     env_file:
       - deployment/docker-compose/.base.env
     environment:
-      # The browser calls the backend directly (no Caddy), so override the
-      # https://localhost/api value from .base.env.
-      NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+      # Server-side URL the admin app's BFF (/bff/*) uses to reach core_backend.
+      # The browser only talks to the BFF, so NEXT_PUBLIC_BACKEND_URL is no
+      # longer needed by admin_app.
+      BACKEND_INTERNAL_URL: http://core_backend:8000
     depends_on:
       - core_backend
 

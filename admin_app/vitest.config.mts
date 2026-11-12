@@ -21,7 +21,11 @@ export default defineConfig({
   // react() handles the JSX transform.
   plugins: [nextStaticImages(), react()],
   // Built-in replacement for vite-tsconfig-paths: resolves the "@/*" alias.
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    // "server-only" is resolved by Next.js, not installed; stub it for tests.
+    alias: { "server-only": path.resolve("tests/unit/stubs/server-only.ts") },
+  },
   test: {
     environment: "jsdom",
     include: ["tests/unit/**/*.test.{ts,tsx}"],

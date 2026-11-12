@@ -1,7 +1,11 @@
 "use client";
-import { getLoginWorkspace } from "@/components/features/workspace-management/api";
+import {
+  login as loginRequest,
+  loginGoogle as loginGoogleRequest,
+  switchWorkspace,
+} from "@/client";
 import type { UserRole } from "@/components/features/workspace-management/types";
-import { apiCalls, CustomError } from "@/utils/api";
+import { CustomError } from "@/utils/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
@@ -99,8 +103,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       : "/";
 
     try {
-      const { access_token, access_level, user_role, workspace_name } =
-        await apiCalls.getLoginToken(username, password);
+      // OAuth2 password form, sent as application/x-www-form-urlencoded.
+      const {
+        data: { access_token, access_level, user_role, workspace_name },
+      } = await loginRequest({ body: { username, password } });
       localStorage.setItem("username", username);
       setUsername(username);
       setLoginParams(access_token, access_level, user_role, workspace_name);
@@ -121,8 +127,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       : "/content";
     try {
       logoutWorkspace();
-      const { access_token, access_level, user_role, workspace_name } =
-        await getLoginWorkspace(workspaceName, token);
+      // logoutWorkspace() just removed the token from localStorage, where the
+      // API client normally reads it, so pass the current one explicitly.
+      const {
+        data: { access_token, access_level, user_role, workspace_name },
+      } = await switchWorkspace({
+        body: { workspace_name: workspaceName },
+        auth: token ?? undefined,
+      });
       setLoginParams(access_token, access_level, user_role, workspace_name);
       if (currentPage) {
         router.push(currentPage);
@@ -151,9 +163,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/";
 
-    apiCalls
-      .getGoogleLoginToken({ client_id: client_id, credential: credential })
-      .then(({ access_token, access_level, username, user_role, workspace_name }) => {
+    loginGoogleRequest({ body: { client_id, credential } })
+      .then(({ data }) => {
+        const { access_token, access_level, username, user_role, workspace_name } = data;
         localStorage.setItem("username", username);
         setUsername(username);
         setLoginParams(access_token, access_level, user_role, workspace_name);

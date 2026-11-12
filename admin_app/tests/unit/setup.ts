@@ -31,7 +31,11 @@ class IntersectionObserverStub {
 globalThis.IntersectionObserver ??=
   IntersectionObserverStub as unknown as typeof IntersectionObserver;
 
-if (!window.matchMedia) {
+// Server-side tests (`// @vitest-environment node`, e.g. the BFF proxy) have no
+// DOM, so the browser stand-ins below only apply under jsdom.
+const isBrowser = typeof window !== "undefined";
+
+if (isBrowser && !window.matchMedia) {
   window.matchMedia = (query: string) =>
     ({
       matches: false,
@@ -45,13 +49,15 @@ if (!window.matchMedia) {
     }) as MediaQueryList;
 }
 
-// Used by scroll-into-view behaviour in menus/lists.
-Element.prototype.scrollIntoView ??= () => {};
+if (isBrowser) {
+  // Used by scroll-into-view behaviour in menus/lists.
+  Element.prototype.scrollIntoView ??= () => {};
 
-// Pointer capture is used by Base UI sliders/menus.
-Element.prototype.hasPointerCapture ??= () => false;
-Element.prototype.setPointerCapture ??= () => {};
-Element.prototype.releasePointerCapture ??= () => {};
+  // Pointer capture is used by Base UI sliders/menus.
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.setPointerCapture ??= () => {};
+  Element.prototype.releasePointerCapture ??= () => {};
+}
 
 // Used by file downloads (DownloadModal). Tests can spy on these.
 URL.createObjectURL ??= () => "blob:mock";

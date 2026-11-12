@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { makeContent, mockAuth, mockBackend } from "./helpers/mockApi";
+import { makeContent, makeTag, mockAuth, mockBackend } from "./helpers/mockApi";
 
 /**
  * /content and /content/edit, run against a mocked backend and a fake
@@ -7,10 +7,7 @@ import { makeContent, mockAuth, mockBackend } from "./helpers/mockApi";
  * playwright.config.ts reuses one that's already running.
  */
 
-const TAGS = [
-  { tag_id: 1, tag_name: "Maternal health" },
-  { tag_id: 2, tag_name: "Nutrition" },
-];
+const TAGS = [makeTag(1, "Maternal health"), makeTag(2, "Nutrition")];
 
 const CONTENTS = [
   makeContent(1, { content_title: "Antenatal visits", content_tags: [1] }),

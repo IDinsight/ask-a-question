@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { IndexingStatusResponse } from "../api";
+import type { IndexingStatusResponse } from "../types";
 import type { Content, Tag } from "../types";
 import { SearchBar, SearchBarProps } from "./SearchBar";
 

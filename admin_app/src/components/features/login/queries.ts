@@ -8,34 +8,31 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getRegisterOption, registerUser } from "./api";
-
-/* ------------------------------------------------------------------ */
-/* Query keys                                                          */
-/* ------------------------------------------------------------------ */
-
-export const loginKeys = {
-  all: ["login"] as const,
-  registerOption: () => [...loginKeys.all, "register-option"] as const,
-};
+import { createFirstUser } from "@/client";
+import {
+  isRegisterRequiredOptions,
+  isRegisterRequiredQueryKey,
+} from "@/client/@tanstack/react-query.gen";
+import type { RequireRegisterResponse } from "@/client";
 
 /* ------------------------------------------------------------------ */
 /* Does the deployment still need its first (admin) user?              */
 /* ------------------------------------------------------------------ */
 
-const selectRequireRegister = (data: { require_register?: boolean } | undefined) =>
+const selectRequireRegister = (data: RequireRegisterResponse | undefined) =>
   !!data?.require_register;
 
 /**
  * Resolves to true when no user exists yet. If the check fails we log it and
  * the sign-in page stays usable (the setup dialogs just don't appear).
  */
-export const useRegisterOptionQuery = () =>
-  useQuery({
-    queryKey: loginKeys.registerOption(),
-    queryFn: async (): Promise<{ require_register?: boolean }> => {
+export const useRegisterOptionQuery = () => {
+  const { queryFn, queryKey } = isRegisterRequiredOptions();
+  return useQuery({
+    queryKey,
+    queryFn: async (context) => {
       try {
-        return await getRegisterOption();
+        return await queryFn!(context);
       } catch (error) {
         console.error("Could not check whether first-user setup is needed:", error);
         throw error;
@@ -45,6 +42,7 @@ export const useRegisterOptionQuery = () =>
     // One attempt, as before: a failure just skips the setup dialogs.
     retry: false,
   });
+};
 
 /* ------------------------------------------------------------------ */
 /* Register the first user                                             */
@@ -52,23 +50,29 @@ export const useRegisterOptionQuery = () =>
 
 /**
  * Creates the first (admin) user. Resolves with `{ recovery_codes }`.
- * Throws { status, message } for 4xx and a plain Error otherwise (see api.ts);
+ * Throws { status, message } for 4xx and a plain Error otherwise (see utils/api.ts);
  * the RegisterModal shows the message.
  */
 export const useRegisterUserMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       username,
       password,
     }: {
       username: string;
       password: string;
-    }): Promise<{ recovery_codes?: string[] }> => registerUser(username, password),
+    }) => {
+      const { data } = await createFirstUser({
+        // The backend always makes the first user an admin of a new workspace.
+        body: { username, password },
+      });
+      return data;
+    },
     // A user exists now, so the check's cached answer is out of date. Not
     // awaited: the recovery codes should show without waiting for a refetch.
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: loginKeys.registerOption() });
+      void queryClient.invalidateQueries({ queryKey: isRegisterRequiredQueryKey() });
     },
   });
 };

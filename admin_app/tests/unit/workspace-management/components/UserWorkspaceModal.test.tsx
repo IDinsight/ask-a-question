@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import UserCreateModal from "@/components/features/workspace-management/components/UserWorkspaceModal";
-import type { UserBody } from "@/components/features/workspace-management/api";
+import type { UserBody } from "@/components/features/workspace-management/types";
 
 type Props = React.ComponentProps<typeof UserCreateModal>;
 

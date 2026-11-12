@@ -2,28 +2,29 @@
  * TanStack Query hooks for the dashboard. Every API call the dashboard makes
  * goes through a hook here; DashboardWrapper is the only caller.
  *
- * Conventions:
- * - Hooks read the auth token themselves and stay disabled until it exists.
- * - The token is NOT part of the query key; AuthProvider clears the whole cache
- *   when the user or workspace changes.
+ * Conventions: see workspace-management/queries.ts (generated client via
+ * /bff, hooks disabled until there is a token, generated query keys).
  * - Responses are parsed into UI-ready shapes with `select`, so components get
  *   plain data and never touch the raw API format.
+ * - The dashboard keeps its hand-written response types (./types.ts), which
+ *   describe the nested shapes in more detail than the spec's loose
+ *   dict[str, ...] models; generated responses are read through them.
  */
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { toast } from "@/components/ui/toast";
-import { getContentList } from "@/components/features/content/api";
-import { useAuth } from "@/utils/auth";
+import { refreshInsightsFrequency } from "@/client";
 import {
-  fetchTopicsData,
-  generateNewTopics,
-  getEmbeddingData,
-  getOverviewPageData,
-  getPerformanceDrawerAISummary,
-  getPerformanceDrawerData,
-  getPerformancePageData,
-} from "./api";
+  createPlotOptions,
+  retrieveContentAiSummaryOptions,
+  retrieveContentDetailsOptions,
+  retrieveContentOptions,
+  retrieveInsightsFrequencyOptions,
+  retrieveOverviewFrequencyOptions,
+  retrievePerformanceFrequencyOptions,
+} from "@/client/@tanstack/react-query.gen";
+import { toast } from "@/components/ui/toast";
+import { useAuth } from "@/utils/auth";
 import type {
   CustomDashboardFrequency,
   CustomDateParams,
@@ -70,22 +71,23 @@ export const toPeriodParams = (
 const isComplete = (p: PeriodParams) =>
   p.period !== "custom" || (!!p.startDate && !!p.endDate);
 
-/* ------------------------------------------------------------------ */
-/* Query keys                                                          */
-/* ------------------------------------------------------------------ */
+/** Path params shared by every dashboard endpoint. */
+const timeframe = (p: PeriodParams) => ({ timeframe: p.period });
 
-export const dashboardKeys = {
-  all: ["dashboard"] as const,
-  overview: (p: PeriodParams) => [...dashboardKeys.all, "overview", p] as const,
-  hasContent: () => [...dashboardKeys.all, "has-content"] as const,
-  performance: (p: PeriodParams) => [...dashboardKeys.all, "performance", p] as const,
-  drawer: (p: PeriodParams, contentId: number | null) =>
-    [...dashboardKeys.all, "performance", p, "drawer", contentId] as const,
-  aiSummary: (p: PeriodParams, contentId: number | null) =>
-    [...dashboardKeys.all, "performance", p, "ai-summary", contentId] as const,
-  topics: (p: PeriodParams) => [...dashboardKeys.all, "topics", p] as const,
-  embedding: (p: PeriodParams) => [...dashboardKeys.all, "embedding", p] as const,
-};
+/** Date range query params: only custom periods send them. */
+const dateRange = (p: PeriodParams) =>
+  p.period === "custom" ? { start_date: p.startDate, end_date: p.endDate } : {};
+
+/**
+ * Overview query params. Custom periods also send a frequency (default
+ * "Day"); presets only when one was chosen (the backend picks otherwise).
+ */
+const overviewQuery = (p: PeriodParams) =>
+  p.period === "custom"
+    ? { ...dateRange(p), frequency: p.frequency || "Day" }
+    : p.frequency
+    ? { frequency: p.frequency }
+    : {};
 
 /* ------------------------------------------------------------------ */
 /* Overview                                                            */
@@ -112,16 +114,11 @@ const parseOverview = (data: OverviewResponse): OverviewData => {
 export const useOverviewQuery = (params: PeriodParams, enabled: boolean) => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: dashboardKeys.overview(params),
-    queryFn: (): Promise<OverviewResponse> =>
-      getOverviewPageData(
-        params.period,
-        token!,
-        params.startDate,
-        params.endDate,
-        params.frequency,
-      ),
-    select: parseOverview,
+    ...retrieveOverviewFrequencyOptions({
+      path: timeframe(params),
+      query: overviewQuery(params),
+    }),
+    select: (data) => parseOverview(data as unknown as OverviewResponse),
     enabled: enabled && !!token && isComplete(params),
   });
 };
@@ -130,9 +127,8 @@ export const useOverviewQuery = (params: PeriodParams, enabled: boolean) => {
 export const useHasContentQuery = (enabled: boolean) => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: dashboardKeys.hasContent(),
-    queryFn: () => getContentList({ token: token!, limit: 1 }),
-    select: (data: unknown) => Array.isArray(data) && data.length > 0,
+    ...retrieveContentOptions({ query: { limit: 1 } }),
+    select: (data) => Array.isArray(data) && data.length > 0,
     enabled: enabled && !!token,
   });
 };
@@ -156,11 +152,12 @@ const parsePerformance = (data: PerformanceResponse): RowDataType[] =>
 export const usePerformanceQuery = (params: PeriodParams, enabled: boolean) => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: dashboardKeys.performance(params),
-    // The performance endpoints ignore frequency, so it isn't sent.
-    queryFn: (): Promise<PerformanceResponse> =>
-      getPerformancePageData(params.period, token!, params.startDate, params.endDate),
-    select: parsePerformance,
+    // The performance endpoints take no frequency.
+    ...retrievePerformanceFrequencyOptions({
+      path: timeframe(params),
+      query: dateRange(params),
+    }),
+    select: (data) => parsePerformance(data as unknown as PerformanceResponse),
     enabled: enabled && !!token && isComplete(params),
   });
 };
@@ -190,16 +187,12 @@ export const usePerformanceDrawerQuery = (
 ) => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: dashboardKeys.drawer(params, contentId),
-    queryFn: (): Promise<DrawerResponse> =>
-      getPerformanceDrawerData(
-        params.period,
-        contentId!,
-        token!,
-        params.startDate,
-        params.endDate,
-      ),
-    select: parseDrawer,
+    ...retrieveContentDetailsOptions({
+      // -1 only builds a key while idle (contentId null); it is never fetched.
+      path: { ...timeframe(params), content_id: contentId ?? -1 },
+      query: dateRange(params),
+    }),
+    select: (data) => parseDrawer(data as unknown as DrawerResponse),
     enabled: contentId !== null && !!token && isComplete(params),
   });
 };
@@ -214,15 +207,10 @@ export const usePerformanceAISummaryQuery = (
 ) => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: dashboardKeys.aiSummary(params, contentId),
-    queryFn: (): Promise<{ ai_summary?: string }> =>
-      getPerformanceDrawerAISummary(
-        params.period,
-        contentId!,
-        token!,
-        params.startDate,
-        params.endDate,
-      ),
+    ...retrieveContentAiSummaryOptions({
+      path: { ...timeframe(params), content_id: contentId ?? -1 },
+      query: dateRange(params),
+    }),
     select: (data) => data?.ai_summary || AI_SUMMARY_DISABLED,
     enabled: contentId !== null && !!token && isComplete(params),
   });
@@ -259,7 +247,10 @@ const EMPTY_TOPICS: TopicModelingResponse = {
 export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
   const { token } = useAuth();
   const queryClient = useQueryClient();
-  const key = dashboardKeys.topics(params);
+  // The insights endpoint takes only the timeframe, so all custom ranges share
+  // one cached result, as on the backend.
+  const topicsOptions = retrieveInsightsFrequencyOptions({ path: timeframe(params) });
+  const key = topicsOptions.queryKey;
   const keyId = JSON.stringify(key);
 
   // Polling that ran past POLLING_TIMEOUT, per period key.
@@ -267,8 +258,8 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
 
   const query = useQuery({
     queryKey: key,
-    queryFn: (): Promise<TopicModelingResponse> =>
-      fetchTopicsData(params.period, token!, params.startDate, params.endDate),
+    queryFn: async (context): Promise<TopicModelingResponse> =>
+      (await topicsOptions.queryFn!(context)) as unknown as TopicModelingResponse,
     enabled: enabled && !!token && isComplete(params),
     refetchInterval: (q) =>
       q.state.data?.status === "in_progress" && !timedOut[keyId]
@@ -316,8 +307,13 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
   }, [status, keyId, params.period, query.data?.error_message]);
 
   const refresh = useMutation({
-    mutationFn: (): Promise<{ detail?: string }> =>
-      generateNewTopics(params.period, token!, params.startDate, params.endDate),
+    mutationFn: async () => {
+      const { data } = await refreshInsightsFrequency({
+        path: timeframe(params),
+        query: dateRange(params),
+      });
+      return data as { detail?: string } | undefined;
+    },
     onMutate: () => {
       waiting.current[keyId] = true;
       setTimedOut((prev) => ({ ...prev, [keyId]: false }));
@@ -359,15 +355,7 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
 export const useEmbeddingQuery = (params: PeriodParams, enabled: boolean) => {
   const { token } = useAuth();
   return useQuery({
-    queryKey: dashboardKeys.embedding(params),
-    queryFn: (): Promise<unknown> =>
-      getEmbeddingData(
-        params.period,
-        token!,
-        params.startDate,
-        params.endDate,
-        params.frequency,
-      ),
+    ...createPlotOptions({ path: timeframe(params) }),
     enabled: enabled && !!token && isComplete(params),
     staleTime: Infinity,
   });

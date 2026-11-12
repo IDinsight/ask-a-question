@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { Content, Tag } from "../types";
-import { handleApiError } from "@/utils/api";
+import { getErrorMessage } from "@/utils/api";
 
 interface ContentDownload {
   content_id: number | null;
@@ -120,11 +120,8 @@ const DownloadModal = ({
       const filename = `content_${timestamp}.csv`;
       downloadCSV(csv, filename);
     } catch (error) {
-      try {
-        handleApiError(error, "Failed to download content");
-      } catch (apiError: any) {
-        onFailedDownload(apiError.message);
-      }
+      // The backend's reason for a 4xx, a generic message otherwise.
+      onFailedDownload(getErrorMessage(error, "Failed to download content"));
     } finally {
       setLoading(false);
       onClose();
