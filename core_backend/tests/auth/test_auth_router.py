@@ -12,8 +12,13 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.auth import service
+from app.core.security import create_access_token
 from app.users.schemas import UserRoles
-from tests.conftest import TEST_WORKSPACE_NAME_1
+from tests.conftest import (
+    TEST_ADMIN_USERNAME_1,
+    TEST_WORKSPACE_NAME_1,
+    TEST_WORKSPACE_NAME_2,
+)
 
 LOGIN_PASSWORD = "login_password"  # pragma: allowlist secret
 
@@ -228,3 +233,133 @@ class TestAuthenticateKeyDependency:
 
         response = client.post("/search", headers=headers, json={"query_text": "hi"})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# Placeholder resolved to the `login_user` fixture's username inside the test.
+FRESH_USER = "<fresh user in workspace 1>"
+
+
+class TestTokenMembershipChecks:
+    """A signed JWT is only honoured while its user still exists and still belongs
+    to the workspace in the token. These hit routes that used to trust the token's
+    `workspace_name` claim alone (read-only content routes and the JWT fallback of
+    `authenticate_key`).
+    """
+
+    @staticmethod
+    def _bearer(username: str, workspace_name: str) -> dict[str, str]:
+        """Build an Authorization header with a correctly signed token.
+
+        Parameters
+        ----------
+        username
+            The `username` claim.
+        workspace_name
+            The `workspace_name` claim.
+
+        Returns
+        -------
+        dict[str, str]
+            The headers.
+        """
+
+        token = create_access_token(
+            user_role=UserRoles.ADMIN, username=username, workspace_name=workspace_name
+        )
+        return {"Authorization": f"Bearer {token}"}
+
+    def test_member_is_allowed(self, client: TestClient) -> None:
+        """Positive control: admin 1 can read workspace 1 content.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        """
+
+        headers = self._bearer(TEST_ADMIN_USERNAME_1, TEST_WORKSPACE_NAME_1)
+        assert client.get("/content/", headers=headers).status_code == 200
+
+    @pytest.mark.parametrize(
+        "username, workspace_name",
+        [
+            # User was deleted (or never existed) but the token is still signed.
+            ("ghost_user_" + uuid.uuid4().hex, TEST_WORKSPACE_NAME_1),
+            # Real user (fresh, only in workspace 1), but the token names workspace 2.
+            (FRESH_USER, TEST_WORKSPACE_NAME_2),
+            # Workspace does not exist.
+            (TEST_ADMIN_USERNAME_1, "no_such_workspace_" + uuid.uuid4().hex),
+        ],
+        ids=["user-gone", "not-a-member", "workspace-gone"],
+    )
+    @pytest.mark.parametrize(
+        "method, path, body",
+        [
+            ("GET", "/content/", None),
+            ("GET", "/tag/", None),
+            ("GET", "/urgency-rules/", None),
+            ("GET", "/workspace/current-workspace", None),
+            ("POST", "/search", {"query_text": "hi"}),
+        ],
+        ids=["content", "tags", "urgency-rules", "current-workspace", "search"],
+    )
+    def test_non_member_is_rejected(
+        self,
+        body: dict[str, Any] | None,
+        client: TestClient,
+        method: str,
+        path: str,
+        request: pytest.FixtureRequest,
+        username: str,
+        workspace_name: str,
+    ) -> None:
+        """Signed tokens for non-members are rejected with 401.
+
+        Parameters
+        ----------
+        body
+            JSON body to send, if any.
+        client
+            Test client.
+        method
+            HTTP method.
+        path
+            Route to call.
+        request
+            Pytest request, used to create the fresh user only when needed.
+        username
+            The `username` claim (`FRESH_USER` = a new user in workspace 1 only).
+        workspace_name
+            The `workspace_name` claim.
+        """
+
+        if username == FRESH_USER:
+            username = request.getfixturevalue("login_user")["username"]
+        response = client.request(
+            method, path, headers=self._bearer(username, workspace_name), json=body
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class TestNoSecretsInResponses:
+    """User-facing responses never include password hashes or recovery codes."""
+
+    def test_current_user(self, access_token_admin_1: str, client: TestClient) -> None:
+        """`/user/current-user` exposes no credential material.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            Admin access token in workspace 1.
+        client
+            Test client.
+        """
+
+        response = client.get(
+            "/user/current-user",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert "hashed_password" not in response.text
+        assert "recovery_code" not in response.text
+        assert "$argon2" not in response.text

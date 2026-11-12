@@ -1,8 +1,9 @@
 """Cross-cutting observability: logging, Prometheus metrics, Sentry and Langfuse."""
 
 import logging
+import re
 from logging import Logger
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import litellm
 import sentry_sdk
@@ -179,6 +180,107 @@ def get_log_level_from_str(*, log_level_str: str = LOG_LEVEL) -> int:
     return log_level_dict.get(log_level_str.upper(), logging.INFO)
 
 
+# Patterns for credentials that must never reach log output or error trackers.
+_REDACTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    # `Authorization: Bearer <token>` (API keys and JWTs).
+    (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9\-._~+/]+=*"), "Bearer [REDACTED]"),
+    # Bare JWTs (three base64url segments, header always starts with "eyJ").
+    (re.compile(r"\beyJ[\w-]+\.[\w-]+\.[\w-]+"), "[REDACTED_JWT]"),
+    # key=value / "key": "value" pairs for sensitive field names.
+    (
+        re.compile(
+            r"(?i)([\"']?\b(?:password|passwd|secret|token|api_key|recovery_codes?"
+            r"|credential|authorization)\b[\"']?\s*[:=]\s*)"
+            r"(\[[^\]]*\]|[\"'][^\"']*[\"']|[^\s,&}]+)"
+        ),
+        r"\1[REDACTED]",
+    ),
+]
+
+# Request fields Sentry must never receive.
+SENSITIVE_FIELD_NAMES = frozenset(
+    {
+        "authorization",
+        "cookie",
+        "credential",
+        "new_api_key",
+        "password",
+        "recovery_code",
+        "recovery_codes",
+        "set-cookie",
+    }
+)
+
+
+def redact(text: str) -> str:
+    """Mask credentials (bearer tokens, JWTs, passwords, ...) in free text.
+
+    Parameters
+    ----------
+    text
+        The text to scrub.
+
+    Returns
+    -------
+    str
+        The text with each credential replaced by a `[REDACTED...]` marker.
+    """
+
+    for pattern, replacement in _REDACTION_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+class RedactingFormatter(logging.Formatter):
+    """Log formatter that runs `redact` over the fully formatted record, so messages,
+    arguments and exception tracebacks are all scrubbed."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format the record, then redact credentials.
+
+        Parameters
+        ----------
+        record
+            The log record.
+
+        Returns
+        -------
+        str
+            The redacted log line.
+        """
+
+        return redact(super().format(record))
+
+
+def scrub_sentry_event(event: Any, hint: Any) -> Any:
+    """Sentry `before_send` hook that strips credentials from request data.
+
+    Parameters
+    ----------
+    event
+        The Sentry event about to be sent.
+    hint
+        Extra context from Sentry (unused).
+
+    Returns
+    -------
+    Any
+        The scrubbed event.
+    """
+
+    request = event.get("request") or {}
+    for section in ("headers", "data", "cookies"):
+        values = request.get(section)
+        if isinstance(values, dict):
+            for key in list(values):
+                # Cookie names are arbitrary, so every cookie value is redacted.
+                if section == "cookies" or key.lower() in SENSITIVE_FIELD_NAMES:
+                    values[key] = "[REDACTED]"
+    if isinstance(request.get("query_string"), str):
+        request["query_string"] = redact(request["query_string"])
+    return event
+
+
 def setup_logger(*, log_level: Optional[int] = None, name: str = __name__) -> Logger:
     """Setup logger for the application.
 
@@ -205,7 +307,7 @@ def setup_logger(*, log_level: Optional[int] = None, name: str = __name__) -> Lo
 
     logger.setLevel(log_level)
 
-    formatter = logging.Formatter(
+    formatter = RedactingFormatter(
         "%(asctime)s %(filename)20s%(lineno)4s : %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
@@ -251,6 +353,9 @@ def init_sentry() -> None:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         traces_sample_rate=float(SENTRY_TRACES_SAMPLE_RATE),
+        # Never attach user IPs, cookies or auth headers; scrub what remains.
+        send_default_pii=False,
+        before_send=scrub_sentry_event,
         _experiments={
             "continuous_profiling_auto_start": True,
         },

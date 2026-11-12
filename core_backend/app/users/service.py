@@ -22,7 +22,7 @@ from app.core.exceptions import (
     NotFoundError,
 )
 from app.core.observability import setup_logger
-from app.core.security import update_api_limits
+from app.core.security import hash_recovery_code, update_api_limits
 from app.question_answer.schemas import IdentifiedLanguage
 from app.users.models import UserDB
 from app.users.repository import (
@@ -484,9 +484,11 @@ async def reset_user_password(
 
     user_to_update = await check_reset_password_call(asession=asession, user=user)
 
-    # 1. Recovery codes are single-use, so drop the one that was just used.
+    # 1. Recovery codes are single-use, so drop the one that was just used. Stored
+    # codes are hashes, so compare against the hash of the submitted code.
+    used_code_hash = hash_recovery_code(code=user.recovery_code)
     updated_recovery_codes = [
-        val for val in user_to_update.recovery_codes if val != user.recovery_code
+        val for val in user_to_update.recovery_codes if val != used_code_hash
     ]
     updated_user_db = await reset_user_password_in_db(
         asession=asession,
@@ -865,22 +867,22 @@ async def check_reset_password_call(
 
     Raises
     ------
-    NotFoundError
-        If the user to update is not found.
     BadRequestError
-        If the recovery code is incorrect.
+        If the user does not exist or the recovery code is incorrect. Both cases
+        return the same message so the endpoint cannot be used to discover which
+        usernames exist.
     """
 
+    invalid = BadRequestError("Invalid username or recovery code.")
+
     user_to_update = await check_if_user_exists(asession=asession, user=user)
+    if user_to_update is None or not user.recovery_code:
+        raise invalid
 
-    if user_to_update is None:
-        raise NotFoundError("User not found.")
-
-    if (
-        not user.recovery_code
-        or user.recovery_code not in user_to_update.recovery_codes
+    if hash_recovery_code(code=user.recovery_code) not in (
+        user_to_update.recovery_codes or []
     ):
-        raise BadRequestError("Recovery code is incorrect.")
+        raise invalid
 
     return user_to_update
 

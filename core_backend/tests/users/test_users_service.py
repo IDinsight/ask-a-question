@@ -19,6 +19,7 @@ from app.core.exceptions import (
     InternalServerError,
     NotFoundError,
 )
+from app.core.security import hash_recovery_code
 from app.users import service
 from app.users.models import UserDB
 from app.users.repository import (
@@ -61,7 +62,11 @@ def make_user_db(user_id: int = 1, username: str = "caller") -> UserDB:
 
     return UserDB(
         created_datetime_utc=NOW,
-        recovery_codes=["code_1", "code_2"],
+        # Stored codes are hashes; the plaintext codes are "code_1" and "code_2".
+        recovery_codes=[
+            hash_recovery_code(code="code_1"),
+            hash_recovery_code(code="code_2"),
+        ],
         updated_datetime_utc=NOW,
         user_id=user_id,
         username=username,
@@ -236,9 +241,9 @@ class TestCreateAndAddUser:
         user = UserCreate(username="existing", workspace_name="ws")
         expected = UserCreateWithCode(recovery_codes=[], username="existing")
         add_mock = AsyncMock(
-            side_effect=UserWorkspaceRoleAlreadyExistsError("dup")
-            if role_exists
-            else None,
+            side_effect=(
+                UserWorkspaceRoleAlreadyExistsError("dup") if role_exists else None
+            ),
             return_value=expected,
         )
         patch_repo(
@@ -566,14 +571,17 @@ class TestResetPassword:
         assert result.username == "caller"
         assert mocks["reset_user_password_in_db"].await_args is not None
         reset_kwargs = mocks["reset_user_password_in_db"].await_args.kwargs
-        assert reset_kwargs["recovery_codes"] == ["code_2"]
+        assert reset_kwargs["recovery_codes"] == [hash_recovery_code(code="code_2")]
 
     @pytest.mark.parametrize(
         "user_db, code, expected",
         [
-            (None, "code_1", NotFoundError),
+            # Unknown user gets the same error as a wrong code (no enumeration).
+            (None, "code_1", BadRequestError),
             (make_user_db(), "wrong", BadRequestError),
             (make_user_db(), "", BadRequestError),
+            # The stored hash itself is not accepted as a code.
+            (make_user_db(), hash_recovery_code(code="code_1"), BadRequestError),
         ],
     )
     async def test_check_reset_password_call_errors(

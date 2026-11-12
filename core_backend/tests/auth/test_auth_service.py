@@ -26,9 +26,11 @@ from app.core.exceptions import (
     UnauthorizedError,
 )
 from app.core.security import (
+    LegacySha256Hasher,
     create_access_token,
     get_key_hash,
-    get_password_salted_hash,
+    hash_password,
+    verify_password,
 )
 from app.users.models import UserDB
 from app.users.repository import UserNotFoundError
@@ -56,7 +58,7 @@ def make_user_db(username: str = "user") -> UserDB:
     """
 
     return UserDB(
-        hashed_password=get_password_salted_hash(key=PASSWORD),
+        hashed_password=hash_password(password=PASSWORD),
         user_id=1,
         username=username,
     )
@@ -102,8 +104,10 @@ def result_with(value: Any) -> MagicMock:
     result = MagicMock()
     if isinstance(value, Exception):
         result.scalar_one.side_effect = value
+        result.scalar_one_or_none.return_value = None
     else:
         result.scalar_one.return_value = value
+        result.scalar_one_or_none.return_value = value
     return result
 
 
@@ -196,6 +200,16 @@ def fake_google(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     return verify
 
 
+# Claims of a valid access token; individual tests break one of them.
+_VALID_CLAIMS: dict[str, Any] = {
+    "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+    "iat": datetime.now(timezone.utc),
+    "type": "access_token",
+    "username": "user",
+    "workspace_name": "ws",
+}
+
+
 class TestDecodeAccessToken:
     """Tests for `decode_access_token` and `build_authentication_details`."""
 
@@ -225,8 +239,52 @@ class TestDecodeAccessToken:
                 JWT_SECRET,
                 algorithm=JWT_ALGORITHM,
             ),
+            # Correct shape but missing `exp`: must not be accepted as non-expiring.
+            jwt.encode(
+                {**_VALID_CLAIMS, "exp": None},
+                JWT_SECRET,
+                algorithm=JWT_ALGORITHM,
+            ),
+            jwt.encode(
+                {k: v for k, v in _VALID_CLAIMS.items() if k != "iat"},
+                JWT_SECRET,
+                algorithm=JWT_ALGORITHM,
+            ),
+            # Some other token type signed with the same key.
+            jwt.encode(
+                {**_VALID_CLAIMS, "type": "refresh_token"},
+                JWT_SECRET,
+                algorithm=JWT_ALGORITHM,
+            ),
+            # Forged: signed with a different key.
+            jwt.encode(
+                _VALID_CLAIMS,
+                "a-different-secret-that-is-at-least-32-chars",
+                algorithm=JWT_ALGORITHM,
+            ),
+            # Unsigned (`alg: none`) token.
+            jwt.encode(_VALID_CLAIMS, None, algorithm="none"),
+            # Signed with an algorithm outside the pinned list.
+            jwt.encode(_VALID_CLAIMS, JWT_SECRET, algorithm="HS512"),
+            # Claims of the wrong type.
+            jwt.encode(
+                {**_VALID_CLAIMS, "username": ["admin"]},
+                JWT_SECRET,
+                algorithm=JWT_ALGORITHM,
+            ),
         ],
-        ids=["malformed", "missing-workspace", "expired"],
+        ids=[
+            "malformed",
+            "missing-workspace",
+            "expired",
+            "missing-exp",
+            "missing-iat",
+            "wrong-type",
+            "wrong-key",
+            "alg-none",
+            "unpinned-alg",
+            "non-string-username",
+        ],
     )
     def test_invalid_tokens(self, token: str) -> None:
         """Test that bad tokens raise a 401 with the bearer challenge header.
@@ -328,6 +386,111 @@ class TestCredentialsLogin:
         else:
             with pytest.raises(UnauthorizedError):
                 await call
+
+
+class TestPasswordHashUpgrade:
+    """Tests for the Argon2 migration and timing behaviour of credential login."""
+
+    async def test_legacy_hash_is_upgraded_on_login(
+        self, fake_session: MagicMock, patch_service: PatchService
+    ) -> None:
+        """A user with a pre-Argon2 hash logs in and the hash is replaced.
+
+        Parameters
+        ----------
+        fake_session
+            Mock session used by the service.
+        patch_service
+            Fixture that patches service dependencies.
+        """
+
+        user_db = make_user_db()
+        user_db.hashed_password = LegacySha256Hasher().hash(PASSWORD)
+        mocks = patch_service(
+            get_user_by_username=user_db,
+            get_user_default_workspace=make_workspace_db("default_ws"),
+            get_user_role_in_workspace=UserRoles.ADMIN,
+            update_user_hashed_password=None,
+        )
+
+        result = await service.authenticate_credentials(
+            password=PASSWORD, username="user"
+        )
+
+        assert result is not None
+        upgrade = mocks["update_user_hashed_password"]
+        upgrade.assert_awaited_once()
+        new_hash = upgrade.await_args.kwargs["hashed_password"]
+        assert new_hash.startswith("$argon2id$")
+        assert verify_password(password=PASSWORD, stored_hash=new_hash) == (
+            True,
+            None,
+        )
+
+    @pytest.mark.parametrize(
+        "password, expect_upgrade_call",
+        [(PASSWORD, False), ("wrong", False)],
+        ids=["argon2-valid", "argon2-wrong-password"],
+    )
+    async def test_argon2_hash_is_not_rewritten(
+        self,
+        expect_upgrade_call: bool,
+        fake_session: MagicMock,
+        password: str,
+        patch_service: PatchService,
+    ) -> None:
+        """Current Argon2 hashes are left alone, and wrong passwords never write.
+
+        Parameters
+        ----------
+        expect_upgrade_call
+            Whether the hash should be rewritten.
+        fake_session
+            Mock session used by the service.
+        password
+            The password supplied.
+        patch_service
+            Fixture that patches service dependencies.
+        """
+
+        mocks = patch_service(
+            get_user_by_username=make_user_db(),
+            get_user_default_workspace=make_workspace_db("default_ws"),
+            get_user_role_in_workspace=UserRoles.ADMIN,
+            update_user_hashed_password=None,
+        )
+        await service.authenticate_credentials(password=password, username="user")
+        assert mocks["update_user_hashed_password"].await_count == int(
+            expect_upgrade_call
+        )
+
+    async def test_unknown_user_still_runs_a_hash_check(
+        self,
+        fake_session: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+        patch_service: PatchService,
+    ) -> None:
+        """Unknown usernames do the same Argon2 work, so timing does not leak them.
+
+        Parameters
+        ----------
+        fake_session
+            Mock session used by the service.
+        monkeypatch
+            Pytest monkeypatch fixture.
+        patch_service
+            Fixture that patches service dependencies.
+        """
+
+        dummy = MagicMock()
+        monkeypatch.setattr(service, "verify_dummy_password", dummy)
+        patch_service(get_user_by_username=AsyncMock(side_effect=UserNotFoundError()))
+
+        assert (
+            await service.authenticate_credentials(password=PASSWORD, username="nope")
+            is None
+        )
+        dummy.assert_called_once_with(password=PASSWORD)
 
 
 class TestGoogleLogin:
@@ -523,7 +686,7 @@ class TestWorkspaceLookup:
         fake_session.execute.assert_not_awaited()
 
     @pytest.mark.parametrize(
-        "token, workspace_found, valid",
+        "token, workspace_found, user_found, user_role, valid",
         [
             (
                 create_access_token(
@@ -531,23 +694,53 @@ class TestWorkspaceLookup:
                 ),
                 True,
                 True,
+                UserRoles.ADMIN,
+                True,
             ),
             (
                 create_access_token(
                     user_role=UserRoles.ADMIN, username="u", workspace_name="gone"
                 ),
                 False,
+                True,
+                UserRoles.ADMIN,
                 False,
             ),
-            ("neither-key-nor-jwt", True, False),
+            (
+                create_access_token(
+                    user_role=UserRoles.ADMIN, username="u", workspace_name="ws"
+                ),
+                True,
+                False,
+                None,
+                False,
+            ),
+            (
+                create_access_token(
+                    user_role=UserRoles.ADMIN, username="u", workspace_name="ws"
+                ),
+                True,
+                True,
+                None,
+                False,
+            ),
+            ("neither-key-nor-jwt", True, True, UserRoles.ADMIN, False),
         ],
-        ids=["jwt-valid", "jwt-unknown-workspace", "garbage"],
+        ids=[
+            "jwt-valid",
+            "jwt-unknown-workspace",
+            "jwt-user-deleted",
+            "jwt-user-removed-from-workspace",
+            "garbage",
+        ],
     )
     async def test_jwt_fallback(
         self,
         fake_session: MagicMock,
         patch_service: PatchService,
         token: str,
+        user_found: bool,
+        user_role: UserRoles | None,
         valid: bool,
         workspace_found: bool,
     ) -> None:
@@ -565,13 +758,22 @@ class TestWorkspaceLookup:
             Whether the token should resolve to a workspace.
         workspace_found
             Whether the workspace named in the JWT exists.
+        user_found
+            Whether the user named in the JWT still exists.
+        user_role
+            The user's current role in the workspace (`None` = no longer a member).
         """
 
         workspace_db = make_workspace_db()
         patch_service(
             get_workspace_by_api_key=AsyncMock(
                 side_effect=service.WorkspaceTokenNotFoundError()
-            )
+            ),
+            get_user_by_username=AsyncMock(
+                return_value=make_user_db() if user_found else None,
+                side_effect=None if user_found else service.UserNotFoundError(),
+            ),
+            get_user_role_in_workspace=AsyncMock(return_value=user_role),
         )
         fake_session.execute.return_value = result_with(
             workspace_db if workspace_found else NoResultFound()

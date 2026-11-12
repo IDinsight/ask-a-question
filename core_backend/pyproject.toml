@@ -53,6 +53,7 @@ dependencies = [
     "mistralai==1.6.0",
     "python-dotenv==1.2.4",
     "slowapi>=0.1.10",
+    "pwdlib[argon2]==0.3.1",
 ]
 
 # Test and lint tooling. uv installs the `dev` group by default on `uv sync` /
@@ -99,8 +100,8 @@ follow_imports = "skip"
 
 [tool.ruff]
 lint.select = ["E", "F", "B", "Q", "I"]
-line-length = 88
 lint.ignore = ["B008"]  # Do not perform function calls in argument defaults.
+line-length = 88
 # The old root config had no requires-python, so ruff defaulted to py38. Pinned so
 # moving the config here doesn't switch on py>=3.10 rules (B905, Q003). Bump to py312
 # in a follow-up and fix the resulting violations.
@@ -122,7 +123,9 @@ testpaths = ["tests"]
 # -ra: short summary of skips/failures. --strict-markers: typos in marks fail.
 # -m "not rails": the guardrail tests call a real LLM, so they are opt-in
 # (`pytest -m rails`). A later -m on the command line replaces this one.
-addopts = ["-ra", "--strict-markers", "-m", "not rails"]
+# --cov: always measure coverage (settings in [tool.coverage.*] below). Pass
+# --no-cov to skip it, e.g. when running a single test file while iterating.
+addopts = ["-ra", "--strict-markers", "-m", "not rails", "--cov"]
 asyncio_mode = "auto"
 bdd_features_base_dir = "tests/bdd/features"
 filterwarnings = ["ignore::DeprecationWarning"]
@@ -131,7 +134,7 @@ markers = [
     "alembic: alembic migration tests (pytest-alembic).",
 ]
 
-# Coverage for `pytest --cov` (opt-in: measuring slows the run down).
+# Coverage settings, applied on every pytest run via --cov in addopts.
 [tool.coverage.run]
 source = ["app"]
 branch = true

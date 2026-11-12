@@ -127,10 +127,20 @@ HTTPX_TIMEOUT: float = 10.0
 # Turn.io
 TURNIO_API_BASE: str = os.environ.get("TURNIO_API_BASE", "https://whatsapp.turn.io/v1/")
 
+# ---- security settings
+# FastAPI debug mode returns tracebacks to clients. Off unless explicitly enabled.
+DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
+
+# Bearer token required to scrape /metrics. When unset, /metrics returns 404.
+METRICS_TOKEN = os.environ.get("METRICS_TOKEN", "")
+
 # ---- auth settings (moved from app/auth/config.py)
 ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
-JWT_SECRET = os.environ.get("JWT_SECRET", "jwt-secret")
+# Required in every environment (prod, dev and tests) and has no default.
+# `validate_security_settings` (app.core.security) refuses to start the app when it is
+# empty, a value published in this repo, or shorter than 32 characters.
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
 NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID = os.environ.get(
     "NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID",
     "update-me",

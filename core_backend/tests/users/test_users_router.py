@@ -561,7 +561,8 @@ class TestUserPasswordReset:
         "username, expected_status",
         [
             (TEST_ADMIN_USERNAME_1, status.HTTP_400_BAD_REQUEST),  # Wrong code.
-            ("invalid_username", status.HTTP_404_NOT_FOUND),
+            # Same status as a wrong code, so usernames cannot be enumerated.
+            ("invalid_username", status.HTTP_400_BAD_REQUEST),
         ],
     )
     def test_reset_password_rejected(

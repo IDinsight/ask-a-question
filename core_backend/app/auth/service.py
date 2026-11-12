@@ -38,7 +38,8 @@ from app.core.security import (
     create_access_token,
     get_key_hash,
     update_api_limits,
-    verify_password_salted_hash,
+    verify_dummy_password,
+    verify_password,
 )
 from app.users.models import UserDB
 from app.users.repository import (
@@ -48,6 +49,7 @@ from app.users.repository import (
     get_user_default_workspace,
     get_user_role_in_workspace,
     save_user_to_db,
+    update_user_hashed_password,
 )
 from app.users.schemas import UserCreate, UserRoles
 from app.workspaces.models import WorkspaceDB
@@ -105,13 +107,28 @@ def decode_access_token(*, token: str) -> tuple[str, str]:
     """
 
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        # Pin the algorithm list (never trust the token header) and require the time
+        # claims, so a token without `exp` cannot live forever.
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            options={"require": ["exp", "iat"]},
+        )
     except InvalidTokenError as err:
         raise _credentials_error() from err
 
+    if payload.get("type") != "access_token":
+        raise _credentials_error()
+
     username = payload.get("username", None)
     workspace_name = payload.get("workspace_name", None)
-    if not (username and workspace_name):
+    if not (
+        isinstance(username, str)
+        and username
+        and isinstance(workspace_name, str)
+        and workspace_name
+    ):
         raise _credentials_error()
     return username, workspace_name
 
@@ -179,27 +196,40 @@ async def authenticate_credentials(
     ) as asession:
         try:
             user_db = await get_user_by_username(asession=asession, username=username)
-            if verify_password_salted_hash(
-                key=password, stored_hash=user_db.hashed_password
-            ):
-                user_workspace_db = await get_user_default_workspace(
-                    asession=asession, user_db=user_db
-                )
-                user_role = await get_user_role_in_workspace(
-                    asession=asession, user_db=user_db, workspace_db=user_workspace_db
-                )
-                assert user_role is not None and user_role in UserRoles
-
-                # Hardcode "fullaccess" now, but may use it in the future.
-                return AuthenticatedUser(
-                    access_level="fullaccess",
-                    user_role=user_role,
-                    username=username,
-                    workspace_name=user_workspace_db.workspace_name,
-                )
-            return None
         except UserNotFoundError:
+            # Do the same Argon2 work as for a real user, so response time does not
+            # reveal whether the username exists.
+            verify_dummy_password(password=password)
             return None
+
+        is_valid, new_hash = verify_password(
+            password=password, stored_hash=user_db.hashed_password
+        )
+        if not is_valid:
+            return None
+
+        # Legacy SHA-256 (or outdated Argon2) hash: replace it now that we have the
+        # plaintext. This is how existing accounts migrate to Argon2.
+        if new_hash is not None:
+            await update_user_hashed_password(
+                asession=asession, hashed_password=new_hash, user_db=user_db
+            )
+
+        user_workspace_db = await get_user_default_workspace(
+            asession=asession, user_db=user_db
+        )
+        user_role = await get_user_role_in_workspace(
+            asession=asession, user_db=user_db, workspace_db=user_workspace_db
+        )
+        assert user_role is not None and user_role in UserRoles
+
+        # Hardcode "fullaccess" now, but may use it in the future.
+        return AuthenticatedUser(
+            access_level="fullaccess",
+            user_role=user_role,
+            username=username,
+            workspace_name=user_workspace_db.workspace_name,
+        )
 
 
 async def login_with_credentials(
@@ -501,16 +531,88 @@ async def get_workspace_by_api_key_or_jwt(*, token: str) -> WorkspaceDB:
             return workspace_db
         except WorkspaceTokenNotFoundError:
             # Fall back to JWT token authentication if API key is not valid.
-            _, workspace_name = decode_access_token(token=token)
-            stmt = select(WorkspaceDB).where(
-                WorkspaceDB.workspace_name == workspace_name
+            username, workspace_name = decode_access_token(token=token)
+            return await _get_workspace_for_member(
+                asession=asession, username=username, workspace_name=workspace_name
             )
-            result = await asession.execute(stmt)
-            try:
-                workspace_db = result.scalar_one()
-                return workspace_db
-            except NoResultFound as err:
-                raise _credentials_error() from err
+
+
+async def _get_workspace_for_member(
+    *, asession: AsyncSession, username: str, workspace_name: str
+) -> WorkspaceDB:
+    """Return the token's workspace, but only while the token's user still exists and
+    still belongs to that workspace.
+
+    A JWT stays cryptographically valid until it expires, so without this check a
+    user who was deleted or removed from a workspace keeps access until expiry.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    username
+        The `username` claim from the token.
+    workspace_name
+        The `workspace_name` claim from the token.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace the user is a member of.
+
+    Raises
+    ------
+    UnauthorizedError
+        If the user or workspace no longer exists, or the user is no longer a
+        member of the workspace.
+    """
+
+    try:
+        user_db = await get_user_by_username(asession=asession, username=username)
+    except UserNotFoundError as err:
+        raise _credentials_error() from err
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_name == workspace_name)
+    workspace_db = (await asession.execute(stmt)).scalar_one_or_none()
+    if workspace_db is None:
+        raise _credentials_error()
+
+    user_role = await get_user_role_in_workspace(
+        asession=asession, user_db=user_db, workspace_db=workspace_db
+    )
+    if user_role is None:
+        raise _credentials_error()
+
+    return workspace_db
+
+
+async def get_workspace_name_for_access_token(*, token: str) -> str:
+    """Return the workspace name in a JWT after checking the user is still a member.
+
+    Parameters
+    ----------
+    token
+        The access token.
+
+    Returns
+    -------
+    str
+        The workspace name.
+
+    Raises
+    ------
+    UnauthorizedError
+        If the token is invalid, or its user is gone or no longer in the workspace.
+    """
+
+    username, workspace_name = decode_access_token(token=token)
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        workspace_db = await _get_workspace_for_member(
+            asession=asession, username=username, workspace_name=workspace_name
+        )
+    return workspace_db.workspace_name
 
 
 async def get_user_by_access_token(*, token: str) -> UserDB:

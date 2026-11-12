@@ -16,8 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
     generate_recovery_codes,
-    get_password_salted_hash,
     get_random_string,
+    hash_password,
+    hash_recovery_code,
 )
 from app.users.models import UserDB, UserWorkspaceDB
 from app.users.schemas import (
@@ -116,7 +117,10 @@ async def add_existing_user_to_workspace(
 
     return UserCreateWithCode(
         is_default_workspace=user.is_default_workspace,
-        recovery_codes=user_db.recovery_codes if user_db.recovery_codes else [],
+        # Never return an existing user's recovery codes: the caller is an admin of
+        # *another* workspace and could use them to reset this user's password.
+        # Codes are only shown once, when the account is created.
+        recovery_codes=[],
         role=user.role,
         username=user_db.username,
         workspace_name=workspace_db.workspace_name,
@@ -161,12 +165,14 @@ async def add_new_user_to_workspace(
 
     assert user.role is not None and user.role in UserRoles
 
-    # 1.
+    # 1. The plaintext codes are returned to the caller once; only hashes are stored.
     recovery_codes = generate_recovery_codes()
 
     # 2.
     user_db = await save_user_to_db(
-        asession=asession, recovery_codes=recovery_codes, user=user
+        asession=asession,
+        recovery_codes=[hash_recovery_code(code=code) for code in recovery_codes],
+        user=user,
     )
 
     # 3.
@@ -826,7 +832,7 @@ async def reset_user_password_in_db(
         The user object saved in the database after password reset.
     """
 
-    hashed_password = get_password_salted_hash(key=user.password)
+    hashed_password = hash_password(password=user.password)
     user_db = UserDB(
         hashed_password=hashed_password,
         recovery_codes=recovery_codes,
@@ -876,10 +882,10 @@ async def save_user_to_db(
         )
 
     if isinstance(user, UserCreateWithPassword):
-        hashed_password = get_password_salted_hash(key=user.password)
+        hashed_password = hash_password(password=user.password)
     else:
         random_password = get_random_string(size=PASSWORD_LENGTH)
-        hashed_password = get_password_salted_hash(key=random_password)
+        hashed_password = hash_password(password=random_password)
 
     user_db = UserDB(
         created_datetime_utc=datetime.now(timezone.utc),
@@ -893,6 +899,31 @@ async def save_user_to_db(
     await asession.refresh(user_db)
 
     return user_db
+
+
+async def update_user_hashed_password(
+    *, asession: AsyncSession, hashed_password: str, user_db: UserDB
+) -> None:
+    """Replace a user's stored password hash (used to upgrade legacy hashes on login).
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    hashed_password
+        The new hash to store.
+    user_db
+        The user whose hash is replaced.
+    """
+
+    stmt = (
+        update(UserDB)
+        .where(UserDB.user_id == user_db.user_id)
+        .values(hashed_password=hashed_password)
+    )
+    await asession.execute(stmt)
+    await asession.commit()
+    user_db.hashed_password = hashed_password
 
 
 async def update_user_default_workspace(

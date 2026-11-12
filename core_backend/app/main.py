@@ -32,8 +32,10 @@ from app.contents import router as contents_router
 from app.core.config import (
     BACKEND_ROOT_PATH,
     CROSS_ENCODER_MODEL,
+    DEBUG,
     DOMAIN,
     HTTPX_TIMEOUT,
+    METRICS_TOKEN,
     REDIS_HOST,
     USE_CROSS_ENCODER,
 )
@@ -44,6 +46,11 @@ from app.core.observability import (
     init_langfuse,
     init_sentry,
     setup_logger,
+)
+from app.core.security import (
+    SecurityHeadersMiddleware,
+    protect_metrics_app,
+    validate_security_settings,
 )
 from app.dashboard import router as dashboard_router
 from app.data_api import router as data_api_router
@@ -184,9 +191,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Application finished")
 
 
-# 1. Build the app.
+# 0. Refuse to start with a missing/weak JWT secret (raises InsecureConfigurationError).
+validate_security_settings()
+
+# 1. Build the app. `debug` stays off unless DEBUG=true: in debug mode FastAPI returns
+# full tracebacks to API clients.
 app = FastAPI(
-    debug=True,
+    debug=DEBUG,
     description=page_description,
     openapi_tags=tags_metadata,
     lifespan=lifespan,
@@ -206,17 +217,23 @@ origins = [
     f"http://{DOMAIN}:3000",
     f"https://{DOMAIN}",
 ]
+# Only the methods and request headers the admin app actually uses.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
-# 5. Add Prometheus middleware and mount the metrics app on /metrics.
+# 5. Add Prometheus middleware and mount the metrics app on /metrics. The metrics app
+# requires `Authorization: Bearer $METRICS_TOKEN` and is a 404 when the token is unset.
 app.add_middleware(PrometheusMiddleware)
-app.mount("/metrics", create_metrics_app())
+app.mount("/metrics", protect_metrics_app(create_metrics_app(), token=METRICS_TOKEN))
+
+# Added last so it is the outermost middleware and also covers CORS preflight and
+# error responses.
+app.add_middleware(SecurityHeadersMiddleware)
 
 # 6. Initialise Langfuse and Sentry if configured.
 init_langfuse()

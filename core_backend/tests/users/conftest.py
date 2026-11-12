@@ -9,7 +9,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_password_salted_hash
+from app.core.security import hash_password
 from app.users.models import UserDB, UserWorkspaceDB
 from app.users.schemas import UserRoles
 from app.workspaces.models import WorkspaceDB
@@ -63,7 +63,7 @@ def make_user(rollback_asession: AsyncSession) -> MakeUser:
         now = datetime.now(timezone.utc)
         user_db = UserDB(
             created_datetime_utc=now,
-            hashed_password=get_password_salted_hash(key=password),
+            hashed_password=hash_password(password=password),
             recovery_codes=recovery_codes,
             updated_datetime_utc=now,
             username=username or unique_name("repo_user"),

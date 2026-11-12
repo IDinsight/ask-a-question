@@ -118,11 +118,11 @@ async def get_current_workspace_name(
     Raises
     ------
     UnauthorizedError
-        If the credentials are invalid.
+        If the credentials are invalid, or the user no longer exists or no longer
+        belongs to the workspace in the token.
     """
 
-    _, workspace_name = service.decode_access_token(token=token)
-    return workspace_name
+    return await service.get_workspace_name_for_access_token(token=token)
 
 
 async def rate_limiter(

@@ -7,7 +7,7 @@ created per test and discarded on teardown (no clean-up code needed).
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import verify_password_salted_hash
+from app.core.security import verify_password
 from app.users.repository import (
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -99,9 +99,9 @@ class TestSaveAndGetUser:
         saved_user = await save_user_to_db(
             asession=rollback_asession, recovery_codes=["code"], user=user
         )
-        assert verify_password_salted_hash(
-            key=NEW_PASSWORD, stored_hash=saved_user.hashed_password
-        )
+        assert verify_password(
+            password=NEW_PASSWORD, stored_hash=saved_user.hashed_password
+        )[0]
         assert saved_user.recovery_codes == ["code"]
 
     async def test_save_user_to_db_existing_user(
@@ -543,9 +543,9 @@ class TestUpdateUser:
             user_id=user_db.user_id,
         )
         assert updated.recovery_codes == ["b"]
-        assert verify_password_salted_hash(
-            key=NEW_PASSWORD, stored_hash=updated.hashed_password
-        )
+        assert verify_password(
+            password=NEW_PASSWORD, stored_hash=updated.hashed_password
+        )[0]
 
     async def test_update_user_in_db(
         self, make_user: MakeUser, rollback_asession: AsyncSession

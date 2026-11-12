@@ -45,12 +45,26 @@ from app.core.database import (
     get_connection_url,
     get_session_context_manager,
 )
+from app.core import security as core_security
 from app.core.security import (
     create_access_token,
     get_key_hash,
-    get_password_salted_hash,
+    hash_password,
 )
 from app.main import app
+
+# Production Argon2 parameters (64 MiB, 3 passes) make every hash/verify cost tens of
+# milliseconds, which more than doubles the suite's run time. Tests swap in the
+# cheapest valid Argon2 parameters. Hashes keep the same `$argon2id$` format and the
+# same verify/upgrade code paths; only the work factor changes. This is a test-only
+# monkeypatch: there is deliberately no setting that lowers the cost in production.
+core_security.password_hash = core_security.PasswordHash(
+    (
+        core_security.Argon2Hasher(time_cost=1, memory_cost=8, parallelism=1),
+        core_security.LegacySha256Hasher(),
+    )
+)
+core_security._DUMMY_PASSWORD_HASH = core_security.password_hash.hash("dummy")
 
 # process_input / process_output were merged into the question_answer service module.
 from app.question_answer import service as process_input
@@ -1517,7 +1531,7 @@ def temp_workspace_api_key_and_api_quota(
 
     temp_user_db = UserDB(
         created_datetime_utc=datetime.now(timezone.utc),
-        hashed_password=get_password_salted_hash(key="temp_password"),
+        hashed_password=hash_password(password="temp_password"),
         updated_datetime_utc=datetime.now(timezone.utc),
         username=username,
     )
@@ -1587,7 +1601,7 @@ def temp_workspace_token_and_quota(
 
     temp_user_db = UserDB(
         created_datetime_utc=datetime.now(timezone.utc),
-        hashed_password=get_password_salted_hash(key="temp_password"),
+        hashed_password=hash_password(password="temp_password"),
         updated_datetime_utc=datetime.now(timezone.utc),
         username=username,
     )

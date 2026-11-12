@@ -279,7 +279,9 @@ def check_mark_add_response_pass(
     assert json_response["role"] == UserRoles.ADMIN
     assert json_response["username"] == "Mark"
     assert json_response["workspace_name"] == "Workspace_Amir"
-    assert json_response["recovery_codes"]
+    # Mark already exists, so Suzin must not receive Mark's recovery codes (she could
+    # use them to reset Mark's password). Codes are only shown when a user is created.
+    assert json_response["recovery_codes"] == []
 
     mark_access_token = user_workspace_responses["mark"]["access_token"]
     response = client.get(

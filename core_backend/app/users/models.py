@@ -38,7 +38,8 @@ class UserDB(Base):
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
+    # Argon2 hashes are ~97 chars (legacy SHA-256 ones were 96); leave headroom.
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     recovery_codes: Mapped[list] = mapped_column(ARRAY(String), nullable=True)
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

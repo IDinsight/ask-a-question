@@ -11,6 +11,10 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
+from app.core.observability import setup_logger
+
+_logger = setup_logger()
+
 
 class AppError(Exception):
     """Base class for errors that map to an HTTP response.
@@ -120,8 +124,40 @@ async def _app_error_handler(request: Request, exc: Exception) -> JSONResponse:
     )
 
 
+async def _unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Return a generic 500 for any exception no other handler caught.
+
+    The client never sees the exception type, message or traceback (which can carry
+    SQL, file paths or secrets). The full error is logged server-side, and Starlette
+    re-raises it after this response so Sentry still records it.
+
+    Parameters
+    ----------
+    request
+        The incoming request; only its method and path are logged.
+    exc
+        The unhandled exception.
+
+    Returns
+    -------
+    JSONResponse
+        `{"detail": "Internal server error."}` with status 500.
+    """
+
+    _logger.error(
+        "Unhandled error on %s %s",
+        request.method,
+        request.url.path,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Internal server error."},
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
-    """Attach the domain-exception handler to the FastAPI app.
+    """Attach the domain-exception and catch-all handlers to the FastAPI app.
 
     Parameters
     ----------
@@ -130,3 +166,4 @@ def register_exception_handlers(app: FastAPI) -> None:
     """
 
     app.add_exception_handler(AppError, _app_error_handler)
+    app.add_exception_handler(Exception, _unhandled_error_handler)

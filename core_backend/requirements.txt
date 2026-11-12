@@ -11,6 +11,7 @@ sqlalchemy[asyncio]==2.0.20
 PyPDF2==3.0.1
 python-multipart==0.0.33
 pyjwt[crypto]==2.8.0
+pwdlib[argon2]==0.3.1
 prometheus_client==0.19.0
 google-api-python-client==2.129.0
 google-api-python-client-stubs==1.25.0
