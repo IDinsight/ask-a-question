@@ -15,7 +15,7 @@
 #
 # Source folders are bind-mounted, so edits on the host trigger reloads in the
 # containers. Rebuild (`up --build`) only when dependencies change
-# (requirements.txt, pnpm-lock.yaml, docs-site/uv.lock).
+# (core_backend/uv.lock, pnpm-lock.yaml, docs-site/uv.lock).
 
 services:
   core_backend:

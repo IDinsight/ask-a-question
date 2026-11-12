@@ -1,11 +1,34 @@
+Dockerfile
+Dockerfile.dev
+.dockerignore
+
+# Local virtualenvs (macOS binaries, ~1.5 GB) - the image builds its own
+.venv
+venv
+
+# Python / tool caches
 __pycache__
+**/__pycache__
 *.pyc
 *.pyo
 *.egg-info
-**/.gitignore
 .mypy_cache
 .pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# Tests aren't needed at runtime (the dev stack bind-mounts them anyway)
+tests
+
+# Editor / agent / tooling folders
 .vscode
+.claude
+.codegraph
+.impeccable
+**/.gitignore
 
 # Local secrets must never be baked into the image
 .env
+.env.*
+!.env.example
