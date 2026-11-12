@@ -10,8 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Ask A Question",
-  description:
-    "Trustworthy answers for communities. Actionable insights for you.",
+  description: "Trustworthy answers for communities. Actionable insights for you.",
 };
 
 export default function RootLayout({

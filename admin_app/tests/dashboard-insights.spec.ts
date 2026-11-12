@@ -80,7 +80,7 @@ test.describe("content performance", () => {
     await expect(firstTitle).toHaveText("Card 1");
     await expect(page.getByText(/Ordered by upvotes, lowest first/)).toBeVisible();
 
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await expect(page.getByText("Page 2 of 2")).toBeVisible();
 
     // Search resets to page 1

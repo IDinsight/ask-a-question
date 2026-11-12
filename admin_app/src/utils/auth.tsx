@@ -1,7 +1,8 @@
 "use client";
-import { getLoginWorkspace } from "@/app/(protected)/workspace-management/api";
-import type { UserRole } from "@/app/(protected)/workspace-management/types";
+import { getLoginWorkspace } from "@/components/features/workspace-management/api";
+import type { UserRole } from "@/components/features/workspace-management/types";
 import { apiCalls, CustomError } from "@/utils/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
 
@@ -73,12 +74,16 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const searchParams = useSearchParams();
   const router = useRouter();
+  // Cached server data belongs to one user + workspace. Drop it whenever that
+  // identity changes, so a new workspace never shows the previous one's data.
+  const queryClient = useQueryClient();
   const setLoginParams = (
     token: string,
     accessLevel: string,
     user_role: UserRole,
     workspaceName: string,
   ) => {
+    queryClient.clear();
     localStorage.setItem("token", token);
     localStorage.setItem("accessLevel", accessLevel);
     localStorage.setItem("workspaceName", workspaceName);
@@ -160,6 +165,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       });
   };
   const logout = () => {
+    queryClient.clear();
     localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("userRole");
@@ -173,6 +179,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logoutWorkspace = () => {
+    queryClient.clear();
     localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("userRole");

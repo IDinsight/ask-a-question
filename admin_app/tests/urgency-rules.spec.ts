@@ -170,14 +170,14 @@ test.describe("urgency rules page", () => {
     await question.fill("There is bleeding");
     await question.press("Enter");
     await expect(page.getByText("Urgent", { exact: true })).toBeVisible();
-    await expect(page.getByText("Matched Rule", { exact: true })).toBeVisible();
+    await expect(page.getByText("Matched rule", { exact: true })).toBeVisible();
 
     await question.fill("All good");
     await question.press("Enter");
     await expect(page.getByText("Not urgent")).toBeVisible();
 
     // Raw response dialog
-    await page.getByRole("button", { name: "<json>" }).click();
+    await page.getByRole("button", { name: "View raw response" }).click();
     await expect(page.getByRole("dialog")).toContainText('"is_urgent": false');
 
     await page.screenshot({

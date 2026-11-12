@@ -1,8 +1,8 @@
 import React from "react";
 
 import { Toaster } from "@/components/ui/toast";
-import { AppShell } from "./_components/AppShell";
-import { ProtectedComponent } from "./_components/ProtectedComponent";
+import { AppShell } from "@/components/common/AppShell";
+import { ProtectedComponent } from "@/components/common/ProtectedComponent";
 
 /**
  * Layout for every signed-in page (content, dashboard, integrations, urgency
