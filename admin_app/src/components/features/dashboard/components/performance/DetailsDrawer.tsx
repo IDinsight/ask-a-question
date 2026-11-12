@@ -46,7 +46,11 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 /** Sent / upvotes / downvotes over the period for one content card. */
-const ContentLineChart = ({ rows }: { rows: DrawerData["line_chart_data"] }) => (
+const ContentLineChart = ({
+  rows,
+}: {
+  rows: DrawerData["line_chart_data"];
+}) => (
   <ChartContainer config={chartConfig} className="aspect-auto h-60 w-full">
     <LineChart data={rows} margin={{ left: -16, right: 8, top: 8 }}>
       <CartesianGrid vertical={false} />
@@ -96,7 +100,9 @@ const ContentLineChart = ({ rows }: { rows: DrawerData["line_chart_data"] }) => 
 const Stat = ({ title, value }: { title: string; value: number }) => (
   <div className="flex flex-col gap-0.5 border bg-background p-3">
     <span className="text-xs text-muted-foreground">{title}</span>
-    <span className="text-lg font-semibold tabular-nums">{value.toLocaleString()}</span>
+    <span className="text-lg font-semibold tabular-nums">
+      {value.toLocaleString()}
+    </span>
   </div>
 );
 
@@ -115,8 +121,12 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({
         className="w-full gap-6 overflow-y-auto p-6 text-sm data-[side=right]:sm:max-w-2xl"
       >
         <SheetHeader className="p-0 pr-8">
-          <SheetTitle className="text-lg font-semibold">{data.title}</SheetTitle>
-          <SheetDescription>Performance for the selected time range.</SheetDescription>
+          <SheetTitle className="text-lg font-semibold">
+            {data.title}
+          </SheetTitle>
+          <SheetDescription>
+            Performance for the selected time range.
+          </SheetDescription>
         </SheetHeader>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -130,13 +140,22 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({
           <ContentLineChart rows={data.line_chart_data} />
         </div>
 
-        <section aria-labelledby="feedback-heading" className="flex flex-col gap-4">
-          <h3 id="feedback-heading" className="text-base font-semibold tracking-tight">
+        <section
+          aria-labelledby="feedback-heading"
+          className="flex flex-col gap-4"
+        >
+          <h3
+            id="feedback-heading"
+            className="text-base font-semibold tracking-tight"
+          >
             Feedback by users
           </h3>
           <div className="flex flex-col gap-2 border bg-muted/50 p-4">
             <span className="flex items-center gap-2 font-semibold">
-              <IconSparkles className="size-4 text-chart-1" aria-hidden="true" />
+              <IconSparkles
+                className="size-4 text-chart-1"
+                aria-hidden="true"
+              />
               AI overview
             </span>
             {aiSummary === null ? (

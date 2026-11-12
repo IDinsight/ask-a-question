@@ -18,8 +18,13 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import service
-from app.auth.schemas import AuthenticatedUser
-from app.core.config import JWT_ALGORITHM, JWT_SECRET, REDIS_KEY_EXPIRED
+from app.auth.schemas import AuthenticatedUser, AuthenticationDetails
+from app.core.config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    JWT_ALGORITHM,
+    JWT_SECRET,
+    REDIS_KEY_EXPIRED,
+)
 from app.core.exceptions import (
     BadRequestError,
     TooManyRequestsError,
@@ -36,6 +41,7 @@ from app.users.models import UserDB
 from app.users.repository import UserNotFoundError
 from app.users.schemas import UserRoles
 from app.workspaces.models import WorkspaceDB
+from tests.conftest import FakeRedis
 
 PASSWORD = "auth_service_password"  # pragma: allowlist secret
 GMAIL = "someone@gmail.com"
@@ -213,11 +219,18 @@ _VALID_CLAIMS: dict[str, Any] = {
 class TestDecodeAccessToken:
     """Tests for `decode_access_token` and `build_authentication_details`."""
 
-    def test_round_trip(self) -> None:
-        """Test that a token issued by the service decodes to its claims."""
+    async def test_round_trip(self, fake_redis: FakeRedis) -> None:
+        """Test that a token issued by the service decodes to its claims.
 
-        details = service.build_authentication_details(
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        """
+
+        details = await service.build_authentication_details(
             access_level="fullaccess",
+            redis=fake_redis,  # type: ignore[arg-type]
             user_role=UserRoles.ADMIN,
             username="user",
             workspace_name="ws",
@@ -263,7 +276,8 @@ class TestDecodeAccessToken:
                 algorithm=JWT_ALGORITHM,
             ),
             # Unsigned (`alg: none`) token.
-            jwt.encode(_VALID_CLAIMS, None, algorithm="none"),
+            # PyJWT ignores the key for `none`; "" just satisfies its type hints.
+            jwt.encode(_VALID_CLAIMS, "", algorithm="none"),
             # Signed with an algorithm outside the pinned list.
             jwt.encode(_VALID_CLAIMS, JWT_SECRET, algorithm="HS512"),
             # Claims of the wrong type.
@@ -356,7 +370,7 @@ class TestCredentialsLogin:
 
     @pytest.mark.parametrize("authenticated", [False, True])
     async def test_login_with_credentials(
-        self, authenticated: bool, patch_service: PatchService
+        self, authenticated: bool, fake_redis: FakeRedis, patch_service: PatchService
     ) -> None:
         """Test that failed authentication is a 401 and success issues a token.
 
@@ -364,6 +378,8 @@ class TestCredentialsLogin:
         ----------
         authenticated
             Whether `authenticate_credentials` succeeds.
+        fake_redis
+            In-memory Redis stand-in.
         patch_service
             Fixture that patches service dependencies.
         """
@@ -375,7 +391,11 @@ class TestCredentialsLogin:
             workspace_name="ws",
         )
         patch_service(authenticate_credentials=user if authenticated else None)
-        call = service.login_with_credentials(password=PASSWORD, username="user")
+        call = service.login_with_credentials(
+            password=PASSWORD,
+            redis=fake_redis,  # type: ignore[arg-type]
+            username="user",
+        )
         if authenticated:
             details = await call
             assert details.username == "user"
@@ -420,6 +440,7 @@ class TestPasswordHashUpgrade:
         assert result is not None
         upgrade = mocks["update_user_hashed_password"]
         upgrade.assert_awaited_once()
+        assert upgrade.await_args is not None
         new_hash = upgrade.await_args.kwargs["hashed_password"]
         assert new_hash.startswith("$argon2id$")
         assert verify_password(password=PASSWORD, stored_hash=new_hash) == (
@@ -528,12 +549,17 @@ class TestGoogleLogin:
                 service.verify_google_token(credential="tok")
 
     async def test_login_with_google(
-        self, monkeypatch: pytest.MonkeyPatch, patch_service: PatchService
+        self,
+        fake_redis: FakeRedis,
+        monkeypatch: pytest.MonkeyPatch,
+        patch_service: PatchService,
     ) -> None:
         """Test that the verified email is used to authenticate and a token issued.
 
         Parameters
         ----------
+        fake_redis
+            In-memory Redis stand-in.
         monkeypatch
             Pytest monkeypatch fixture.
         patch_service
@@ -553,7 +579,10 @@ class TestGoogleLogin:
             service, "verify_google_token", lambda **_: {"email": GMAIL}
         )
 
-        details = await service.login_with_google(credential="tok", redis=AsyncMock())
+        details = await service.login_with_google(
+            credential="tok",
+            redis=fake_redis,  # type: ignore[arg-type]
+        )
 
         assert details.username == GMAIL
         assert mocks["authenticate_or_create_google_user"].await_args is not None
@@ -918,4 +947,290 @@ class TestConsumeApiQuota:
         with pytest.raises(TooManyRequestsError):
             await service.consume_api_quota(
                 redis=redis, workspace_db=make_workspace_db()
+            )
+
+
+class TestRefreshTokens:
+    """Tests for refresh token issue, rotation, reuse detection and revocation.
+
+    Redis is `FakeRedis`; the workspace membership lookup (`_get_membership`) is
+    mocked, so no database is needed.
+    """
+
+    @pytest.fixture
+    def member(self, fake_session: MagicMock, patch_service: PatchService) -> AsyncMock:
+        """Make the token's user a READ_ONLY member of its workspace.
+
+        Parameters
+        ----------
+        fake_session
+            Mock session used by the service.
+        patch_service
+            Fixture that patches service dependencies.
+
+        Returns
+        -------
+        AsyncMock
+            The `_get_membership` mock, to change the role or raise.
+        """
+
+        return patch_service(
+            _get_membership=(make_workspace_db(), UserRoles.READ_ONLY)
+        )["_get_membership"]
+
+    @staticmethod
+    async def login(redis: FakeRedis) -> AuthenticationDetails:
+        """Issue a token pair the way login does.
+
+        Parameters
+        ----------
+        redis
+            In-memory Redis stand-in.
+
+        Returns
+        -------
+        AuthenticationDetails
+            The issued tokens.
+        """
+
+        return await service.build_authentication_details(
+            access_level="fullaccess",
+            redis=redis,  # type: ignore[arg-type]
+            user_role=UserRoles.ADMIN,
+            username="user",
+            workspace_name="ws",
+        )
+
+    @staticmethod
+    def claims(token: str) -> dict[str, Any]:
+        """Decode a token issued by the service.
+
+        Parameters
+        ----------
+        token
+            The JWT.
+
+        Returns
+        -------
+        dict[str, Any]
+            The verified claims.
+        """
+
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+
+    async def test_login_issues_registered_refresh_token(
+        self, fake_redis: FakeRedis
+    ) -> None:
+        """Test that a login returns a refresh token that Redis knows about.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        """
+
+        details = await self.login(fake_redis)
+        claims = self.claims(details.refresh_token)
+
+        assert claims["type"] == "refresh_token"
+        assert claims["workspace_name"] == "ws"
+        assert details.expires_in == ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        assert await fake_redis.exists(f"refresh-token:{claims['jti']}")
+        assert await fake_redis.exists(f"refresh-family:{claims['fam']}")
+        assert await fake_redis.smembers("refresh-user:user") == {
+            claims["fam"].encode()
+        }
+
+    async def test_refresh_rotates_token(
+        self, fake_redis: FakeRedis, member: AsyncMock
+    ) -> None:
+        """Test that a refresh returns a new pair in the same family, consumes the
+        old token, and re-reads the user's role.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        member
+            The `_get_membership` mock (role READ_ONLY).
+        """
+
+        first = await self.login(fake_redis)
+        second = await service.refresh_access_token(
+            redis=fake_redis,  # type: ignore[arg-type]
+            refresh_token=first.refresh_token,
+        )
+
+        old, new = self.claims(first.refresh_token), self.claims(second.refresh_token)
+        assert new["fam"] == old["fam"]
+        assert new["jti"] != old["jti"]
+        assert not await fake_redis.exists(f"refresh-token:{old['jti']}")
+        assert await fake_redis.exists(f"refresh-token:{new['jti']}")
+        # Logged in as ADMIN, demoted since: the new access token has the new role.
+        assert second.user_role == UserRoles.READ_ONLY
+        assert self.claims(second.access_token)["user_role"] == UserRoles.READ_ONLY
+        member.assert_awaited_once()
+
+    async def test_reuse_revokes_family(
+        self, fake_redis: FakeRedis, member: AsyncMock
+    ) -> None:
+        """Test that replaying a used refresh token fails and also kills the token
+        that replaced it.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        member
+            The `_get_membership` mock.
+        """
+
+        first = await self.login(fake_redis)
+        second = await service.refresh_access_token(
+            redis=fake_redis,  # type: ignore[arg-type]
+            refresh_token=first.refresh_token,
+        )
+
+        with pytest.raises(UnauthorizedError):
+            await service.refresh_access_token(
+                redis=fake_redis,  # type: ignore[arg-type]
+                refresh_token=first.refresh_token,
+            )
+        with pytest.raises(UnauthorizedError):
+            await service.refresh_access_token(
+                redis=fake_redis,  # type: ignore[arg-type]
+                refresh_token=second.refresh_token,
+            )
+
+    async def test_logout_revokes_family(
+        self, fake_redis: FakeRedis, member: AsyncMock
+    ) -> None:
+        """Test that a refresh token stops working after logout.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        member
+            The `_get_membership` mock.
+        """
+
+        details = await self.login(fake_redis)
+        await service.logout(
+            redis=fake_redis,  # type: ignore[arg-type]
+            refresh_token=details.refresh_token,
+        )
+
+        assert await fake_redis.smembers("refresh-user:user") == set()
+        with pytest.raises(UnauthorizedError):
+            await service.refresh_access_token(
+                redis=fake_redis,  # type: ignore[arg-type]
+                refresh_token=details.refresh_token,
+            )
+
+    async def test_logout_ignores_invalid_token(self, fake_redis: FakeRedis) -> None:
+        """Test that logging out with a junk token is a silent no-op.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        """
+
+        await service.logout(
+            redis=fake_redis,  # type: ignore[arg-type]
+            refresh_token="not-a-jwt",
+        )
+        assert not fake_redis.data
+
+    async def test_revoke_all_refresh_tokens(
+        self, fake_redis: FakeRedis, member: AsyncMock
+    ) -> None:
+        """Test that revoking a user's tokens ends every one of their sessions.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        member
+            The `_get_membership` mock.
+        """
+
+        sessions = [await self.login(fake_redis) for _ in range(2)]
+        await service.revoke_all_refresh_tokens(
+            redis=fake_redis,  # type: ignore[arg-type]
+            username="user",
+        )
+
+        for details in sessions:
+            with pytest.raises(UnauthorizedError):
+                await service.refresh_access_token(
+                    redis=fake_redis,  # type: ignore[arg-type]
+                    refresh_token=details.refresh_token,
+                )
+
+    async def test_non_member_cannot_refresh(
+        self, fake_redis: FakeRedis, member: AsyncMock
+    ) -> None:
+        """Test that a user removed from the workspace cannot refresh.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        member
+            The `_get_membership` mock.
+        """
+
+        details = await self.login(fake_redis)
+        member.side_effect = UnauthorizedError("gone")
+
+        with pytest.raises(UnauthorizedError):
+            await service.refresh_access_token(
+                redis=fake_redis,  # type: ignore[arg-type]
+                refresh_token=details.refresh_token,
+            )
+
+    async def test_token_types_are_not_interchangeable(
+        self, fake_redis: FakeRedis
+    ) -> None:
+        """Test that an access token cannot refresh and a refresh token cannot
+        authenticate requests.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        """
+
+        details = await self.login(fake_redis)
+
+        with pytest.raises(UnauthorizedError):
+            await service.refresh_access_token(
+                redis=fake_redis,  # type: ignore[arg-type]
+                refresh_token=details.access_token,
+            )
+        with pytest.raises(UnauthorizedError):
+            service.decode_access_token(token=details.refresh_token)
+
+    async def test_refresh_token_without_ids_is_rejected(
+        self, fake_redis: FakeRedis
+    ) -> None:
+        """Test that a correctly signed refresh token missing `jti`/`fam` fails.
+
+        Parameters
+        ----------
+        fake_redis
+            In-memory Redis stand-in.
+        """
+
+        token = jwt.encode(
+            {**_VALID_CLAIMS, "type": "refresh_token"},
+            JWT_SECRET,
+            algorithm=JWT_ALGORITHM,
+        )
+        with pytest.raises(UnauthorizedError):
+            await service.refresh_access_token(
+                redis=fake_redis,  # type: ignore[arg-type]
+                refresh_token=token,
             )

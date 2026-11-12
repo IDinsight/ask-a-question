@@ -19,7 +19,13 @@ type Row = Record<string, unknown>;
 
 const DataContext = createContext<Row[]>([]);
 
-const Chart = ({ data = [], children }: { data?: Row[]; children?: React.ReactNode }) => (
+const Chart = ({
+  data = [],
+  children,
+}: {
+  data?: Row[];
+  children?: React.ReactNode;
+}) => (
   <DataContext.Provider value={data}>
     <div data-testid="chart">{children}</div>
   </DataContext.Provider>
@@ -28,9 +34,11 @@ const Chart = ({ data = [], children }: { data?: Row[]; children?: React.ReactNo
 export const BarChart = Chart;
 export const LineChart = Chart;
 
-export const ResponsiveContainer = ({ children }: { children?: React.ReactNode }) => (
-  <>{children}</>
-);
+export const ResponsiveContainer = ({
+  children,
+}: {
+  children?: React.ReactNode;
+}) => <>{children}</>;
 
 export const CartesianGrid = () => null;
 
@@ -46,7 +54,9 @@ export const XAxis = ({
     <ul aria-label="x-axis">
       {data.map((row, i) => (
         <li key={i}>
-          {tickFormatter ? tickFormatter(row[dataKey], i) : String(row[dataKey])}
+          {tickFormatter
+            ? tickFormatter(row[dataKey], i)
+            : String(row[dataKey])}
         </li>
       ))}
     </ul>
@@ -60,7 +70,12 @@ export const YAxis = ({ domain }: { domain?: unknown }) => (
 export const Tooltip = ({ content }: { content?: React.ReactElement }) => {
   const data = useContext(DataContext);
   if (!content) return null;
-  const item = (payload: Row) => ({ dataKey: "value", name: "value", value: 1, payload });
+  const item = (payload: Row) => ({
+    dataKey: "value",
+    name: "value",
+    value: 1,
+    payload,
+  });
   return (
     <>
       {data.length > 0 && (

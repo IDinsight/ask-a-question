@@ -22,7 +22,9 @@ const task = (overrides: Partial<DocIndexingTask> = {}): DocIndexingTask => ({
   ...overrides,
 });
 
-const row = (overrides: Partial<DocIndexingStatusRow> = {}): DocIndexingStatusRow => ({
+const row = (
+  overrides: Partial<DocIndexingStatusRow> = {},
+): DocIndexingStatusRow => ({
   fileName: "guide.pdf",
   status: "Done",
   docsIndexed: "1 of 1",
@@ -64,7 +66,9 @@ describe("IndexingStatusModal", () => {
 
   it("shows the error above the table", () => {
     renderModal({ error: "Could not load status" });
-    expect(screen.getByRole("alert")).toHaveTextContent("Could not load status");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Could not load status",
+    );
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
 
@@ -89,7 +93,9 @@ describe("IndexingStatusModal", () => {
     expect(cells[6]).toHaveTextContent("parse failed");
     expect(cells[6]).toHaveClass("text-destructive");
     // Single-task rows have no expand toggle.
-    expect(screen.queryByRole("button", { name: "Show files" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show files" }),
+    ).not.toBeInTheDocument();
   });
 
   it("handles an upload with no tasks", () => {
@@ -106,8 +112,16 @@ describe("IndexingStatusModal", () => {
           docsIndexed: "1 of 3",
           tasks: [
             task({ doc_name: "a.pdf", task_status: "Success" }),
-            task({ doc_name: "b.pdf", task_status: "In progress", finished_datetime_utc: "" }),
-            task({ doc_name: "c.pdf", task_status: "Failed", error_trace: "bad pdf" }),
+            task({
+              doc_name: "b.pdf",
+              task_status: "In progress",
+              finished_datetime_utc: "",
+            }),
+            task({
+              doc_name: "c.pdf",
+              task_status: "Failed",
+              error_trace: "bad pdf",
+            }),
           ],
         }),
       ],
@@ -120,9 +134,13 @@ describe("IndexingStatusModal", () => {
     expect(screen.getByText("Success")).toHaveClass("text-green-700");
     expect(screen.getByText("In progress")).toHaveClass("text-amber-700");
     const failedRow = screen.getByText("c.pdf").closest("tr")!;
-    expect(within(failedRow).getByText("bad pdf")).toHaveClass("text-destructive");
+    expect(within(failedRow).getByText("bad pdf")).toHaveClass(
+      "text-destructive",
+    );
     // The in-progress task has no finish time.
-    expect(within(screen.getByText("b.pdf").closest("tr")!).getByText("—")).toBeInTheDocument();
+    expect(
+      within(screen.getByText("b.pdf").closest("tr")!).getByText("—"),
+    ).toBeInTheDocument();
 
     // Clicking the row itself toggles too.
     await user.click(screen.getByText("bundle.zip"));

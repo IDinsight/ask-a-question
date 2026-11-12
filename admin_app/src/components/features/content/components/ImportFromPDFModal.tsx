@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   IconAlertCircle,
@@ -19,11 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
-
-interface CustomError {
-  type: string;
-  description: string;
-}
 
 interface ImportFromPDFModalProps {
   open: boolean;
@@ -46,14 +41,18 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   const [importErrorMessages, setImportErrorMessages] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
 
-  useEffect(() => {
+  // Reset the form when the dialog closes. Adjusting state during render
+  // (instead of in an effect) avoids an extra render pass with stale values.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (!open) {
       setFiles([]);
       setError("");
       setImportErrorMessages([]);
       setImportSuccess(false);
     }
-  }, [open]);
+  }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError("");
@@ -113,8 +112,8 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
             Generate new content from PDF
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Generate new contents from PDF files into AAQ. The system will automatically
-            create cards from the file content.
+            Generate new contents from PDF files into AAQ. The system will
+            automatically create cards from the file content.
           </DialogDescription>
         </DialogHeader>
 

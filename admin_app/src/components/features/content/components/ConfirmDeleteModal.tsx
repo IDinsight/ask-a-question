@@ -51,7 +51,8 @@ export const ConfirmDeleteModal: React.FC<{
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
           <AlertDialogDescription>
             You are about to permanently delete{" "}
-            <strong className="text-foreground">{selectedContentsCount}</strong> content
+            <strong className="text-foreground">{selectedContentsCount}</strong>{" "}
+            content
             {selectedContentsCount === 1 ? "" : "s"}.
           </AlertDialogDescription>
         </AlertDialogHeader>

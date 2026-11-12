@@ -13,7 +13,9 @@ describe("AdminAlertModal", () => {
     const onContinue = vi.fn();
     render(<AdminAlertModal open onContinue={onContinue} onClose={vi.fn()} />);
 
-    expect(screen.getByRole("dialog", { name: "Initial setup" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Initial setup" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(onContinue).toHaveBeenCalledOnce();
@@ -31,7 +33,9 @@ describe("AdminAlertModal", () => {
 });
 
 describe("RegisterModal", () => {
-  const setup = (registerUser = vi.fn().mockResolvedValue({ recovery_codes: [] })) => {
+  const setup = (
+    registerUser = vi.fn().mockResolvedValue({ recovery_codes: [] }),
+  ) => {
     const user = userEvent.setup();
     const onContinue = vi.fn();
     const onClose = vi.fn();
@@ -49,7 +53,8 @@ describe("RegisterModal", () => {
       password: screen.getByLabelText("Password"),
       confirm: screen.getByLabelText("Confirm password"),
     };
-    const submit = () => user.click(screen.getByRole("button", { name: "Register" }));
+    const submit = () =>
+      user.click(screen.getByRole("button", { name: "Register" }));
     return { user, registerUser, onContinue, onClose, fields, submit };
   };
 
@@ -58,9 +63,13 @@ describe("RegisterModal", () => {
 
     await submit();
 
-    expect(await screen.findByText("Username is required.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Username is required."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Password is required.")).toBeInTheDocument();
-    expect(screen.getByText("Please confirm the password.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Please confirm the password."),
+    ).toBeInTheDocument();
     expect(registerUser).not.toHaveBeenCalled();
   });
 
@@ -72,13 +81,17 @@ describe("RegisterModal", () => {
     await user.type(fields.confirm, "pass-two");
     await submit();
 
-    expect(await screen.findByText("Passwords do not match.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Passwords do not match."),
+    ).toBeInTheDocument();
     expect(fields.confirm).toHaveAttribute("aria-invalid", "true");
     expect(registerUser).not.toHaveBeenCalled();
   });
 
   it("registers with a trimmed username and hands back the recovery codes", async () => {
-    const registerUser = vi.fn().mockResolvedValue({ recovery_codes: ["code-1", "code-2"] });
+    const registerUser = vi
+      .fn()
+      .mockResolvedValue({ recovery_codes: ["code-1", "code-2"] });
     const { user, fields, submit, onContinue } = setup(registerUser);
 
     await user.type(fields.username, "  admin  ");
@@ -113,7 +126,9 @@ describe("RegisterModal", () => {
     await user.type(fields.confirm, "test-pass");
     await submit();
 
-    expect(await screen.findByText("Username already taken.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Username already taken."),
+    ).toBeInTheDocument();
     expect(onContinue).not.toHaveBeenCalled();
   });
 
@@ -126,7 +141,9 @@ describe("RegisterModal", () => {
     await user.type(fields.confirm, "test-pass");
     await submit();
 
-    expect(await screen.findByText("Error processing request.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Error processing request."),
+    ).toBeInTheDocument();
   });
 
   it("disables Register while the request is in flight", async () => {
@@ -157,7 +174,9 @@ describe("RegisterModal", () => {
 
     expect(fields.password).toHaveAttribute("type", "text");
     expect(fields.confirm).toHaveAttribute("type", "text");
-    expect(screen.getAllByRole("button", { name: "Hide passwords" })).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: "Hide passwords" }),
+    ).toHaveLength(2);
   });
 
   it("calls onClose on Escape", async () => {

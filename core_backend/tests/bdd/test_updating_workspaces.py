@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -41,7 +41,7 @@ def reset_databases(
 )
 def poornima_update_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Poornima updates the name and quotas for workspace Amir.
 
     Parameters
@@ -53,7 +53,7 @@ def poornima_update_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from the update workspace request.
     """
 
@@ -76,7 +76,7 @@ def poornima_update_workspace(
 
 @then("The name for workspace Amir should be updated but not the quotas")
 def check_poornima_update_response(
-    poornima_update_workspace_response: httpx.Response,
+    poornima_update_workspace_response: httpx2.Response,
 ) -> None:
     """Check that the name for workspace Amir should be updated to workspace
     Amir_Updated but the quotas are not updated.
@@ -100,7 +100,7 @@ def check_poornima_update_response(
 )
 def zia_update_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Zia updates the name and quotas for workspace Carlos.
 
     Parameters
@@ -112,7 +112,7 @@ def zia_update_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from the update workspace request.
     """
 
@@ -133,7 +133,7 @@ def zia_update_workspace(
 
 
 @then("Zia should get an error")
-def check_zia_update_response(zia_update_workspace_response: httpx.Response) -> None:
+def check_zia_update_response(zia_update_workspace_response: httpx2.Response) -> None:
     """Check that Zia should get an error.
 
     Parameters

@@ -68,14 +68,20 @@ describe("CardsUtilityStrip", () => {
 
     it("disables a test launcher while its sidebar is open", () => {
       renderStrip({ openSearchSidebar: true, openChatSidebar: true });
-      expect(screen.getByRole("button", { name: "Test search" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Test search" }),
+      ).toBeDisabled();
       expect(screen.getByRole("button", { name: "Test chat" })).toBeDisabled();
     });
 
     it("hides Validate cards and PDF status by default", () => {
       renderStrip({ unvalidatedCardsCount: undefined });
-      expect(screen.queryByRole("button", { name: /Validate cards/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /PDF/ })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Validate cards/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /PDF/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("shows Validate cards with the pending count", async () => {
@@ -91,21 +97,27 @@ describe("CardsUtilityStrip", () => {
       const user = userEvent.setup();
       const props = renderStrip({ indexingStatus: true });
       const button = screen.getByRole("button", { name: /Processing PDF/ });
-      expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("status", { name: "Loading" }),
+      ).toBeInTheDocument();
       await user.click(button);
       expect(props.onIndexingStatusClick).toHaveBeenCalled();
     });
 
     it("shows the PDF status button when idle", () => {
       renderStrip({ indexingStatus: false });
-      expect(screen.getByRole("button", { name: "PDF upload status" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "PDF upload status" }),
+      ).toBeInTheDocument();
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
     it("downloads all contents", async () => {
       const user = userEvent.setup();
       const props = renderStrip();
-      await user.click(screen.getByRole("button", { name: "Download all contents" }));
+      await user.click(
+        screen.getByRole("button", { name: "Download all contents" }),
+      );
       expect(props.onDownloadClick).toHaveBeenCalled();
     });
 
@@ -117,12 +129,22 @@ describe("CardsUtilityStrip", () => {
         "/content/edit",
       );
 
-      await user.click(screen.getByRole("button", { name: "Import or generate cards" }));
-      await user.click(await screen.findByRole("menuitem", { name: "Import cards from CSV" }));
+      await user.click(
+        screen.getByRole("button", { name: "Import or generate cards" }),
+      );
+      await user.click(
+        await screen.findByRole("menuitem", { name: "Import cards from CSV" }),
+      );
       expect(props.onImportCSVClick).toHaveBeenCalled();
 
-      await user.click(screen.getByRole("button", { name: "Import or generate cards" }));
-      await user.click(await screen.findByRole("menuitem", { name: "Generate cards from PDF" }));
+      await user.click(
+        screen.getByRole("button", { name: "Import or generate cards" }),
+      );
+      await user.click(
+        await screen.findByRole("menuitem", {
+          name: "Generate cards from PDF",
+        }),
+      );
       expect(props.onImportPDFClick).toHaveBeenCalled();
     });
 
@@ -131,8 +153,12 @@ describe("CardsUtilityStrip", () => {
       const newButton = screen.getByRole("button", { name: "New" });
       expect(newButton).toBeDisabled();
       expect(newButton).not.toHaveAttribute("href");
-      expect(screen.getByRole("button", { name: "Import or generate cards" })).toBeDisabled();
-      expect(screen.getByRole("button", { name: "Download all contents" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Import or generate cards" }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Download all contents" }),
+      ).toBeDisabled();
     });
   });
 
@@ -140,7 +166,9 @@ describe("CardsUtilityStrip", () => {
     it("shows the selection count and replaces the page actions", () => {
       renderStrip({ selectedContents: [1] });
       expect(screen.getByText("1 selected")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Test search" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Test search" }),
+      ).not.toBeInTheDocument();
     });
 
     it("selects all shown cards, deselects all, and deletes", async () => {
@@ -169,7 +197,10 @@ describe("CardsUtilityStrip", () => {
     it("passes search input to the parent", async () => {
       const user = userEvent.setup();
       const props = renderStrip();
-      await user.type(screen.getByRole("searchbox", { name: "Search content" }), "x");
+      await user.type(
+        screen.getByRole("searchbox", { name: "Search content" }),
+        "x",
+      );
       expect(props.setSearchTerm).toHaveBeenCalledWith("x");
     });
 
@@ -177,10 +208,9 @@ describe("CardsUtilityStrip", () => {
       renderStrip({ filterTags: [tags[0], tags[1], tags[2]] });
       expect(screen.getByText("health")).toBeInTheDocument();
       expect(screen.getByText("+2")).toBeInTheDocument();
-      expect(screen.getByRole("combobox", { name: "Filter by tag" })).toHaveAttribute(
-        "placeholder",
-        "",
-      );
+      expect(
+        screen.getByRole("combobox", { name: "Filter by tag" }),
+      ).toHaveAttribute("placeholder", "");
     });
 
     it("adds a tag picked from the list", async () => {
@@ -190,7 +220,9 @@ describe("CardsUtilityStrip", () => {
       expect(input).toHaveAttribute("placeholder", "Filter by tag");
 
       await user.click(input);
-      await user.click(await screen.findByRole("option", { name: "nutrition" }));
+      await user.click(
+        await screen.findByRole("option", { name: "nutrition" }),
+      );
 
       expect(props.setFilterTags).toHaveBeenCalledWith([tags[1]]);
     });
@@ -198,7 +230,10 @@ describe("CardsUtilityStrip", () => {
     it("says when no tag matches the typed text", async () => {
       const user = userEvent.setup();
       renderStrip();
-      await user.type(screen.getByRole("combobox", { name: "Filter by tag" }), "zzz");
+      await user.type(
+        screen.getByRole("combobox", { name: "Filter by tag" }),
+        "zzz",
+      );
       expect(await screen.findByText("No tags found")).toBeInTheDocument();
     });
   });

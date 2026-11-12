@@ -68,7 +68,9 @@ export const toApiError = (
 ): CustomError | Error => {
   if (!response) {
     // No response at all: offline, DNS, CORS, aborted...
-    return body instanceof Error ? body : new Error("Could not reach the server");
+    return body instanceof Error
+      ? body
+      : new Error("Could not reach the server");
   }
   const detail = extractErrorDetail(body);
   if (response.status >= 500) {

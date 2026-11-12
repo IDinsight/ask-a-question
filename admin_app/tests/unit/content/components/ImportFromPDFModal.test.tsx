@@ -1,16 +1,27 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import { ImportFromPDFModal } from "@/components/features/content/components/ImportFromPDFModal";
 
-const pdf = () => new File(["%PDF-1.4"], "guide.pdf", { type: "application/pdf" });
+const pdf = () =>
+  new File(["%PDF-1.4"], "guide.pdf", { type: "application/pdf" });
 
 // react-dropzone reads drops from dataTransfer; this is the shape it expects.
 const dropData = (files: File[]) => ({
   dataTransfer: {
     files,
-    items: files.map((f) => ({ kind: "file", type: f.type, getAsFile: () => f })),
+    items: files.map((f) => ({
+      kind: "file",
+      type: f.type,
+      getAsFile: () => f,
+    })),
     types: ["Files"],
   },
 });
@@ -55,7 +66,10 @@ describe("ImportFromPDFModal", () => {
 
   it("rejects non-PDF files", async () => {
     const { user, input } = setup();
-    await user.upload(input, new File(["hi"], "notes.txt", { type: "text/plain" }));
+    await user.upload(
+      input,
+      new File(["hi"], "notes.txt", { type: "text/plain" }),
+    );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Only PDF files are allowed.",
     );
@@ -75,15 +89,22 @@ describe("ImportFromPDFModal", () => {
   it("shows the dropzone's own message for other rejections", async () => {
     const { dropZone } = setup();
     // Dropping two files breaks the single-file rule ("too-many-files").
-    const two = [pdf(), new File(["%PDF"], "b.pdf", { type: "application/pdf" })];
+    const two = [
+      pdf(),
+      new File(["%PDF"], "b.pdf", { type: "application/pdf" }),
+    ];
     fireEvent.drop(dropZone, dropData(two));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Too many files");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Too many files",
+    );
   });
 
   it("highlights the zone while a file is dragged over it", async () => {
     const { dropZone } = setup();
     fireEvent.dragEnter(dropZone, dropData([pdf()]));
-    expect(await screen.findByText("Drop the file here...")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Drop the file here..."),
+    ).toBeInTheDocument();
   });
 
   it("starts card generation and offers to check status", async () => {
@@ -100,7 +121,9 @@ describe("ImportFromPDFModal", () => {
       await screen.findByText("Card generation task successfully started!"),
     ).toBeInTheDocument();
     // After success the footer only offers Close.
-    expect(screen.queryByRole("button", { name: "Import" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Import" }),
+    ).not.toBeInTheDocument();
     // (The dialog's corner X is also labelled "Close"; find the footer one.)
     const footerClose = screen
       .getAllByRole("button", { name: "Close" })
@@ -113,7 +136,9 @@ describe("ImportFromPDFModal", () => {
   });
 
   it("shows the upload error", async () => {
-    const { user, input } = setup(vi.fn().mockRejectedValue(new Error("quota exceeded")));
+    const { user, input } = setup(
+      vi.fn().mockRejectedValue(new Error("quota exceeded")),
+    );
     await user.upload(input, pdf());
     await user.click(screen.getByRole("button", { name: "Import" }));
     await flushUpload();

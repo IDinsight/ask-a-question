@@ -130,7 +130,10 @@ function Calendar({
           "text-muted-foreground aria-selected:text-muted-foreground",
           defaultClassNames.outside,
         ),
-        disabled: cn("text-muted-foreground opacity-50", defaultClassNames.disabled),
+        disabled: cn(
+          "text-muted-foreground opacity-50",
+          defaultClassNames.disabled,
+        ),
         hidden: cn("invisible", defaultClassNames.hidden),
         ...classNames,
       }}
@@ -147,16 +150,27 @@ function Calendar({
         },
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
-            return <IconChevronLeft className={cn("size-4", className)} {...props} />;
+            return (
+              <IconChevronLeft className={cn("size-4", className)} {...props} />
+            );
           }
 
           if (orientation === "right") {
-            return <IconChevronRight className={cn("size-4", className)} {...props} />;
+            return (
+              <IconChevronRight
+                className={cn("size-4", className)}
+                {...props}
+              />
+            );
           }
 
-          return <IconChevronDown className={cn("size-4", className)} {...props} />;
+          return (
+            <IconChevronDown className={cn("size-4", className)} {...props} />
+          );
         },
-        DayButton: ({ ...props }) => <CalendarDayButton locale={locale} {...props} />,
+        DayButton: ({ ...props }) => (
+          <CalendarDayButton locale={locale} {...props} />
+        ),
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>

@@ -20,6 +20,10 @@ export type AiFeedbackSummary = {
  * AuthenticationDetails
  *
  * Pydantic model for authentication details.
+ *
+ * `access_token` is short-lived (`expires_in` seconds). Before it expires, the
+ * client exchanges `refresh_token` for a new pair at POST /refresh. Each refresh
+ * token works once.
  */
 export type AuthenticationDetails = {
     /**
@@ -30,6 +34,14 @@ export type AuthenticationDetails = {
      * Access Token
      */
     access_token: string;
+    /**
+     * Expires In
+     */
+    expires_in: number;
+    /**
+     * Refresh Token
+     */
+    refresh_token: string;
     /**
      * Token Type
      */
@@ -788,6 +800,18 @@ export type QueryStats = {
      * Percentage Increase
      */
     percentage_increase: number;
+};
+
+/**
+ * RefreshTokenRequest
+ *
+ * Pydantic model for the body of POST /refresh and POST /logout.
+ */
+export type RefreshTokenRequest = {
+    /**
+     * Refresh Token
+     */
+    refresh_token: string;
 };
 
 /**
@@ -1633,6 +1657,56 @@ export type LoginGoogleResponses = {
 };
 
 export type LoginGoogleResponse = LoginGoogleResponses[keyof LoginGoogleResponses];
+
+export type RefreshAccessTokenData = {
+    body: RefreshTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/refresh';
+};
+
+export type RefreshAccessTokenErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RefreshAccessTokenError = RefreshAccessTokenErrors[keyof RefreshAccessTokenErrors];
+
+export type RefreshAccessTokenResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuthenticationDetails;
+};
+
+export type RefreshAccessTokenResponse = RefreshAccessTokenResponses[keyof RefreshAccessTokenResponses];
+
+export type LogoutData = {
+    body: RefreshTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/logout';
+};
+
+export type LogoutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LogoutError = LogoutErrors[keyof LogoutErrors];
+
+export type LogoutResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type LogoutResponse = LogoutResponses[keyof LogoutResponses];
 
 export type RetrieveContentData = {
     body?: never;

@@ -23,7 +23,8 @@ const UpvoteDownvoteBar = ({
   negativeVotes: number;
 }) => {
   const totalVotes = positiveVotes + negativeVotes;
-  const up = totalVotes > 0 ? Math.round((positiveVotes / totalVotes) * 100) : 0;
+  const up =
+    totalVotes > 0 ? Math.round((positiveVotes / totalVotes) * 100) : 0;
   const down = totalVotes > 0 ? 100 - up : 0;
 
   return (
@@ -58,7 +59,10 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
       aria-labelledby="most-sent"
       className="overflow-hidden border bg-card shadow-xs"
     >
-      <h2 id="most-sent" className="px-5 py-4 text-base font-semibold tracking-tight">
+      <h2
+        id="most-sent"
+        className="px-5 py-4 text-base font-semibold tracking-tight"
+      >
         Most sent content
       </h2>
       <Table className="min-w-[640px] text-sm">

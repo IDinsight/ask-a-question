@@ -17,8 +17,9 @@ import { useAuth } from "@/utils/auth";
  * Side panel for trying a question against the API (used by the content
  * page's "Test search" and the urgency rules page). The caller supplies the
  * request (`handleSendClick`) and how to render its result (`ResponseBox`).
+ * `T` is the response data shape (SearchResponseBoxData or UDResponseBoxData).
  */
-const TestSidebar = ({
+const TestSidebar = <T,>({
   title,
   closeSidebar,
   showLLMResponseToggle,
@@ -32,19 +33,29 @@ const TestSidebar = ({
     question: string,
     generateLLMResponse: boolean,
     setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setResponse: React.Dispatch<any>,
+    setResponse: React.Dispatch<React.SetStateAction<T | null>>,
     token: string | null,
   ) => void;
-  ResponseBox: React.FC<any>;
+  ResponseBox: React.FC<{
+    loading: boolean;
+    responseBoxData: T | null;
+    token: string | null;
+  }>;
 }) => {
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState("");
   const [generateLLMResponse, setGenerateLLMResponse] = useState(false);
-  const [response, setResponse] = useState<any>(null); // could be SearchResponseBoxData or UDResponseBoxData
+  const [response, setResponse] = useState<T | null>(null);
   const { token } = useAuth();
 
   const send = () =>
-    handleSendClick(question, generateLLMResponse, setLoading, setResponse, token);
+    handleSendClick(
+      question,
+      generateLLMResponse,
+      setLoading,
+      setResponse,
+      token,
+    );
 
   return (
     <aside className="flex h-full flex-col gap-6 border-l bg-card p-6 text-sm">
@@ -97,7 +108,11 @@ const TestSidebar = ({
 
       {ResponseBox && (
         <div className="flex min-h-50 flex-1 flex-col overflow-y-auto border-t pt-4">
-          <ResponseBox loading={loading} responseBoxData={response} token={token} />
+          <ResponseBox
+            loading={loading}
+            responseBoxData={response}
+            token={token}
+          />
         </div>
       )}
     </aside>

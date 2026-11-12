@@ -1,5 +1,9 @@
 import React from "react";
-import { IconChevronDown, IconChevronUp, IconSelector } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconSelector,
+} from "@tabler/icons-react";
 
 import { TableHead } from "@/components/ui/table";
 import { cn } from "cn";

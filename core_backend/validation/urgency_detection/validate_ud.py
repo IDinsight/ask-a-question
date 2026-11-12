@@ -7,6 +7,7 @@ from typing import AsyncGenerator, Dict, Union
 import boto3
 import pandas as pd
 import pytest
+import pytest_asyncio
 from dateutil import tz
 from httpx import AsyncClient
 
@@ -19,7 +20,9 @@ logger = setup_logger(name="UDValidation")
 
 
 class TestUDPerformance:
-    @pytest.fixture(scope="class", autouse=True)
+    # Same event loop as the session-scoped `client` and the test (see conftest.py),
+    # otherwise DB connections opened here are reused from another loop.
+    @pytest_asyncio.fixture(scope="class", loop_scope="session", autouse=True)
     async def setup(
         self,
         client: AsyncClient,

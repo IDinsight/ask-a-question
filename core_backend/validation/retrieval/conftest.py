@@ -1,30 +1,23 @@
-from typing import Generator
+from typing import TYPE_CHECKING, Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
-from app.core.database import get_session
 from app.main import app
 
+if TYPE_CHECKING:  # Fixture from validation/conftest.py; imported for typing only.
+    from validation.conftest import ValidationWorkspace
+
 
 @pytest.fixture(scope="session")
-def client() -> Generator[TestClient, None, None]:
+def client(
+    validation_workspace: "ValidationWorkspace",
+) -> Generator[TestClient, None, None]:
+    """Test client for the app. Depends on `validation_workspace` so workspace
+    setup has finished (and closed its own client) first."""
+
     with TestClient(app) as c:
         yield c
-
-
-@pytest.fixture(scope="session")
-def db_session() -> Generator[Session, None, None]:
-    """Create a test database session."""
-    session_gen = get_session()
-    session = next(session_gen)
-
-    try:
-        yield session
-    finally:
-        session.rollback()
-        next(session_gen, None)
 
 
 # create command line arguments for pytest as per https://stackoverflow.com/a/42145604/7664921

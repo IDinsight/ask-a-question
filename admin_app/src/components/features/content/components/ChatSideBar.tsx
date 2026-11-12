@@ -25,7 +25,11 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-import { Message, MessageContent, MessageFooter } from "@/components/ui/message";
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+} from "@/components/ui/message";
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -51,6 +55,7 @@ import {
   IconButtonWithTooltip,
 } from "@/components/common/AssistantParts";
 import { MARKDOWN_CLASSES } from "./ContentModal";
+import type { QueryResult } from "../queries";
 
 /** One content card the chat service retrieved to answer a question. */
 interface SearchResult {
@@ -95,7 +100,7 @@ const ChatSideBar = ({
   setSnackMessage,
 }: {
   closeSidebar: () => void;
-  getResponse: (question: string, session_id?: number) => Promise<any>;
+  getResponse: (question: string, session_id?: number) => Promise<QueryResult>;
   setSnackMessage: (message: string) => void;
 }) => {
   const [loading, setLoading] = useState(false);
@@ -117,7 +122,10 @@ const ChatSideBar = ({
     if (!canSend) return;
     const text = question.trim();
     setQuestion("");
-    setMessages((prev) => [...prev, { id: newId(), type: "question", content: text }]);
+    setMessages((prev) => [
+      ...prev,
+      { id: newId(), type: "question", content: text },
+    ]);
     setLoading(true);
 
     const responsePromise = sessionId
@@ -136,7 +144,7 @@ const ChatSideBar = ({
           },
         ]);
         if (sessionId === null) {
-          setSessionId(response.session_id);
+          setSessionId(response.session_id ?? null);
         }
       })
       .catch((error: CustomError) => {
@@ -198,8 +206,8 @@ const ChatSideBar = ({
                     </EmptyMedia>
                     <EmptyTitle>Start a test conversation</EmptyTitle>
                     <EmptyDescription>
-                      Ask a question to see how the chat service answers using your
-                      content.
+                      Ask a question to see how the chat service answers using
+                      your content.
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
@@ -324,7 +332,9 @@ const ResponseTurn = ({ message }: { message: ResponseMessage }) => {
           </BubbleContent>
         </Bubble>
 
-        {message.sources.length > 0 && <SourcesTrace sources={message.sources} />}
+        {message.sources.length > 0 && (
+          <SourcesTrace sources={message.sources} />
+        )}
 
         <MessageFooter className="gap-0.5 px-0">
           {!message.isError && message.content && (
@@ -345,7 +355,11 @@ const ResponseTurn = ({ message }: { message: ResponseMessage }) => {
           </IconButtonWithTooltip>
         </MessageFooter>
       </MessageContent>
-      <JsonDialog open={jsonOpen} onOpenChange={setJsonOpen} json={message.json} />
+      <JsonDialog
+        open={jsonOpen}
+        onOpenChange={setJsonOpen}
+        json={message.json}
+      />
     </Message>
   );
 };
@@ -360,7 +374,8 @@ const SourcesTrace = ({ sources }: { sources: SearchResult[] }) => (
             <IconFileText />
           </TraceIcon>
           <TraceTitle>
-            Used {sources.length} content {sources.length === 1 ? "card" : "cards"}
+            Used {sources.length} content{" "}
+            {sources.length === 1 ? "card" : "cards"}
           </TraceTitle>
         </TraceLine>
       </TraceCollapsibleTrigger>

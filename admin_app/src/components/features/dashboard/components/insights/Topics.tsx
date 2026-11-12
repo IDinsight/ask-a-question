@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,15 +19,15 @@ const Topics: React.FC<TopicProps> = ({
   onClick,
   topicsPerPage,
 }) => {
-  const [page, setPage] = useState(1);
+  const [requestedPage, setPage] = useState(1);
   const pageCount = Math.max(1, Math.ceil(data.length / topicsPerPage));
+  // New data can have fewer pages; clamp so the user never sees an empty one.
+  const page = Math.min(requestedPage, pageCount);
 
-  // New data can have fewer pages; don't leave the user on an empty one.
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
-
-  const dataToShow = data.slice((page - 1) * topicsPerPage, page * topicsPerPage);
+  const dataToShow = data.slice(
+    (page - 1) * topicsPerPage,
+    page * topicsPerPage,
+  );
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -38,7 +38,11 @@ const Topics: React.FC<TopicProps> = ({
           {/* Fading placeholder rows hint at where topics will appear */}
           <div className="mt-1 flex flex-col gap-2" aria-hidden="true">
             {[1, 0.7, 0.45, 0.25].map((opacity) => (
-              <span key={opacity} className="h-8 bg-muted" style={{ opacity }} />
+              <span
+                key={opacity}
+                className="h-8 bg-muted"
+                style={{ opacity }}
+              />
             ))}
           </div>
         </>
@@ -71,7 +75,10 @@ const Topics: React.FC<TopicProps> = ({
         </ul>
       )}
       {data.length > topicsPerPage && (
-        <nav aria-label="Topic pages" className="flex items-center justify-between">
+        <nav
+          aria-label="Topic pages"
+          className="flex items-center justify-between"
+        >
           <Button
             variant="ghost"
             size="icon-sm"

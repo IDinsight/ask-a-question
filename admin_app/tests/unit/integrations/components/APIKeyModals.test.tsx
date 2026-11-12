@@ -8,7 +8,9 @@ import {
 } from "@/components/features/integrations/components/APIKeyModals";
 
 describe("KeyRenewConfirmationModal", () => {
-  const renderModal = (overrides: Partial<{ isLoading: boolean; open: boolean }> = {}) => {
+  const renderModal = (
+    overrides: Partial<{ isLoading: boolean; open: boolean }> = {},
+  ) => {
     const onClose = vi.fn();
     const onRenew = vi.fn();
     render(
@@ -26,7 +28,9 @@ describe("KeyRenewConfirmationModal", () => {
   it("shows the start of the current key in the warning", () => {
     renderModal();
     expect(
-      screen.getByRole("alertdialog", { name: "Regenerate the workspace API key?" }),
+      screen.getByRole("alertdialog", {
+        name: "Regenerate the workspace API key?",
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("test-key")).toBeInTheDocument();
   });
@@ -68,7 +72,12 @@ describe("NewKeyModal", () => {
     const onCopy = vi.fn();
     const onClose = vi.fn();
     render(
-      <NewKeyModal newKey="test-key-123" open onCopy={onCopy} onClose={onClose} />,
+      <NewKeyModal
+        newKey="test-key-123"
+        open
+        onCopy={onCopy}
+        onClose={onClose}
+      />,
     );
     return { onCopy, onClose };
   };
@@ -89,7 +98,9 @@ describe("NewKeyModal", () => {
 
   it("selects the key when the field gets focus", () => {
     renderModal();
-    const input = screen.getByRole<HTMLInputElement>("textbox", { name: "New API key" });
+    const input = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "New API key",
+    });
 
     input.blur();
     input.focus();

@@ -77,7 +77,9 @@ export const useCurrentWorkspaceQuery = () => {
     if (!query.error) return;
     console.error(query.error);
     toast.add({
-      title: (query.error as unknown as CustomError).message || "Error fetching API key",
+      title:
+        (query.error as unknown as CustomError).message ||
+        "Error fetching API key",
       type: "error",
     });
   }, [query.error]);

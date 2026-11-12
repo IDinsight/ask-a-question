@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -39,7 +39,7 @@ def reset_databases(
 )
 def suzin_reset_own_password(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin resets her own password.
 
     Parameters
@@ -51,7 +51,7 @@ def suzin_reset_own_password(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Suzin resetting her own password.
     """
 
@@ -69,7 +69,7 @@ def suzin_reset_own_password(
 
 @then("Suzin should be able to reset her own password")
 def check_suzin_reset_password_response(
-    client: TestClient, suzin_reset_password_response: httpx.Response
+    client: TestClient, suzin_reset_password_response: httpx2.Response
 ) -> None:
     """Check that Suzin can reset her own password.
 
@@ -119,7 +119,7 @@ def check_suzin_reset_password_response(
 )
 def suzin_reset_mark_password(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin resets Mark's password.
 
     Parameters
@@ -131,7 +131,7 @@ def suzin_reset_mark_password(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Suzin resetting Mark's password.
     """
 
@@ -149,7 +149,7 @@ def suzin_reset_mark_password(
 
 @then("Suzin should be able to reset Mark's password")
 def check_suzin_reset_mark_password_response(
-    suzin_reset_mark_password_response: httpx.Response,
+    suzin_reset_mark_password_response: httpx2.Response,
 ) -> None:
     """Check that Suzin can reset Mark's password.
 
@@ -168,7 +168,7 @@ def check_suzin_reset_mark_password_response(
 )
 def mark_reset_suzin_password(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Mark resets Suzin's password.
 
     Parameters
@@ -180,7 +180,7 @@ def mark_reset_suzin_password(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Mark resetting Suzin's password.
     """
 
@@ -198,7 +198,7 @@ def mark_reset_suzin_password(
 
 @then("Mark should be able to reset Suzin's password")
 def check_mark_reset_suzin_password_response(
-    mark_reset_suzin_password_response: httpx.Response,
+    mark_reset_suzin_password_response: httpx2.Response,
 ) -> None:
     """Check that Mark can reset Suzin's password.
 
@@ -217,7 +217,7 @@ def check_mark_reset_suzin_password_response(
 )
 def poornima_reset_suzin_password(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Poornima resets Suzin's password.
 
     Parameters
@@ -229,7 +229,7 @@ def poornima_reset_suzin_password(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Poornima resetting Suzin's password.
     """
 
@@ -247,7 +247,7 @@ def poornima_reset_suzin_password(
 
 @then("Poornima should be able to reset Suzin's password")
 def check_poornima_reset_suzin_password_response(
-    poornima_reset_suzin_password_response: httpx.Response,
+    poornima_reset_suzin_password_response: httpx2.Response,
 ) -> None:
     """Check that Poornima can reset Suzin's password.
 

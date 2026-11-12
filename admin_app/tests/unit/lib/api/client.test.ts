@@ -80,7 +80,10 @@ describe("error interceptor", () => {
     const error = await call().catch((e) => e);
 
     expect(error).toBeInstanceOf(ApiServerError);
-    expect(error).toMatchObject({ status: 502, message: "Could not reach the server" });
+    expect(error).toMatchObject({
+      status: 502,
+      message: "Could not reach the server",
+    });
   });
 
   it("turns a network failure into a plain Error", async () => {
@@ -94,7 +97,9 @@ describe("error interceptor", () => {
 
   it("on a 401 while signed in, clears the token and goes to /login", async () => {
     localStorage.setItem("token", "[TOKEN]");
-    fetchMock.mockResolvedValueOnce(Response.json({ detail: "x" }, { status: 401 }));
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ detail: "x" }, { status: 401 }),
+    );
     // jsdom can't navigate; record where the app tries to go instead.
     const location = { pathname: "/content", href: "" };
     vi.spyOn(window, "location", "get").mockReturnValue(location as Location);
@@ -104,6 +109,48 @@ describe("error interceptor", () => {
     expect(localStorage.getItem("token")).toBeNull();
     expect(location.href).toBe("/login?sourcePage=%2Fcontent");
   });
+
+  it("refreshes an expiring token before the call and sends the new one", async () => {
+    localStorage.setItem("token", "[OLD_TOKEN]");
+    localStorage.setItem("refreshToken", "[REFRESH_TOKEN]");
+    localStorage.setItem("tokenExpiresAt", String(Date.now() + 10_000));
+    // session.ts refreshes with the global fetch, not the client's.
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Response.json({
+        access_token: "[NEW_TOKEN]",
+        refresh_token: "[NEW_REFRESH_TOKEN]",
+        expires_in: 1800,
+        access_level: "fullaccess",
+        user_role: "admin",
+        workspace_name: "Test workspace",
+        username: "test-admin",
+        token_type: "bearer",
+      }),
+    );
+
+    await call();
+
+    expect(sentRequest().headers.get("authorization")).toBe(
+      "Bearer [NEW_TOKEN]",
+    );
+  });
+
+  it("goes to /login when the refresh token is refused, without calling the API", async () => {
+    localStorage.setItem("token", "[OLD_TOKEN]");
+    localStorage.setItem("refreshToken", "[REFRESH_TOKEN]");
+    localStorage.setItem("tokenExpiresAt", String(Date.now() + 10_000));
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(null, { status: 401 }),
+    );
+    const location = { pathname: "/dashboard", href: "" };
+    vi.spyOn(window, "location", "get").mockReturnValue(location as Location);
+
+    await expect(call()).rejects.toThrow("Your session has expired");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(location.href).toBe("/login?sourcePage=%2Fdashboard");
+  });
 });
 
 describe("toApiError / extractErrorDetail / getErrorMessage", () => {
@@ -111,7 +158,9 @@ describe("toApiError / extractErrorDetail / getErrorMessage", () => {
 
   it("reads FastAPI validation errors (a list of {msg})", () => {
     expect(
-      extractErrorDetail({ detail: [{ msg: "field required" }, { msg: "too short" }] }),
+      extractErrorDetail({
+        detail: [{ msg: "field required" }, { msg: "too short" }],
+      }),
     ).toBe("field required; too short");
   });
 

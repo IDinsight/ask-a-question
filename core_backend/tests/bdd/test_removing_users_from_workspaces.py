@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -97,7 +97,7 @@ def check_suzin_does_not_belong_to_workspace_carlos(
 )
 def remove_carlos_from_workspace_carlos(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos tries to remove himself from workspace Carlos.
 
     Parameters
@@ -109,7 +109,7 @@ def remove_carlos_from_workspace_carlos(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Carlos trying to remove himself from workspace Carlos.
     """
 
@@ -125,7 +125,7 @@ def remove_carlos_from_workspace_carlos(
 @then("Carlos should get an error")
 def check_carlos_cannot_remove_himself_from_workspace_carlos(
     client: TestClient,
-    carlos_remove_response: httpx.Response,
+    carlos_remove_response: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Carlos cannot remove himself from workspace Carlos.
@@ -238,7 +238,7 @@ def check_sid_cannot_authenticate(
 )
 def remove_poornima_from_workspace_suzin(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Amir tries to remove Poornima from workspace Suzin.
 
     Parameters
@@ -250,7 +250,7 @@ def remove_poornima_from_workspace_suzin(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Amir trying to remove Poornima from workspace Suzin.
     """
 
@@ -265,7 +265,7 @@ def remove_poornima_from_workspace_suzin(
 
 @then("Amir should get an error")
 def check_amir_cannot_remove_poornima_from_workspace_suzin(
-    poornima_remove_response: httpx.Response,
+    poornima_remove_response: httpx2.Response,
 ) -> None:
     """Check that Sid can no longer authenticate.
 
@@ -286,7 +286,7 @@ def check_amir_cannot_remove_poornima_from_workspace_suzin(
 )
 def remove_poornima_from_workspace_amir(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Poorima removes herself from workspace Amir.
 
     Parameters
@@ -298,7 +298,7 @@ def remove_poornima_from_workspace_amir(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Poornima removing herself from workspace Amir.
     """
 
@@ -314,7 +314,7 @@ def remove_poornima_from_workspace_amir(
 
 @then("Poornima is required to switch workspaces to workspace Suzin")
 def check_that_poornima_is_required_to_switch_workspaces(
-    poornima_self_remove_response: httpx.Response,
+    poornima_self_remove_response: httpx2.Response,
 ) -> None:
     """Check that Poornima is required to switch workspaces.
 
@@ -340,7 +340,7 @@ def check_that_poornima_is_required_to_switch_workspaces(
 )
 def remove_carlos_from_workspace_carlos_(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos removes himself from workspace Carlos.
 
     Parameters
@@ -352,7 +352,7 @@ def remove_carlos_from_workspace_carlos_(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Carlos removing himself from workspace Carlos.
     """
 
@@ -419,7 +419,7 @@ def check_carlos_cannot_authenticate(
 
 @then("Reauthentication is required")
 def check_authentication_is_required(
-    carlos_self_remove_response: httpx.Response,
+    carlos_self_remove_response: httpx2.Response,
 ) -> None:
     """Check that reauthentication is required again after Carlos removes himself from
     workspace Carlos.

@@ -35,7 +35,9 @@ test.describe("integrations page", () => {
 
     await expect(page.getByText("aD5KZ")).toBeVisible();
     await expect(page.getByText("Active", { exact: true })).toBeVisible();
-    await expect(page.getByText("Last updated Nov 6, 2026 at 09:35")).toBeVisible();
+    await expect(
+      page.getByText("Last updated Nov 6, 2026 at 09:35"),
+    ).toBeVisible();
     await expect(page.getByText("100 requests")).toBeVisible();
     for (const name of ["Typebot", "Turn", "Glific", "REST API"]) {
       await expect(
@@ -57,10 +59,15 @@ test.describe("integrations page", () => {
           ),
       )
       .toBe(true);
-    await page.screenshot({ path: "test-results/integrations.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/integrations.png",
+      fullPage: true,
+    });
   });
 
-  test("regenerating asks first, then shows the new key once", async ({ page }) => {
+  test("regenerating asks first, then shows the new key once", async ({
+    page,
+  }) => {
     const api = await openIntegrations(page);
 
     await page.getByRole("button", { name: "Regenerate key" }).click();
@@ -70,7 +77,9 @@ test.describe("integrations page", () => {
     // Cancel does nothing
     await confirm.getByRole("button", { name: "Cancel" }).click();
     await expect(confirm).toBeHidden();
-    expect(api.requests.some((r) => r.path === "/workspace/rotate-key")).toBe(false);
+    expect(api.requests.some((r) => r.path === "/workspace/rotate-key")).toBe(
+      false,
+    );
 
     await page.getByRole("button", { name: "Regenerate key" }).click();
     await page
@@ -79,10 +88,12 @@ test.describe("integrations page", () => {
       .click();
 
     const dialog = page.getByRole("dialog", { name: "Save your new key" });
-    await expect(dialog.getByRole("textbox", { name: "New API key" })).toHaveValue(
-      /^NEWKEY/,
-    );
-    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await expect(
+      dialog.getByRole("textbox", { name: "New API key" }),
+    ).toHaveValue(/^NEWKEY/);
+    await page
+      .context()
+      .grantPermissions(["clipboard-read", "clipboard-write"]);
     await dialog.getByRole("button", { name: "Copy" }).click();
     await expect(dialog.getByRole("button", { name: "Copied" })).toBeVisible();
     await dialog.getByRole("button", { name: "Close" }).first().click();
@@ -102,15 +113,19 @@ test.describe("integrations page", () => {
     await expect(page.getByText("doesn’t have an API key yet")).toBeVisible();
     await expect(page.getByText("No daily limit")).toBeVisible();
     await page.getByRole("button", { name: "Generate key" }).click();
-    await expect(page.getByRole("dialog", { name: "Save your new key" })).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Save your new key" }),
+    ).toBeVisible();
   });
 
   test("read-only users don't see the key card", async ({ page }) => {
     await openIntegrations(page, { role: "read_only" });
-    await expect(page.getByRole("heading", { name: "Daily API limit" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Workspace API key" })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole("heading", { name: "Daily API limit" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Workspace API key" }),
+    ).toHaveCount(0);
   });
 
   test("a connection card opens its setup guide", async ({ page }) => {

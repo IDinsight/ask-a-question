@@ -4,11 +4,12 @@ SHELL := /bin/bash
 
 .PHONY : lint tests tests-alembic tests-rails teardown-test-containers
 
-# Format, lint and type-check (config in pyproject.toml and .pylintrc).
+# Format, lint, type-check and SAST (config in pyproject.toml and .pylintrc).
 lint:
 	uv run black .
 	uv run ruff check .
-	uv run mypy app tests --ignore-missing-imports --explicit-package-base
+	uv run mypy .
+	uv run bandit -c pyproject.toml -r . -q
 	uv run pylint app tests
 
 # `uv run pytest` is all you need. tests/__init__.py loads tests/test.env, and

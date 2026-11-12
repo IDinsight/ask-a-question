@@ -25,7 +25,9 @@ const related = (id: number, title: string): Content => ({
 });
 
 // Defaults for the view modal; each test overrides what it cares about.
-const viewProps = (overrides: Partial<Parameters<typeof ContentViewModal>[0]> = {}) => ({
+const viewProps = (
+  overrides: Partial<Parameters<typeof ContentViewModal>[0]> = {},
+) => ({
   title: "Handwashing basics",
   text: "Wash for **twenty** seconds.",
   content_id: 7,
@@ -66,8 +68,12 @@ describe("ContentViewModal", () => {
   it("shows the title, rendered markdown, votes and the edit link", () => {
     render(<ContentViewModal {...viewProps()} />);
 
-    expect(screen.getByRole("heading", { name: "Content #3" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Handwashing basics" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Content #3" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Handwashing basics" }),
+    ).toBeInTheDocument();
     // Markdown is rendered, not shown raw.
     expect(screen.getByText("twenty").tagName).toBe("STRONG");
     expect(screen.getByTitle("Upvotes")).toHaveTextContent("4");
@@ -101,7 +107,9 @@ describe("ContentViewModal", () => {
     expect(screen.getByText("hygiene")).toBeInTheDocument();
     expect(screen.getByText("children")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Soap alternatives" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Soap alternatives" }),
+    );
     expect(onRelatedContentClick).toHaveBeenCalledWith(sibling);
   });
 
@@ -114,7 +122,9 @@ describe("ContentViewModal", () => {
       />,
     );
 
-    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Edit" }),
+    ).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Approve" }));
     await userEvent.click(screen.getByRole("button", { name: "Reject" }));
 
@@ -124,7 +134,9 @@ describe("ContentViewModal", () => {
 
   it("disables approve/reject without edit access", () => {
     render(
-      <ContentViewModal {...viewProps({ validation_mode: true, editAccess: false })} />,
+      <ContentViewModal
+        {...viewProps({ validation_mode: true, editAccess: false })}
+      />,
     );
     expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Reject" })).toBeDisabled();
@@ -172,7 +184,9 @@ describe("ArchiveContentModal", () => {
 
     expect(props.archiveContent).toHaveBeenCalledWith(5);
     expect(props.onClose).toHaveBeenCalled();
-    await waitFor(() => expect(props.onSuccessfulArchive).toHaveBeenCalledWith(5));
+    await waitFor(() =>
+      expect(props.onSuccessfulArchive).toHaveBeenCalledWith(5),
+    );
     expect(props.onFailedArchive).not.toHaveBeenCalled();
   });
 

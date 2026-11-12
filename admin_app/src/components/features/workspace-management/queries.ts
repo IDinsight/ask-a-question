@@ -73,7 +73,9 @@ const parseCurrentUser = (data: UserRetrieve): CurrentUser => ({
   // Copy each workspace rather than mutating the cached response.
   workspaces: (data.user_workspaces ?? []).map((workspace, index) => ({
     ...workspace,
-    is_default: data.is_default_workspace ? data.is_default_workspace[index] : false,
+    is_default: data.is_default_workspace
+      ? data.is_default_workspace[index]
+      : false,
   })),
 });
 
@@ -96,7 +98,10 @@ export const useCurrentWorkspaceQuery = () => {
 };
 
 /** Raw /user/ row: the user plus every workspace they belong to. */
-type UserListRow = Pick<UserRetrieve, "user_id" | "username" | "user_workspaces">;
+type UserListRow = Pick<
+  UserRetrieve,
+  "user_id" | "username" | "user_workspaces"
+>;
 
 /**
  * Users of the current workspace. Raw rows are cached; the Wrapper turns them
@@ -105,7 +110,10 @@ type UserListRow = Pick<UserRetrieve, "user_id" | "username" | "user_workspaces"
  */
 export const useUserListQuery = () => {
   const { token } = useAuth();
-  return useQuery({ ...retrieveAllUsersInCurrentWorkspaceOptions(), enabled: !!token });
+  return useQuery({
+    ...retrieveAllUsersInCurrentWorkspaceOptions(),
+    enabled: !!token,
+  });
 };
 
 /**
@@ -175,7 +183,8 @@ export const useCreateUserMutation = () => {
       });
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
   });
 };
 
@@ -196,7 +205,8 @@ export const useAddUserToWorkspaceMutation = () => {
         },
       });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
   });
 };
 
@@ -217,7 +227,9 @@ export const useEditUserMutation = () => {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
-        queryClient.invalidateQueries({ queryKey: workspaceKeys.currentUser() }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceKeys.currentUser(),
+        }),
       ]),
   });
 };
@@ -253,7 +265,9 @@ export const useRemoveUserMutation = () => {
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }),
-        queryClient.invalidateQueries({ queryKey: workspaceKeys.currentUser() }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceKeys.currentUser(),
+        }),
       ]),
   });
 };
@@ -309,8 +323,12 @@ export const useEditWorkspaceMutation = () => {
     },
     onSuccess: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: workspaceKeys.currentWorkspace() }),
-        queryClient.invalidateQueries({ queryKey: workspaceKeys.currentUser() }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceKeys.currentWorkspace(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceKeys.currentUser(),
+        }),
       ]),
   });
 };

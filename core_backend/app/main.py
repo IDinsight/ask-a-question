@@ -17,10 +17,11 @@ from typing import Any
 
 import httpx
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.logger import logger as fastapi_logger
 from fastapi.middleware.cors import CORSMiddleware
 from redis import asyncio as aioredis
+from slowapi.errors import RateLimitExceeded
 from uvicorn_worker import UvicornWorker  # moved out of uvicorn.workers (deprecated)
 
 # Routers are imported under a `<feature>_router` alias. Importing them as bare
@@ -49,7 +50,10 @@ from app.core.observability import (
 )
 from app.core.security import (
     SecurityHeadersMiddleware,
+    enforce_default_rate_limit,
+    limiter,
     protect_metrics_app,
+    rate_limit_exceeded_handler,
     validate_security_settings,
 )
 from app.dashboard import router as dashboard_router
@@ -198,6 +202,8 @@ validate_security_settings()
 # full tracebacks to API clients.
 app = FastAPI(
     debug=DEBUG,
+    # Applies RATE_LIMIT_DEFAULT to every route without its own `@limiter.limit`.
+    dependencies=[Depends(enforce_default_rate_limit)],
     description=page_description,
     # Use the route function's name as the OpenAPI operationId (e.g. "retrieve_content"
     # instead of "retrieve_content_content__get"). admin_app generates its typed API
@@ -216,7 +222,13 @@ for feature in FEATURE_ROUTERS:
 # 3. Register handlers that turn service-layer exceptions into HTTP responses.
 register_exception_handlers(app)
 
-# 4. Add CORS middleware for cross-origin requests.
+# 4. Request rate limiting (slowapi). The default limit is enforced by the app-wide
+# `enforce_default_rate_limit` dependency (see step 1); credential routes are
+# decorated with `@limiter.limit`. Over-limit requests become a 429 here.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# 5. Add CORS middleware for cross-origin requests.
 origins = [
     f"http://{DOMAIN}",
     f"http://{DOMAIN}:3000",
@@ -231,7 +243,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
-# 5. Add Prometheus middleware and mount the metrics app on /metrics. The metrics app
+# 6. Add Prometheus middleware and mount the metrics app on /metrics. The metrics app
 # requires `Authorization: Bearer $METRICS_TOKEN` and is a 404 when the token is unset.
 app.add_middleware(PrometheusMiddleware)
 app.mount("/metrics", protect_metrics_app(create_metrics_app(), token=METRICS_TOKEN))
@@ -240,7 +252,7 @@ app.mount("/metrics", protect_metrics_app(create_metrics_app(), token=METRICS_TO
 # error responses.
 app.add_middleware(SecurityHeadersMiddleware)
 
-# 6. Initialise Langfuse and Sentry if configured.
+# 7. Initialise Langfuse and Sentry if configured.
 init_langfuse()
 init_sentry()
 
@@ -256,7 +268,8 @@ if __name__ == "__main__":
     fastapi_logger.setLevel(logging.DEBUG)
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
+        # Local dev server only (`python -m app.main`), usually inside a container.
+        host="0.0.0.0",  # nosec B104
         port=8000,
         reload=True,
         log_level="debug",

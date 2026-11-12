@@ -39,6 +39,7 @@ import {
 import { SidebarMenuTrigger } from "@/components/common/SidebarMenuTrigger";
 import WorkspaceMenu from "@/components/common/WorkspaceMenu";
 import type { Workspace } from "@/components/features/workspace-management/types";
+import { useLocalStorageItem } from "@/hooks/use-browser-state";
 import WorkspaceCreateModal from "@/components/features/workspace-management/components/WorkspaceCreateModal";
 import type { UserBodyUpdate } from "@/components/features/workspace-management/types";
 import {
@@ -141,8 +142,10 @@ export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dashboardPage = searchParams.get("page") ?? "overview";
-  const { loginWorkspace, workspaceName, userRole, logout, username } = useAuth();
-  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
+  const { loginWorkspace, workspaceName, userRole, logout, username } =
+    useAuth();
+  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] =
+    React.useState(false);
 
   const currentUser = useCurrentUserQuery();
   const editUser = useEditUserMutation();
@@ -216,7 +219,9 @@ export function AppSidebar() {
         open={openCreateWorkspaceModal}
         onClose={() => setOpenCreateWorkspaceModal(false)}
         isEdit={false}
-        onCreate={(workspace: Workspace) => createWorkspace.mutateAsync(workspace)}
+        onCreate={(workspace: Workspace) =>
+          createWorkspace.mutateAsync(workspace)
+        }
         loginWorkspace={(workspace: Workspace) =>
           loginWorkspace(workspace.workspace_name, pathname)
         }
@@ -231,8 +236,16 @@ function WorkspaceUsage() {
   return (
     <div className="mx-2 mb-1 flex flex-col gap-3 border border-sidebar-border p-3 text-xs">
       <div className="font-medium">Workspace usage</div>
-      <UsageMeter label="Content cards" unit="content cards" {...contentCards} />
-      <UsageMeter label="API calls today" unit="daily API calls" {...apiCallsToday} />
+      <UsageMeter
+        label="Content cards"
+        unit="content cards"
+        {...contentCards}
+      />
+      <UsageMeter
+        label="API calls today"
+        unit="daily API calls"
+        {...apiCallsToday}
+      />
       <a
         href={CONTACT_HREF}
         className="text-sidebar-primary underline-offset-2 hover:underline"
@@ -269,7 +282,10 @@ function UsageMeter({
         role="img"
         aria-label={`${used} of ${quota} ${unit} used`}
       >
-        <i className="block h-full bg-sidebar-primary" style={{ width: `${pct}%` }} />
+        <i
+          className="block h-full bg-sidebar-primary"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );
@@ -284,11 +300,8 @@ function AccountMenu({
   onLogout: () => void;
 }) {
   // username is lost on a hard refresh; auth stores it in localStorage on login.
-  const [displayName, setDisplayName] = React.useState<string | null>(username);
-
-  React.useEffect(() => {
-    setDisplayName(username ?? localStorage.getItem("username"));
-  }, [username]);
+  const storedUsername = useLocalStorageItem("username");
+  const displayName = username ?? storedUsername;
 
   return (
     <DropdownMenu>
@@ -304,7 +317,9 @@ function AccountMenu({
         <span className="flex size-8 shrink-0 items-center justify-center border border-sidebar-border bg-sidebar-accent text-sidebar-foreground/70">
           <IconUser />
         </span>
-        <span className="truncate text-sm font-medium">{displayName ?? "Account"}</span>
+        <span className="truncate text-sm font-medium">
+          {displayName ?? "Account"}
+        </span>
         <IconSelector className="ml-auto text-sidebar-foreground/70" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="min-w-56">

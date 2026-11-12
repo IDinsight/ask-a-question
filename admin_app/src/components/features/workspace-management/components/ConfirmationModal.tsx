@@ -44,10 +44,12 @@ const ConfirmationModal = ({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="flex flex-col gap-5 p-6 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">{dialogTitle}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            {dialogTitle}
+          </DialogTitle>
           <DialogDescription className="text-sm">
-            The user has been successfully registered. Save the recovery codes below.
-            You will not be able to see them again.
+            The user has been successfully registered. Save the recovery codes
+            below. You will not be able to see them again.
           </DialogDescription>
         </DialogHeader>
         <ul

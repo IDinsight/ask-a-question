@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -43,7 +43,7 @@ def reset_databases(
 )
 def zia_create_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Zia creates a workspace.
 
     Parameters
@@ -55,7 +55,7 @@ def zia_create_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from creating the workspace.
     """
 
@@ -70,7 +70,7 @@ def zia_create_workspace(
 
 
 @then("Zia should be added as an admin to workspace Zia with the expected quotas")
-def check_zia_create_response(zia_create_workspace_response: httpx.Response) -> None:
+def check_zia_create_response(zia_create_workspace_response: httpx2.Response) -> None:
     """Check that Zia is added as an admin to workspace Zia with the expected quotas.
 
     Parameters
@@ -123,7 +123,7 @@ def check_zia_default_workspace(
 )
 def sid_create_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Sid tries to create a workspace.
 
     Parameters
@@ -135,7 +135,7 @@ def sid_create_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from creating the workspace.
     """
 
@@ -150,7 +150,7 @@ def sid_create_workspace(
 
 
 @then("No new workspaces should be created by Sid")
-def check_sid_create_response(sid_create_workspace_response: httpx.Response) -> None:
+def check_sid_create_response(sid_create_workspace_response: httpx2.Response) -> None:
     """Check that no new workspaces are created by Sid.
 
     Parameters

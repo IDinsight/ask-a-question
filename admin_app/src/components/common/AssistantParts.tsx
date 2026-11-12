@@ -3,7 +3,11 @@ import { IconSparkles } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { MessageAvatar } from "@/components/ui/message";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /**
  * Small pieces shared by the test chat and test search panels so both

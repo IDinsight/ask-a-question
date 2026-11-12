@@ -54,7 +54,9 @@ const LineChart: React.FC<LineChartProps> = ({ data, chartColors }) => {
         byTimestamp.set(x, row);
       }),
     );
-    return Array.from(byTimestamp.values()).sort((a, b) => a.timestamp - b.timestamp);
+    return Array.from(byTimestamp.values()).sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
   }, [data]);
 
   const isEmpty = data.every((series) => series.data.every((p) => !p.y));

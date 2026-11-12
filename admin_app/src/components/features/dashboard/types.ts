@@ -119,7 +119,10 @@ interface ContentLineChartTSData {
 
 interface StatsCardsResponse {
   query_stats: { n_questions: number; percentage_increase: number };
-  response_feedback_stats: { n_negative: number; percentage_negative_increase: number };
+  response_feedback_stats: {
+    n_negative: number;
+    percentage_negative_increase: number;
+  };
   urgency_stats: { n_urgent: number; percentage_increase: number };
   content_feedback_stats: {
     n_positive: number;

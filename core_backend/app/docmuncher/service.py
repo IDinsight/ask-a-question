@@ -1190,9 +1190,7 @@ def _zip_upload_status(
             "..." if len(failed_files) > 3 else ""
         )
         zip_task["overall_status"] = DocStatusEnum.failed
-        zip_task["finished_datetime_utc"] = tasks[-1].get(
-            "finished_datetime_utc", None
-        )
+        zip_task["finished_datetime_utc"] = tasks[-1].get("finished_datetime_utc", None)
         zip_task["error_trace"] = (
             f"{num_docs_failed} documents failed to ingest. "
             f"Failed files: {failed_files_preview}"
@@ -1203,9 +1201,7 @@ def _zip_upload_status(
         zip_task["error_trace"] = ""
     elif num_docs_success == len(tasks):
         zip_task["overall_status"] = DocStatusEnum.success
-        zip_task["finished_datetime_utc"] = tasks[-1].get(
-            "finished_datetime_utc", None
-        )
+        zip_task["finished_datetime_utc"] = tasks[-1].get("finished_datetime_utc", None)
         zip_task["error_trace"] = ""
     else:
         zip_task["overall_status"] = DocStatusEnum.not_started

@@ -1,6 +1,10 @@
 import React from "react";
 import Link from "next/link";
-import { IconArrowRight, IconCategory, IconSparkles } from "@tabler/icons-react";
+import {
+  IconArrowRight,
+  IconCategory,
+  IconSparkles,
+} from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -23,9 +27,10 @@ interface QueriesProps {
 }
 
 const formatDateTime = (value: string) =>
-  Intl.DateTimeFormat("en-ZA", { dateStyle: "short", timeStyle: "short" }).format(
-    new Date(value),
-  );
+  Intl.DateTimeFormat("en-ZA", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 
 /** AI-written summary of the selected topic. */
 const AISummary: React.FC<{ aiSummary: string }> = ({ aiSummary }) => (
@@ -54,7 +59,9 @@ const Queries: React.FC<QueriesProps> = ({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold tracking-tight">Example queries</h2>
+        <h2 className="text-base font-semibold tracking-tight">
+          Example queries
+        </h2>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">
             Last run: {formattedLastRefreshed}
@@ -110,10 +117,13 @@ const Queries: React.FC<QueriesProps> = ({
           <div className="mb-1.5 flex size-11 items-center justify-center border bg-muted">
             <IconCategory className="size-5" aria-hidden="true" />
           </div>
-          <b className="text-base font-semibold">Discover what people ask about</b>
+          <b className="text-base font-semibold">
+            Discover what people ask about
+          </b>
           <span className="max-w-100 text-[13px] text-muted-foreground">
-            Run discovery to group recent queries into topics and see real examples of
-            each. It needs queries from your chatbot in this period to find anything.
+            Run discovery to group recent queries into topics and see real
+            examples of each. It needs queries from your chatbot in this period
+            to find anything.
           </span>
           <Link
             href="/integrations"

@@ -1,7 +1,8 @@
 "use client";
 import { useAuth } from "@/utils/auth";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { useIsClient } from "@/hooks/use-browser-state";
 import { IconLock } from "@tabler/icons-react";
 
 import {
@@ -16,22 +17,21 @@ interface ProtectedComponentProps {
   children: React.ReactNode;
 }
 
-const ProtectedComponent: React.FC<ProtectedComponentProps> = ({ children }) => {
+const ProtectedComponent: React.FC<ProtectedComponentProps> = ({
+  children,
+}) => {
   const router = useRouter();
   const { token } = useAuth();
   const pathname = usePathname();
-  const [isClient, setIsClient] = useState(false);
+  // Don't render children until the token has been checked on the client.
+  const isClient = useIsClient();
 
   useEffect(() => {
     if (!token) {
       router.push("/login?sourcePage=" + encodeURIComponent(pathname));
     }
-  }, [token]);
+  }, [token, router, pathname]);
 
-  // This is to prevent the page from starting to load the children before the token is checked
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
   if (!token || !isClient) {
     return null;
   } else {
@@ -40,7 +40,9 @@ const ProtectedComponent: React.FC<ProtectedComponentProps> = ({ children }) => 
 };
 
 /** Renders children for workspace admins only; everyone else sees a notice. */
-const FullAccessComponent: React.FC<ProtectedComponentProps> = ({ children }) => {
+const FullAccessComponent: React.FC<ProtectedComponentProps> = ({
+  children,
+}) => {
   const { token, userRole } = useAuth();
 
   if (token && userRole == "admin") {

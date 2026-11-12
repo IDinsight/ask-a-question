@@ -24,7 +24,9 @@ const tags: Tag[] = [
   { tag_id: 2, tag_name: "health" },
 ];
 
-const renderModal = (fetchContents: () => Promise<{ contents: Content[]; tags: Tag[] }>) => {
+const renderModal = (
+  fetchContents: () => Promise<{ contents: Content[]; tags: Tag[] }>,
+) => {
   const props = {
     onClose: vi.fn(),
     onFailedDownload: vi.fn(),
@@ -87,7 +89,9 @@ describe("DownloadModal", () => {
     await user.click(screen.getByRole("button", { name: "Download" }));
 
     await waitFor(() =>
-      expect(props.onFailedDownload).toHaveBeenCalledWith("Failed to download content"),
+      expect(props.onFailedDownload).toHaveBeenCalledWith(
+        "Failed to download content",
+      ),
     );
     expect(props.onClose).toHaveBeenCalled();
   });
@@ -100,7 +104,9 @@ describe("DownloadModal", () => {
 
     await user.click(screen.getByRole("button", { name: "Download" }));
 
-    await waitFor(() => expect(props.onFailedDownload).toHaveBeenCalledWith("Not allowed"));
+    await waitFor(() =>
+      expect(props.onFailedDownload).toHaveBeenCalledWith("Not allowed"),
+    );
   });
 
   it("disables both buttons while the download is in progress", async () => {
@@ -115,7 +121,9 @@ describe("DownloadModal", () => {
     expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
 
     resolve({ contents: [], tags: [] });
-    await waitFor(() => expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled(),
+    );
   });
 
   it("calls onClose on Cancel", async () => {

@@ -52,18 +52,28 @@ const BokehPlot: React.FC<BokehPlotProps> = ({
   const [plotLoaded, setPlotLoaded] = useState(false);
   const [embedError, setEmbedError] = useState(false);
 
+  // Clear the last embed error when a new spec arrives (adjusting state during
+  // render rather than in the effect below).
+  const [prevPlotSpec, setPrevPlotSpec] = useState(plotSpec);
+  if (plotSpec !== prevPlotSpec) {
+    setPrevPlotSpec(plotSpec);
+    setEmbedError(false);
+  }
+
   // Render the spec into the DOM whenever a new one arrives. This syncs a
   // third-party widget with props; it doesn't fetch anything.
   useEffect(() => {
     if (!plotSpec) return;
     let cancelled = false;
-    setEmbedError(false);
     import("@bokeh/bokehjs")
       .then(({ embed }) => {
         if (cancelled || !plotRef.current) return;
         plotRef.current.innerHTML = "";
         // bokehjs types the item loosely; the backend returns json_item(...).
-        embed.embed_item(plotSpec as Parameters<typeof embed.embed_item>[0], PLOT_ID);
+        embed.embed_item(
+          plotSpec as Parameters<typeof embed.embed_item>[0],
+          PLOT_ID,
+        );
         setPlotLoaded(true);
       })
       .catch((err) => {
@@ -84,7 +94,9 @@ const BokehPlot: React.FC<BokehPlotProps> = ({
       className="flex flex-col gap-4 border bg-card p-5 shadow-xs"
     >
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold tracking-tight">Topic visualization</h2>
+        <h2 className="text-base font-semibold tracking-tight">
+          Topic visualization
+        </h2>
         <CollapsibleTrigger
           render={
             <Button
@@ -141,39 +153,42 @@ const BokehPlot: React.FC<BokehPlotProps> = ({
           <CollapsibleContent className="flex flex-col gap-3 border-t px-4 py-3 text-sm text-muted-foreground">
             <p>
               The plot below shows queries and content grouped by their topic
-              similarity. Any ungrouped points/outliers are shown in grey, while points
-              in the same cluster are shown as the same color. Content points are shown
-              as black boxes. If there are no content points near query points, you may
-              want to add content so that the query is more likely to be accurately
-              matched to a relevant content point.
+              similarity. Any ungrouped points/outliers are shown in grey, while
+              points in the same cluster are shown as the same color. Content
+              points are shown as black boxes. If there are no content points
+              near query points, you may want to add content so that the query
+              is more likely to be accurately matched to a relevant content
+              point.
             </p>
             <ul className="flex list-disc flex-col gap-2 pl-5">
               <li>
                 Use the mouse wheel to zoom in and out with the{" "}
-                <ToolIcon src={scrollZoomIcon.src} alt="Scroll Zoom" /> tool (activated
-                by default). Pan around using the{" "}
-                <ToolIcon src={moveIcon.src} alt="Pan Tool" /> tool (activated by
-                default).
+                <ToolIcon src={scrollZoomIcon.src} alt="Scroll Zoom" /> tool
+                (activated by default). Pan around using the{" "}
+                <ToolIcon src={moveIcon.src} alt="Pan Tool" /> tool (activated
+                by default).
               </li>
               <li>
-                Hover over points to see the text and topic information using the{" "}
-                <ToolIcon src={tooltipIcon.src} alt="Tooltip" /> tool (activated by
-                default). If you want to stop this behaviour, simply de-select the tool
-                in the sidebar.
+                Hover over points to see the text and topic information using
+                the <ToolIcon src={tooltipIcon.src} alt="Tooltip" /> tool
+                (activated by default). If you want to stop this behaviour,
+                simply de-select the tool in the sidebar.
               </li>
               <li>
-                Use the lasso tool <ToolIcon src={lassoIcon.src} alt="Lasso Tool" /> (in
-                the toolbar to the left of the plot) to select multiple points and see
-                their details in the table.
+                Use the lasso tool{" "}
+                <ToolIcon src={lassoIcon.src} alt="Lasso Tool" /> (in the
+                toolbar to the left of the plot) to select multiple points and
+                see their details in the table.
               </li>
               <li>
-                Click the reset tool <ToolIcon src={refreshIcon.src} alt="Reset Tool" />{" "}
-                to return the plot to its original state and de-select any points you
-                have currently selected.
+                Click the reset tool{" "}
+                <ToolIcon src={refreshIcon.src} alt="Reset Tool" /> to return
+                the plot to its original state and de-select any points you have
+                currently selected.
               </li>
               <li>
-                Select the &quot;Content&quot; checkbox in the legend to toggle the
-                visibility of content points (which will appear as squares)
+                Select the &quot;Content&quot; checkbox in the legend to toggle
+                the visibility of content points (which will appear as squares)
               </li>
             </ul>
           </CollapsibleContent>

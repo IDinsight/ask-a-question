@@ -4,7 +4,7 @@ authentication dependencies (used via `Depends`) shared by the other features.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
 from fastapi.security import (
     HTTPAuthorizationCredentials,
@@ -14,7 +14,13 @@ from fastapi.security import (
 )
 
 from app.auth import service
-from app.auth.schemas import AuthenticationDetails, GoogleLoginData
+from app.auth.schemas import (
+    AuthenticationDetails,
+    GoogleLoginData,
+    RefreshTokenRequest,
+)
+from app.core.config import RATE_LIMIT_AUTH
+from app.core.security import get_client_ip, limiter
 from app.users.models import UserDB
 from app.workspaces.models import WorkspaceDB
 
@@ -158,14 +164,22 @@ async def rate_limiter(
 # ---------------------------------------------------------------------------
 
 
+# Credential endpoints are limited per client IP (RATE_LIMIT_AUTH) instead of the
+# app-wide default, to slow down password guessing and token brute forcing.
+
+
 @router.post("/login")
+@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> AuthenticationDetails:
     """Login route for users to authenticate and receive a JWT token.
 
     Parameters
     ----------
+    request
+        The request object.
     form_data
         Form data containing username and password.
 
@@ -182,11 +196,14 @@ async def login(
     """
 
     return await service.login_with_credentials(
-        password=form_data.password, username=form_data.username
+        password=form_data.password,
+        redis=request.app.state.redis,
+        username=form_data.username,
     )
 
 
 @router.post("/login-google")
+@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)
 async def login_google(
     request: Request, login_data: GoogleLoginData
 ) -> AuthenticationDetails:
@@ -222,4 +239,59 @@ async def login_google(
 
     return await service.login_with_google(
         credential=login_data.credential, redis=request.app.state.redis
+    )
+
+
+@router.post("/refresh")
+@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)
+async def refresh_access_token(
+    request: Request, body: RefreshTokenRequest
+) -> AuthenticationDetails:
+    """Exchange a refresh token for a new access token and a new refresh token.
+
+    Each refresh token works once. Sending one that was already used revokes the
+    whole login session, since it means the token was copied.
+
+    Parameters
+    ----------
+    request
+        The request object.
+    body
+        The refresh token from the last login or refresh.
+
+    Returns
+    -------
+    AuthenticationDetails
+        The new access token and refresh token.
+
+    Raises
+    ------
+    UnauthorizedError
+        If the refresh token is invalid, expired, already used or revoked, or the
+        user no longer belongs to the token's workspace.
+    """
+
+    return await service.refresh_access_token(
+        redis=request.app.state.redis, refresh_token=body.refresh_token
+    )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)
+async def logout(request: Request, body: RefreshTokenRequest) -> None:
+    """Revoke the login session the refresh token belongs to. Always returns 204.
+
+    The access token is not revoked; it stays valid until it expires
+    (ACCESS_TOKEN_EXPIRE_MINUTES), so clients should also discard it.
+
+    Parameters
+    ----------
+    request
+        The request object.
+    body
+        The refresh token to revoke.
+    """
+
+    await service.logout(
+        redis=request.app.state.redis, refresh_token=body.refresh_token
     )

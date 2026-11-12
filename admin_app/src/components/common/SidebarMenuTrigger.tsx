@@ -20,5 +20,7 @@ export const SidebarMenuTrigger = React.forwardRef<
   HTMLButtonElement,
   Omit<React.ComponentProps<typeof SidebarMenuButton>, "render">
 >(function SidebarMenuTrigger(props, ref) {
-  return <SidebarMenuButton {...props} render={<button ref={ref} type="button" />} />;
+  return (
+    <SidebarMenuButton {...props} render={<button ref={ref} type="button" />} />
+  );
 });

@@ -14,7 +14,12 @@ vi.mock("recharts", () => import("../../rechartsMock"));
 const ts = new Date(2026, 0, 5, 14, 30).getTime();
 const rows: QueriesOverTimeRow[] = [
   { timestamp: ts, normal: 3, downvoted: 1, urgent: 0 },
-  { timestamp: new Date(2026, 1, 9).getTime(), normal: 0, downvoted: 0, urgent: 2 },
+  {
+    timestamp: new Date(2026, 1, 9).getTime(),
+    normal: 0,
+    downvoted: 0,
+    urgent: 2,
+  },
 ];
 const zeroRows: QueriesOverTimeRow[] = [
   { timestamp: ts, normal: 0, downvoted: 0, urgent: 0 },
@@ -32,15 +37,24 @@ describe("StackedBarChart", () => {
     ["Day", false, ["Jan 5", "Feb 9"]],
     ["Week", false, ["Jan 5", "Feb 9"]],
     ["Month", false, ["Jan 2026", "Feb 2026"]],
-  ] as const)("formats %s ticks (day of week: %s)", (frequency, showDayOfWeek, expected) => {
-    render(
-      <StackedBarChart data={rows} frequency={frequency} showDayOfWeek={showDayOfWeek} />,
-    );
-    expect(ticks()).toEqual(expected);
-  });
+  ] as const)(
+    "formats %s ticks (day of week: %s)",
+    (frequency, showDayOfWeek, expected) => {
+      render(
+        <StackedBarChart
+          data={rows}
+          frequency={frequency}
+          showDayOfWeek={showDayOfWeek}
+        />,
+      );
+      expect(ticks()).toEqual(expected);
+    },
+  );
 
   it("uses a time-of-day tooltip label for hourly bars and a date otherwise", () => {
-    const { rerender } = render(<StackedBarChart data={rows} frequency="Hour" />);
+    const { rerender } = render(
+      <StackedBarChart data={rows} frequency="Hour" />,
+    );
     expect(screen.getByTestId("tooltip")).toHaveTextContent("Mon 5 Jan, 14:30");
 
     rerender(<StackedBarChart data={rows} frequency="Week" />);
@@ -53,14 +67,22 @@ describe("StackedBarChart", () => {
     for (const key of ["normal", "downvoted", "urgent"]) {
       expect(screen.getByTestId(`bar-${key}`)).toBeInTheDocument();
     }
-    expect(screen.getByTestId("y-axis")).toHaveAttribute("data-domain", '[0,"auto"]');
-    expect(screen.queryByText("No queries in this period")).not.toBeInTheDocument();
+    expect(screen.getByTestId("y-axis")).toHaveAttribute(
+      "data-domain",
+      '[0,"auto"]',
+    );
+    expect(
+      screen.queryByText("No queries in this period"),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a visible 0–20 scale and an empty message when every bar is zero", () => {
     render(<StackedBarChart data={zeroRows} frequency="Day" />);
 
-    expect(screen.getByTestId("y-axis")).toHaveAttribute("data-domain", "[0,20]");
+    expect(screen.getByTestId("y-axis")).toHaveAttribute(
+      "data-domain",
+      "[0,20]",
+    );
     expect(screen.getByText("No queries in this period")).toBeInTheDocument();
   });
 });

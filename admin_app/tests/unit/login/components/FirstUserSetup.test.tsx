@@ -32,7 +32,9 @@ describe("FirstUserSetup", () => {
       <FirstUserSetup requireRegister={false} registerUser={vi.fn()} />,
     );
     rerender(<FirstUserSetup requireRegister registerUser={vi.fn()} />);
-    expect(screen.getByRole("dialog", { name: "Initial setup" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Initial setup" }),
+    ).toBeInTheDocument();
   });
 
   it("walks alert → register → recovery codes → back to sign in", async () => {
@@ -105,7 +107,9 @@ describe("FirstUserSetup", () => {
     expect(screen.getByRole("button", { name: "Copied" })).toBeInTheDocument();
 
     await act(() => vi.advanceTimersByTimeAsync(5000));
-    expect(screen.getByRole("button", { name: "Copy codes" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy codes" }),
+    ).toBeInTheDocument();
   });
 
   it("logs and keeps the label when the clipboard is blocked", async () => {
@@ -117,8 +121,12 @@ describe("FirstUserSetup", () => {
       />,
     );
     await goToCodes(user);
-    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("blocked"));
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(
+      new Error("blocked"),
+    );
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
     await user.click(screen.getByRole("button", { name: "Copy codes" }));
 
@@ -126,6 +134,8 @@ describe("FirstUserSetup", () => {
       "Failed to copy recovery codes:",
       expect.any(Error),
     );
-    expect(screen.getByRole("button", { name: "Copy codes" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy codes" }),
+    ).toBeInTheDocument();
   });
 });

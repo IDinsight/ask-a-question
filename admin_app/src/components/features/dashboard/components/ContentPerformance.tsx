@@ -92,14 +92,19 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
         className="flex flex-col gap-4 border bg-card p-5 shadow-xs"
       >
         <div>
-          <h2 id="top-content" className="text-base font-semibold tracking-tight">
+          <h2
+            id="top-content"
+            className="text-base font-semibold tracking-tight"
+          >
             Top content, {periodLabel(timePeriod)}
           </h2>
           <p className="text-[13px] text-muted-foreground">
             Ordered by {SORT_LABELS[sortColumn] ?? sortColumn},{" "}
             {sortDirection === "descending" ? "highest" : "lowest"} first
             {/* Total pages live in the table footer (it knows about search filtering) */}
-            {(page > 1 || rows.length > N_TOP_CONTENT) && ` · page ${page} of results`}.
+            {(page > 1 || rows.length > N_TOP_CONTENT) &&
+              ` · page ${page} of results`}
+            .
           </p>
         </div>
         <LineChart data={lineChartData} chartColors={SERIES_COLORS} />

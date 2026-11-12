@@ -49,15 +49,19 @@ const DownloadModal = ({
   const [loading, setLoading] = useState(false);
 
   const fetchAndTransformContents = async () => {
-    const { contents: raw_json_contents, tags: tags_json } = await fetchContents();
+    const { contents: raw_json_contents, tags: tags_json } =
+      await fetchContents();
     if (raw_json_contents.length === 0) {
       return [];
     }
     const tag_list = Object.values<Tag>(tags_json);
-    const tag_dict = tag_list.reduce((acc: Record<string, string>, tag: Tag) => {
-      acc[tag.tag_id] = tag.tag_name;
-      return acc;
-    }, {});
+    const tag_dict = tag_list.reduce(
+      (acc: Record<string, string>, tag: Tag) => {
+        acc[tag.tag_id] = tag.tag_name;
+        return acc;
+      },
+      {},
+    );
     // convert fetched contents to list of json objects
     const list_json_contents = Object.values(raw_json_contents);
     // Convert to ContentDownload structure with tag names and metadata as string
@@ -92,7 +96,7 @@ const DownloadModal = ({
   };
 
   const handleDownloadContent = async (
-    fetchAndTransformContents: () => Promise<any[]>,
+    fetchAndTransformContents: () => Promise<object[]>,
     onNoDataFound: () => void,
     onFailedDownload: (error_message: string) => void,
     setLoading: (loading: boolean) => void,
@@ -107,16 +111,13 @@ const DownloadModal = ({
       }
       const csv = Papa.unparse(list_json_content_download);
       const now = new Date();
-      const timestamp = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(
-        2,
-        "0",
-      )}_${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(
-        2,
-        "0",
-      )}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(
-        2,
-        "0",
-      )}`;
+      const timestamp = `${now.getFullYear()}_${String(
+        now.getMonth() + 1,
+      ).padStart(2, "0")}_${String(now.getDate()).padStart(2, "0")}_${String(
+        now.getHours(),
+      ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(
+        now.getSeconds(),
+      ).padStart(2, "0")}`;
       const filename = `content_${timestamp}.csv`;
       downloadCSV(csv, filename);
     } catch (error) {
@@ -129,7 +130,10 @@ const DownloadModal = ({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => !nextOpen && onClose()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia>

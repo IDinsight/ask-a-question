@@ -58,8 +58,12 @@ export const RelatedContentsAutoComplete = ({
             {(values: Content[]) => (
               <>
                 {values.map((content) => (
-                  <ComboboxChip key={content.content_id ?? content.content_title}>
-                    <span className="max-w-48 truncate">{content.content_title}</span>
+                  <ComboboxChip
+                    key={content.content_id ?? content.content_title}
+                  >
+                    <span className="max-w-48 truncate">
+                      {content.content_title}
+                    </span>
                   </ComboboxChip>
                 ))}
                 <ComboboxChipsInput

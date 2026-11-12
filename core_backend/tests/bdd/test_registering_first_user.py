@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -141,7 +141,7 @@ def verify_workspace_and_role_for_tony(
     "Tony tries to register Mark as a first user",
     target_fixture="register_mark_response",
 )
-def try_to_register_mark(client: TestClient) -> httpx.Response:
+def try_to_register_mark(client: TestClient) -> httpx2.Response:
     """Try to register Mark as a user.
 
     Parameters
@@ -151,7 +151,7 @@ def try_to_register_mark(client: TestClient) -> httpx.Response:
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from trying to register Mark as a user.
     """
 
@@ -171,7 +171,7 @@ def try_to_register_mark(client: TestClient) -> httpx.Response:
 
 @then("Tony should not be allowed to register Mark as the first user")
 def check_that_mark_is_not_allowed_to_register(
-    register_mark_response: httpx.Response,
+    register_mark_response: httpx2.Response,
 ) -> None:
     """Check that Mark is not allowed to be registered as the first user.
 

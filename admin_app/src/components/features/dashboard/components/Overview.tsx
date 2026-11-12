@@ -39,7 +39,10 @@ interface OverviewProps {
 }
 
 /** The five headline numbers, in display order. */
-const toStatCards = (stats: StatsCardsResponse, period: Period): StatCardProps[] => [
+const toStatCards = (
+  stats: StatsCardsResponse,
+  period: Period,
+): StatCardProps[] => [
   {
     title: "Total queries",
     value: stats.query_stats.n_questions,
@@ -50,7 +53,8 @@ const toStatCards = (stats: StatsCardsResponse, period: Period): StatCardProps[]
   {
     title: "Downvoted responses",
     value: stats.response_feedback_stats.n_negative,
-    percentageChange: stats.response_feedback_stats.percentage_negative_increase,
+    percentageChange:
+      stats.response_feedback_stats.percentage_negative_increase,
     Icon: IconThumbDown,
     period,
   },
@@ -124,7 +128,10 @@ const Overview: React.FC<OverviewProps> = ({
           aria-labelledby="usage-frequency"
           className="flex min-w-0 flex-[1_1_280px] flex-col gap-4 border bg-card p-5 shadow-xs"
         >
-          <h2 id="usage-frequency" className="text-base font-semibold tracking-tight">
+          <h2
+            id="usage-frequency"
+            className="text-base font-semibold tracking-tight"
+          >
             Usage frequency
           </h2>
           <HeatMap data={data?.heatmap ?? {}} />
@@ -175,7 +182,10 @@ const GetSetUp = ({ hasContent }: { hasContent: boolean }) => {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="get-set-up" className="text-base font-semibold tracking-tight">
+          <h2
+            id="get-set-up"
+            className="text-base font-semibold tracking-tight"
+          >
             Get set up
           </h2>
           <p className="text-[13px] text-muted-foreground">
@@ -203,19 +213,31 @@ const GetSetUp = ({ hasContent }: { hasContent: boolean }) => {
       </div>
       <ol className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step, i) => (
-          <li key={step.title} className="flex flex-col gap-2 border bg-background p-4">
+          <li
+            key={step.title}
+            className="flex flex-col gap-2 border bg-background p-4"
+          >
             <span
               className={cn(
                 "flex size-6 items-center justify-center border border-input text-xs font-semibold text-muted-foreground",
-                step.done && "border-primary bg-primary text-primary-foreground",
+                step.done &&
+                  "border-primary bg-primary text-primary-foreground",
               )}
             >
-              {step.done ? <IconCheck className="size-3.5" aria-label="Done" /> : i + 1}
+              {step.done ? (
+                <IconCheck className="size-3.5" aria-label="Done" />
+              ) : (
+                i + 1
+              )}
             </span>
             <b className="text-sm font-semibold">{step.title}</b>
-            <span className="text-[13px] text-muted-foreground">{step.text}</span>
+            <span className="text-[13px] text-muted-foreground">
+              {step.text}
+            </span>
             {step.done ? (
-              <span className="mt-auto text-xs text-muted-foreground">Done</span>
+              <span className="mt-auto text-xs text-muted-foreground">
+                Done
+              </span>
             ) : (
               step.link && (
                 <Link

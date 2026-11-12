@@ -1,16 +1,26 @@
 import { test, expect, type Page } from "@playwright/test";
-import { makeContent, makeOverview, mockAuth, mockBackend } from "./helpers/mockApi";
+import {
+  makeContent,
+  makeOverview,
+  mockAuth,
+  mockBackend,
+} from "./helpers/mockApi";
 
 /**
  * /dashboard?page=overview, run against a mocked backend and a fake admin
  * login (see helpers/mockApi.ts). Needs the dev server on :3000.
  */
 
-async function openOverview(page: Page, data: Parameters<typeof mockBackend>[1] = {}) {
+async function openOverview(
+  page: Page,
+  data: Parameters<typeof mockBackend>[1] = {},
+) {
   await mockAuth(page);
   const api = await mockBackend(page, data);
   await page.goto("/dashboard?page=overview");
-  await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Overview", level: 1 }),
+  ).toBeVisible();
   return api;
 }
 
@@ -20,19 +30,25 @@ test.describe("dashboard overview", () => {
   }) => {
     await openOverview(page);
 
-    await expect(page.getByRole("heading", { name: "Get set up" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Get set up" }),
+    ).toBeVisible();
     await expect(page.getByText("1 of 4")).toBeVisible();
-    await expect(page.getByRole("link", { name: "View integrations" })).toHaveAttribute(
-      "href",
-      "/integrations",
-    );
+    await expect(
+      page.getByRole("link", { name: "View integrations" }),
+    ).toHaveAttribute("href", "/integrations");
     await expect(page.getByText("No change data yet")).toHaveCount(5);
     await expect(page.getByText("No queries in this period")).toBeVisible();
-    await expect(page.getByText(/Busy hours and days show up here/)).toBeVisible();
+    await expect(
+      page.getByText(/Busy hours and days show up here/),
+    ).toBeVisible();
     await expect(page.getByText("Nothing has been sent yet.")).toBeVisible();
     await expect(page.locator('[class*="Mui"]')).toHaveCount(0);
 
-    await page.screenshot({ path: "test-results/overview-empty.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/overview-empty.png",
+      fullPage: true,
+    });
     await page
       .locator("section", {
         has: page.getByRole("heading", { name: "Queries over time" }),
@@ -41,7 +57,9 @@ test.describe("dashboard overview", () => {
       .screenshot({ path: "test-results/overview-empty-charts.png" });
   });
 
-  test("checklist marks content as done once content exists", async ({ page }) => {
+  test("checklist marks content as done once content exists", async ({
+    page,
+  }) => {
     await openOverview(page, { contents: [makeContent(1)] });
     await expect(page.getByText("2 of 4")).toBeVisible();
   });
@@ -71,7 +89,9 @@ test.describe("dashboard overview", () => {
       }),
     });
 
-    await expect(page.getByRole("heading", { name: "Get set up" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Get set up" })).toHaveCount(
+      0,
+    );
     await expect(page.getByText("42", { exact: true })).toBeVisible();
     await expect(page.getByText("+25.0%")).toBeVisible();
     await expect(page.getByText("No queries in this period")).toHaveCount(0);
@@ -83,7 +103,10 @@ test.describe("dashboard overview", () => {
     await expect(page.getByText("[DELETED] Old card")).toBeVisible();
 
     await page.waitForTimeout(1600); // let Recharts finish its grow-in animation
-    await page.screenshot({ path: "test-results/overview-data.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/overview-data.png",
+      fullPage: true,
+    });
     await page
       .locator("section", {
         has: page.getByRole("heading", { name: "Queries over time" }),
@@ -97,18 +120,21 @@ test.describe("dashboard overview", () => {
       .screenshot({ path: "test-results/overview-data-table.png" });
   });
 
-  test("time range buttons refetch with the chosen period", async ({ page }) => {
+  test("time range buttons refetch with the chosen period", async ({
+    page,
+  }) => {
     const api = await openOverview(page);
     const last7 = page.getByRole("button", { name: "Last 7 days" });
     await expect(last7).toHaveAttribute("aria-pressed", "true");
 
     await page.getByRole("button", { name: "Last month" }).click();
-    await expect(page.getByRole("button", { name: "Last month" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(
+      page.getByRole("button", { name: "Last month" }),
+    ).toHaveAttribute("aria-pressed", "true");
     await expect
-      .poll(() => api.requests.some((r) => r.path === "/dashboard/overview/month"))
+      .poll(() =>
+        api.requests.some((r) => r.path === "/dashboard/overview/month"),
+      )
       .toBe(true);
   });
 
@@ -141,7 +167,9 @@ test.describe("dashboard overview", () => {
       page.getByRole("button", { name: "Edit custom date range" }),
     ).toBeVisible();
     await expect
-      .poll(() => api.requests.some((r) => r.path === "/dashboard/overview/custom"))
+      .poll(() =>
+        api.requests.some((r) => r.path === "/dashboard/overview/custom"),
+      )
       .toBe(true);
   });
 });

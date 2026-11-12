@@ -65,7 +65,9 @@ describe("ImportFromCSVModal", () => {
 
     expect(uploadCsv).toHaveBeenCalledWith(csv);
     expect(screen.getByText("File uploaded successfully!")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Imported" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Imported" }),
+    ).toBeInTheDocument();
 
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(onClose).toHaveBeenCalled();
@@ -103,7 +105,9 @@ describe("ImportFromCSVModal", () => {
     await user.upload(fileInput, csv);
     await user.click(importButton());
     await flushUpload();
-    expect(screen.getByRole("alert")).toHaveTextContent("An unknown error occurred");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "An unknown error occurred",
+    );
   });
 
   it("shows a retry message when the upload itself fails", async () => {

@@ -45,7 +45,9 @@ test.describe("urgency rules page", () => {
       page.getByRole("heading", { name: "How urgency detection works" }),
     ).toBeVisible();
     // Nothing to test without rules
-    await expect(page.getByRole("button", { name: "Test rules" })).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Test rules" }),
+    ).toBeDisabled();
     await expect(page.locator('[class*="Mui"]')).toHaveCount(0);
 
     await page.screenshot({
@@ -97,7 +99,9 @@ test.describe("urgency rules page", () => {
     expect(api.urgencyRules).toHaveLength(2);
   });
 
-  test("edits a rule with the save button and cancels on blur", async ({ page }) => {
+  test("edits a rule with the save button and cancels on blur", async ({
+    page,
+  }) => {
     const api = await openRulesPage(page);
 
     // Edit via the hover action, save with the send button
@@ -107,15 +111,21 @@ test.describe("urgency rules page", () => {
     await input.fill("Fever above 40 degrees");
     await page.getByRole("button", { name: "Save rule" }).click();
     await expect(page.getByText("Fever above 40 degrees")).toBeVisible();
-    expect(api.urgencyRules[1].urgency_rule_text).toBe("Fever above 40 degrees");
+    expect(api.urgencyRules[1].urgency_rule_text).toBe(
+      "Fever above 40 degrees",
+    );
 
     // Double-click to edit, then click away: the change is dropped
     await page.getByText("Bleeding during pregnancy").dblclick();
     const input1 = page.getByRole("textbox", { name: "Rule 1" });
     await input1.fill("Changed but not saved");
-    await page.getByRole("heading", { name: "Urgency detection", level: 1 }).click();
+    await page
+      .getByRole("heading", { name: "Urgency detection", level: 1 })
+      .click();
     await expect(page.getByText("Bleeding during pregnancy")).toBeVisible();
-    expect(api.urgencyRules[0].urgency_rule_text).toBe("Bleeding during pregnancy");
+    expect(api.urgencyRules[0].urgency_rule_text).toBe(
+      "Bleeding during pregnancy",
+    );
   });
 
   test("deletes a rule", async ({ page }) => {
@@ -154,7 +164,9 @@ test.describe("urgency rules page", () => {
 
     await expect(page.getByRole("button", { name: "New rule" })).toBeDisabled();
     await page.getByText("Bleeding during pregnancy").hover();
-    await expect(page.getByRole("button", { name: "Edit rule 1" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Edit rule 1" })).toHaveCount(
+      0,
+    );
   });
 
   test("test panel classifies a message", async ({ page }) => {

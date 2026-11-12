@@ -39,7 +39,8 @@ const ContentEditWrapper = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
   const [content, setContent] = React.useState<Content | null>(null);
-  const [openDiscardChangesModal, setOpenDiscardChangesModal] = React.useState(false);
+  const [openDiscardChangesModal, setOpenDiscardChangesModal] =
+    React.useState(false);
 
   const [isSaved, setIsSaved] = React.useState(true);
 
@@ -100,7 +101,9 @@ const ContentEditWrapper = () => {
           contents={contentList.data}
           addTag={createTag.mutateAsync}
           deleteTag={deleteTag.mutateAsync}
-          saveContent={(contentId, body) => save.mutateAsync({ contentId, body })}
+          saveContent={(contentId, body) =>
+            save.mutateAsync({ contentId, body })
+          }
           isSaving={save.isPending}
           onSaved={(message) => {
             // The content list page shows this message after we redirect back.
@@ -133,7 +136,12 @@ const Header = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="icon" aria-label="Back to content" onClick={onBack}>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Back to content"
+        onClick={onBack}
+      >
         <IconChevronLeft />
       </Button>
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -160,7 +168,10 @@ const DiscardChangesModal = ({
   onConfirmDiscard: () => void;
 }) => {
   return (
-    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => !nextOpen && onClose()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Discard changes?</AlertDialogTitle>

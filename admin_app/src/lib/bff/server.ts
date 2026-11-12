@@ -35,7 +35,10 @@ export const BFF_PREFIX = "/bff";
  * internal service URL (http://core_backend:8000); otherwise localhost:8000.
  */
 const backendUrl = (): string =>
-  (process.env.BACKEND_INTERNAL_URL || "http://localhost:8000").replace(/\/+$/, "");
+  (process.env.BACKEND_INTERNAL_URL || "http://localhost:8000").replace(
+    /\/+$/,
+    "",
+  );
 
 /**
  * Default upstream timeout. Matches Caddy's 100s backend read timeout, since
@@ -57,9 +60,13 @@ export const matchRoute = (
   method: string,
   backendPath: string,
 ): BffRoute | "method-not-allowed" | null => {
-  const candidates = BFF_ROUTES.filter((route) => route.pattern.test(backendPath));
+  const candidates = BFF_ROUTES.filter((route) =>
+    route.pattern.test(backendPath),
+  );
   if (candidates.length === 0) return null;
-  return candidates.find((route) => route.method === method) ?? "method-not-allowed";
+  return (
+    candidates.find((route) => route.method === method) ?? "method-not-allowed"
+  );
 };
 
 const jsonError = (status: number, detail: string, headers: Headers) => {
@@ -86,13 +93,19 @@ export const proxyToBackend = async (
   // the backend receives exactly the path the generated client built.
   const { pathname, search } = new URL(request.url);
   const backendPath = pathname.slice(BFF_PREFIX.length) || "/";
-  const route = backendPath.includes("..") ? null : matchRoute(method, backendPath);
+  const route = backendPath.includes("..")
+    ? null
+    : matchRoute(method, backendPath);
 
   if (route === null || route === "method-not-allowed") {
     const status = route === null ? 404 : 405;
     // The concrete path is not logged (it may contain a username).
     logger.warn("bff.rejected", { requestId, method, status });
-    return jsonError(status, route === null ? "Not Found" : "Method Not Allowed", responseHeaders);
+    return jsonError(
+      status,
+      route === null ? "Not Found" : "Method Not Allowed",
+      responseHeaders,
+    );
   }
   const logFields = { requestId, method, route: route.template };
 
@@ -109,7 +122,9 @@ export const proxyToBackend = async (
   // Buffer the body. Multipart uploads keep their original content-type (with
   // boundary), so the backend parses them exactly as before.
   const body =
-    method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();
+    method === "GET" || method === "HEAD"
+      ? undefined
+      : await request.arrayBuffer();
 
   // --- Call the backend ------------------------------------------------------
   let upstream: Response;
@@ -124,12 +139,16 @@ export const proxyToBackend = async (
     });
   } catch (error) {
     const durationMs = Math.round(performance.now() - started);
-    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
-    logger.error(timedOut ? "bff.upstream_timeout" : "bff.upstream_unreachable", {
-      ...logFields,
-      durationMs,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    const timedOut =
+      error instanceof DOMException && error.name === "TimeoutError";
+    logger.error(
+      timedOut ? "bff.upstream_timeout" : "bff.upstream_unreachable",
+      {
+        ...logFields,
+        durationMs,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
     responseHeaders.set("server-timing", `upstream;dur=${durationMs}`);
     return timedOut
       ? jsonError(504, "The server took too long to respond", responseHeaders)

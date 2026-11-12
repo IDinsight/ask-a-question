@@ -4,11 +4,27 @@ import {
   loginGoogle as loginGoogleRequest,
   switchWorkspace,
 } from "@/client";
+import type { AuthenticationDetails } from "@/client/types.gen";
 import type { UserRole } from "@/components/features/workspace-management/types";
-import { CustomError } from "@/utils/api";
+import { isCustomError } from "@/utils/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ReactNode, createContext, useContext, useState } from "react";
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import {
+  SessionExpiredError,
+  clearTokens,
+  getFreshAccessToken,
+  getRefreshToken,
+  revokeRefreshToken,
+  saveTokens,
+  syncSessionCookie,
+} from "@/lib/api/session";
 
 type AuthContextType = {
   token: string | null;
@@ -64,6 +80,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   };
   const [token, setToken] = useState<string | null>(getInitialToken);
 
+  // Keep the cookie src/proxy.ts reads in line with what's stored. Sign-in and
+  // sign-out already set/clear it (session.ts); this covers sessions that
+  // started before the cookie existed, so they get it on their next visit.
+  useEffect(() => {
+    syncSessionCookie();
+  }, [token]);
+
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const getInitialAccessLevel = () => {
@@ -81,14 +104,17 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   // Cached server data belongs to one user + workspace. Drop it whenever that
   // identity changes, so a new workspace never shows the previous one's data.
   const queryClient = useQueryClient();
-  const setLoginParams = (
-    token: string,
-    accessLevel: string,
-    user_role: UserRole,
-    workspaceName: string,
-  ) => {
+  /** Store a login/switch response: token pair plus who and where the user is. */
+  const setLoginParams = (details: AuthenticationDetails) => {
+    const {
+      access_token: token,
+      access_level: accessLevel,
+      user_role,
+      workspace_name: workspaceName,
+    } = details;
     queryClient.clear();
-    localStorage.setItem("token", token);
+    // Access token, refresh token, expiry and the proxy cookie.
+    saveTokens(details);
     localStorage.setItem("accessLevel", accessLevel);
     localStorage.setItem("workspaceName", workspaceName);
     localStorage.setItem("userRole", user_role);
@@ -104,15 +130,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     try {
       // OAuth2 password form, sent as application/x-www-form-urlencoded.
-      const {
-        data: { access_token, access_level, user_role, workspace_name },
-      } = await loginRequest({ body: { username, password } });
+      const { data } = await loginRequest({ body: { username, password } });
       localStorage.setItem("username", username);
       setUsername(username);
-      setLoginParams(access_token, access_level, user_role, workspace_name);
+      setLoginParams(data);
       router.push(sourcePage);
-    } catch (error: CustomError | any) {
-      if (error.status === 401) {
+    } catch (error) {
+      // A 401 arrives as a CustomError (see utils/api.ts).
+      if (isCustomError(error) && error.status === 401) {
         setLoginError(error.message);
         console.error("Login error:", error);
       } else {
@@ -121,34 +146,49 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
   };
-  const loginWorkspace = async (workspaceName: string, currentPage?: string) => {
+  const loginWorkspace = async (
+    workspaceName: string,
+    currentPage?: string,
+  ) => {
     const sourcePage = searchParams.has("sourcePage")
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/content";
+    // The session we're leaving. Read after any refresh below, since a
+    // refresh rotates it.
+    let previousRefreshToken: string | null = null;
     try {
+      // Refresh first if needed: the switch call must carry a live token.
+      const currentToken = await getFreshAccessToken();
+      previousRefreshToken = getRefreshToken();
       logoutWorkspace();
       // logoutWorkspace() just removed the token from localStorage, where the
       // API client normally reads it, so pass the current one explicitly.
-      const {
-        data: { access_token, access_level, user_role, workspace_name },
-      } = await switchWorkspace({
+      const { data } = await switchWorkspace({
         body: { workspace_name: workspaceName },
-        auth: token ?? undefined,
+        auth: currentToken,
       });
-      setLoginParams(access_token, access_level, user_role, workspace_name);
+      setLoginParams(data);
       if (currentPage) {
         router.push(currentPage);
       } else {
         router.push(sourcePage);
       }
-    } catch (error: Error | any) {
-      if (error.status === 401) {
+    } catch (error) {
+      if (error instanceof SessionExpiredError) {
+        // Nothing left to switch with; the tokens are already cleared.
+        logout();
+      } else if (isCustomError(error) && error.status === 401) {
         setLoginError("Invalid workspace name");
         console.error("Workspace Login error:", error);
       } else {
         console.error("Login error:", error);
         setLoginError("An unexpected error occurred. Please try again later.");
       }
+    } finally {
+      // The switch issues a brand-new session, and on failure the old tokens
+      // are already gone from storage. Either way the old session is unused,
+      // so revoke it rather than leave it valid for days.
+      revokeRefreshToken(previousRefreshToken);
     }
   };
 
@@ -165,10 +205,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     loginGoogleRequest({ body: { client_id, credential } })
       .then(({ data }) => {
-        const { access_token, access_level, username, user_role, workspace_name } = data;
-        localStorage.setItem("username", username);
-        setUsername(username);
-        setLoginParams(access_token, access_level, user_role, workspace_name);
+        localStorage.setItem("username", data.username);
+        setUsername(data.username);
+        setLoginParams(data);
         router.push(sourcePage);
       })
       .catch((error) => {
@@ -178,7 +217,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   };
   const logout = () => {
     queryClient.clear();
-    localStorage.removeItem("token");
+    // End the session server-side too, so the refresh token can't be reused.
+    revokeRefreshToken(getRefreshToken());
+    clearTokens();
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("userRole");
     localStorage.removeItem("workspaceName");
@@ -192,7 +233,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logoutWorkspace = () => {
     queryClient.clear();
-    localStorage.removeItem("token");
+    clearTokens();
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("userRole");
     localStorage.removeItem("workspaceName");
@@ -215,7 +256,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     logoutWorkspace: logoutWorkspace,
   };
 
-  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;

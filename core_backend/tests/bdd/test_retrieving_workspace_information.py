@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -41,7 +41,7 @@ def reset_databases(
 )
 def suzin_retrieve_workspace_information_by_workspace_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin retrieves information for workspace Suzin.
 
     Parameters
@@ -53,7 +53,7 @@ def suzin_retrieve_workspace_information_by_workspace_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Suzin retrieving workspace information by workspace ID.
     """
 
@@ -71,7 +71,7 @@ def suzin_retrieve_workspace_information_by_workspace_id(
 
 @then("Suzin should be able to see information regarding workspace Suzin only")
 def check_suzin_workspace_info_by_workspace_id(
-    suzin_retrieved_workspace_by_workspace_id_response: httpx.Response,
+    suzin_retrieved_workspace_by_workspace_id_response: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Suzin should be able to see information regarding workspace Suzin
@@ -101,7 +101,7 @@ def check_suzin_workspace_info_by_workspace_id(
 )
 def carlos_retrieve_workspace_information_by_workspace_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos retrieves information for workspace Suzin.
 
     Parameters
@@ -113,7 +113,7 @@ def carlos_retrieve_workspace_information_by_workspace_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Carlos retrieving workspace information by workspace ID.
     """
 
@@ -130,7 +130,7 @@ def carlos_retrieve_workspace_information_by_workspace_id(
 
 @then("Carlos should get an error")
 def check_carlos_workspace_info_by_workspace_id(
-    carlos_retrieved_workspace_by_workspace_id_response: httpx.Response,
+    carlos_retrieved_workspace_by_workspace_id_response: httpx2.Response,
 ) -> None:
     """Check that Carlos should get an error.
 
@@ -153,7 +153,7 @@ def check_carlos_workspace_info_by_workspace_id(
 )
 def sid_retrieve_workspace_information_by_workspace_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Sid retrieves information for workspace Amir.
 
     Parameters
@@ -165,7 +165,7 @@ def sid_retrieve_workspace_information_by_workspace_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Sid retrieving workspace information by workspace ID.
     """
 
@@ -182,7 +182,7 @@ def sid_retrieve_workspace_information_by_workspace_id(
 
 @then("Sid should get an error")
 def check_sid_workspace_info_by_workspace_id(
-    sid_retrieved_workspace_by_workspace_id_response: httpx.Response,
+    sid_retrieved_workspace_by_workspace_id_response: httpx2.Response,
 ) -> None:
     """Check that Sid should get an error.
 
@@ -205,7 +205,7 @@ def check_sid_workspace_info_by_workspace_id(
 )
 def suzin_retrieve_workspace_information_by_user_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin retrieves workspace information for Poornima.
 
     Parameters
@@ -217,7 +217,7 @@ def suzin_retrieve_workspace_information_by_user_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Suzin retrieving workspace information by user ID.
     """
 
@@ -236,7 +236,7 @@ def suzin_retrieve_workspace_information_by_user_id(
     "to"
 )
 def check_suzin_workspace_info_by_user_id(
-    suzin_retrieved_workspace_by_user_id_response: httpx.Response,
+    suzin_retrieved_workspace_by_user_id_response: httpx2.Response,
 ) -> None:
     """Check that Suzin should be able to see information for all workspaces that
     Poornima
@@ -259,7 +259,7 @@ def check_suzin_workspace_info_by_user_id(
 )
 def amir_retrieve_workspace_information_by_user_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Amir retrieves workspace information for Poornima.
 
     Parameters
@@ -271,7 +271,7 @@ def amir_retrieve_workspace_information_by_user_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Amir retrieving workspace information by user ID.
     """
 
@@ -287,7 +287,7 @@ def amir_retrieve_workspace_information_by_user_id(
 
 @then("Amir should only see information for Poornima in workspace Amir")
 def check_amir_workspace_info_by_user_id(
-    amir_retrieved_workspace_by_user_id_response: httpx.Response,
+    amir_retrieved_workspace_by_user_id_response: httpx2.Response,
 ) -> None:
     """Check that Amir should only see information for Poornima in workspace Amir.
 
@@ -311,7 +311,7 @@ def check_amir_workspace_info_by_user_id(
 )
 def carlos_retrieve_workspace_information_by_user_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos retrieves workspace information for Poornima.
 
     Parameters
@@ -323,7 +323,7 @@ def carlos_retrieve_workspace_information_by_user_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Carlos retrieving workspace information by user ID.
     """
 
@@ -338,7 +338,7 @@ def carlos_retrieve_workspace_information_by_user_id(
 
 @then("Carlos should get an error again")
 def check_carlos_workspace_info_by_user_id(
-    carlos_retrieved_workspace_by_user_id_response: httpx.Response,
+    carlos_retrieved_workspace_by_user_id_response: httpx2.Response,
 ) -> None:
     """Check that Carlos should get an error.
 
@@ -361,7 +361,7 @@ def check_carlos_workspace_info_by_user_id(
 )
 def mark_retrieve_workspace_information_by_user_id(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Mark retrieves workspace information for Suzin.
 
     Parameters
@@ -373,7 +373,7 @@ def mark_retrieve_workspace_information_by_user_id(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Mark retrieving workspace information by user ID.
     """
 
@@ -388,7 +388,7 @@ def mark_retrieve_workspace_information_by_user_id(
 
 @then("Mark should get an error")
 def check_mark_workspace_info_by_user_id(
-    mark_retrieved_workspace_by_user_id_response: httpx.Response,
+    mark_retrieved_workspace_by_user_id_response: httpx2.Response,
 ) -> None:
     """Check that Mark should get an error.
 

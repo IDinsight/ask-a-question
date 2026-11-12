@@ -44,6 +44,7 @@ import {
   retrieveTagOptions,
   retrieveTagQueryKey,
 } from "@/client/@tanstack/react-query.gen";
+import type { QueryResponse } from "@/client";
 import { ApiServerError, isCustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import type {
@@ -51,10 +52,21 @@ import type {
   ContentBody,
   DocIndexingStatusRow,
   DocIndexingTask,
+  CsvUploadResult,
   DocumentUploadResponse,
+  IndexingHistoryEntry,
   IndexingStatusResponse,
   Tag,
 } from "./types";
+
+/**
+ * Search/chat result: the HTTP status plus the response body spread on top
+ * (fields are optional because a failed search returns `error` instead).
+ */
+export type QueryResult = {
+  status: number;
+  error?: unknown;
+} & Partial<QueryResponse>;
 
 /* ------------------------------------------------------------------ */
 /* Query keys                                                          */
@@ -98,7 +110,7 @@ export const formatDate = (dateString: string) => {
 
 /** GET /docmuncher/status/data rows -> dialog rows, newest first. */
 const toIndexingHistoryRows = (entries: unknown[]): DocIndexingStatusRow[] =>
-  (entries as any[])
+  (entries as IndexingHistoryEntry[])
     .map((entry) => ({
       fileName: entry.parent_file_name,
       status: (entry.overall_status === "Success"
@@ -113,7 +125,8 @@ const toIndexingHistoryRows = (entries: unknown[]): DocIndexingStatusRow[] =>
       tasks: (entry.tasks as DocIndexingTask[]) || [],
     }))
     .sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
 /* ------------------------------------------------------------------ */
@@ -169,7 +182,9 @@ export const useIndexingStatusQuery = () => {
     // The spec says boolean; the backend sends {detail} when docmuncher is off.
     queryFn: async (context): Promise<IndexingStatusResponse> => {
       const data = await queryFn!(context);
-      queryClient.invalidateQueries({ queryKey: contentKeys.unvalidatedCount() });
+      queryClient.invalidateQueries({
+        queryKey: contentKeys.unvalidatedCount(),
+      });
       return data as IndexingStatusResponse;
     },
     enabled: !!token,
@@ -220,7 +235,9 @@ export const useIndexingHistoryQuery = (enabled: boolean) => {
 /* ------------------------------------------------------------------ */
 
 /** Archiving changes the list and may remove an unvalidated card. */
-const invalidateAfterArchive = (queryClient: ReturnType<typeof useQueryClient>) =>
+const invalidateAfterArchive = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) =>
   Promise.all([
     queryClient.invalidateQueries({ queryKey: contentKeys.list() }),
     queryClient.invalidateQueries({ queryKey: contentKeys.unvalidatedCount() }),
@@ -262,7 +279,10 @@ export const useBulkArchiveContentMutation = () => {
               await archiveContent({ path: { content_id } });
               successCount++;
             } catch (error) {
-              console.error(`Failed to delete content ID ${content_id}:`, error);
+              console.error(
+                `Failed to delete content ID ${content_id}:`,
+                error,
+              );
               failedContentIds.push(content_id);
             }
           }),
@@ -284,8 +304,12 @@ export const useValidateContentMutation = () => {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: contentKeys.list() }),
-        queryClient.invalidateQueries({ queryKey: contentKeys.unvalidatedCount() }),
-        queryClient.invalidateQueries({ queryKey: contentKeys.nextUnvalidated() }),
+        queryClient.invalidateQueries({
+          queryKey: contentKeys.unvalidatedCount(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: contentKeys.nextUnvalidated(),
+        }),
       ]),
   });
 };
@@ -311,7 +335,9 @@ export const useSaveContentMutation = () => {
       // Not awaited: the editor navigates away right after saving.
       queryClient.invalidateQueries({ queryKey: contentKeys.list() });
       if (contentId !== null) {
-        queryClient.invalidateQueries({ queryKey: contentKeys.detail(contentId) });
+        queryClient.invalidateQueries({
+          queryKey: contentKeys.detail(contentId),
+        });
       }
     },
   });
@@ -325,9 +351,7 @@ export const useSaveContentMutation = () => {
 export const useBulkUploadContentsMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (
-      file: File,
-    ): Promise<{ status: number; data?: any; detail?: any }> => {
+    mutationFn: async (file: File): Promise<CsvUploadResult> => {
       try {
         const { data, response } = await bulkUploadContents({ body: { file } });
         return { status: response.status, data };
@@ -337,7 +361,10 @@ export const useBulkUploadContentsMutation = () => {
           const body = error.body as { detail?: unknown } | undefined;
           return {
             status: error.status,
-            detail: body?.detail || "An unknown error occurred",
+            // Assumes the backend's 4xx `detail` matches CsvUploadResult.
+            detail:
+              (body?.detail as CsvUploadResult["detail"]) ||
+              "An unknown error occurred",
           };
         }
         throw new Error("An unexpected error occurred during the bulk upload.");
@@ -371,8 +398,12 @@ export const usePostDocumentToIndexMutation = () => {
     },
     onSuccess: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: contentKeys.indexingStatus() }),
-        queryClient.invalidateQueries({ queryKey: contentKeys.indexingHistory() }),
+        queryClient.invalidateQueries({
+          queryKey: contentKeys.indexingStatus(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: contentKeys.indexingHistory(),
+        }),
       ]),
   });
 };
@@ -402,7 +433,8 @@ export const useCreateTagMutation = () => {
   return useMutation({
     mutationFn: async (tagName: string): Promise<Tag> =>
       (await createTag({ body: { tag_name: tagName } })).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: contentKeys.tags() }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: contentKeys.tags() }),
   });
 };
 
@@ -437,10 +469,13 @@ export const useSearchMutation = () =>
     }: {
       question: string;
       generateLLMResponse: boolean;
-    }): Promise<{ status: number; data?: any; error?: any }> => {
+    }): Promise<QueryResult> => {
       try {
         const { data, response } = await search({
-          body: { query_text: question, generate_llm_response: generateLLMResponse },
+          body: {
+            query_text: question,
+            generate_llm_response: generateLLMResponse,
+          },
         });
         return { status: response.status, ...data };
       } catch (error) {
@@ -461,7 +496,7 @@ export const useChatMutation = () =>
     }: {
       question: string;
       sessionId?: number;
-    }): Promise<{ status: number; data?: any; error?: any }> => {
+    }): Promise<QueryResult> => {
       const { data, response } = await chat({
         body: {
           query_text: question,

@@ -26,14 +26,29 @@ class AuthenticatedUser(BaseModel):
 
 
 class AuthenticationDetails(BaseModel):
-    """Pydantic model for authentication details."""
+    """Pydantic model for authentication details.
+
+    `access_token` is short-lived (`expires_in` seconds). Before it expires, the
+    client exchanges `refresh_token` for a new pair at POST /refresh. Each refresh
+    token works once.
+    """
 
     access_level: AccessLevel
     access_token: str
+    expires_in: int
+    refresh_token: str
     token_type: TokenType
     user_role: UserRoles
     username: str
     workspace_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RefreshTokenRequest(BaseModel):
+    """Pydantic model for the body of POST /refresh and POST /logout."""
+
+    refresh_token: str
 
     model_config = ConfigDict(from_attributes=True)
 

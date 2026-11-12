@@ -166,9 +166,9 @@ export const ContentBox = ({
       setIsSaved(true);
       setSaveError(false);
       return result.content_id;
-    } catch (error: Error | any) {
+    } catch (error) {
       const customError = error as CustomError;
-      if (error.status === 403) {
+      if (customError.status === 403) {
         // 403 here means the workspace's content quota is used up.
         console.error(
           "Content quota reached. Please contact support for assistance.",
@@ -225,9 +225,7 @@ export const ContentBox = ({
     setIsTitleEmpty(false);
     setIsContentEmpty(false);
 
-    content
-      ? setContent({ ...content, [key]: e.target.value })
-      : setContent({ ...emptyContent, [key]: e.target.value });
+    setContent({ ...(content ?? emptyContent), [key]: e.target.value });
     setIsSaved(false);
   };
 

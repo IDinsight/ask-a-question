@@ -308,12 +308,6 @@ class LLMCallException(Exception):
     pass
 
 
-
-
-
-
-
-
 def format_prompt(
     *,
     prompt: str,
@@ -343,12 +337,6 @@ def format_prompt(
     return prompt.format(**prompt_kws) if prompt_kws else prompt
 
 
-
-
-
-
-
-
 def remove_json_markdown(*, text: str) -> str:
     """Remove json markdown from text.
 
@@ -368,8 +356,6 @@ def remove_json_markdown(*, text: str) -> str:
         text = text.removeprefix("```json").removesuffix("```")
     text = text.replace(r"\{", "{").replace(r"\}", "}")
     return text.strip()
-
-
 
 
 class EmbeddingCallException(Exception):

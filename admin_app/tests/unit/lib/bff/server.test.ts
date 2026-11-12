@@ -50,14 +50,18 @@ describe("allowlist", () => {
   });
 
   it("rejects a known path with a method the backend doesn't offer (405)", async () => {
-    const response = await proxyToBackend(bffRequest("/tag/", { method: "PATCH" }));
+    const response = await proxyToBackend(
+      bffRequest("/tag/", { method: "PATCH" }),
+    );
 
     expect(response.status).toBe(405);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("rejects path traversal", async () => {
-    const response = await proxyToBackend(bffRequest("/content/../data-api/contents"));
+    const response = await proxyToBackend(
+      bffRequest("/content/../data-api/contents"),
+    );
 
     // URL parsing already collapses "..", so this lands on a non-allowlisted path.
     expect(response.status).toBe(404);
@@ -98,13 +102,18 @@ describe("forwarding", () => {
     expect(headers.get("content-type")).toBe("application/json");
     expect(headers.get("x-forwarded-for")).toBe("203.0.113.7");
     expect(headers.get("cookie")).toBeNull();
-    expect(new TextDecoder().decode(init.body as ArrayBuffer)).toBe('{"tag_name":"x"}');
+    expect(new TextDecoder().decode(init.body as ArrayBuffer)).toBe(
+      '{"tag_name":"x"}',
+    );
   });
 
   it("keeps a multipart upload's boundary", async () => {
     const form = new FormData();
     form.append("file", new Blob(["a,b"]), "cards.csv");
-    const request = bffRequest("/content/csv-upload", { method: "POST", body: form });
+    const request = bffRequest("/content/csv-upload", {
+      method: "POST",
+      body: form,
+    });
     const contentType = request.headers.get("content-type");
 
     await proxyToBackend(request);
@@ -151,7 +160,9 @@ describe("relaying the backend's response", () => {
       Response.json({ detail: "Tag already exists" }, { status: 400 }),
     );
 
-    const response = await proxyToBackend(bffRequest("/tag/", { method: "POST" }));
+    const response = await proxyToBackend(
+      bffRequest("/tag/", { method: "POST" }),
+    );
 
     expect(response.status).toBe(400);
     expect(response.headers.get("content-type")).toBe("application/json");
@@ -183,7 +194,9 @@ describe("failures", () => {
     const response = await proxyToBackend(bffRequest("/tag/"));
 
     expect(response.status).toBe(502);
-    expect(await response.json()).toEqual({ detail: "Could not reach the server" });
+    expect(await response.json()).toEqual({
+      detail: "Could not reach the server",
+    });
   });
 
   it("maps a timeout to 504", async () => {
@@ -191,13 +204,18 @@ describe("failures", () => {
     fetchMock.mockImplementationOnce(
       (_url: string, init: RequestInit) =>
         new Promise((_resolve, reject) =>
-          init.signal!.addEventListener("abort", () => reject(init.signal!.reason)),
+          init.signal!.addEventListener("abort", () =>
+            reject(init.signal!.reason),
+          ),
         ),
     );
 
-    const response = await proxyToBackend(bffRequest("/search", { method: "POST" }), {
-      timeoutMs: 10,
-    });
+    const response = await proxyToBackend(
+      bffRequest("/search", { method: "POST" }),
+      {
+        timeoutMs: 10,
+      },
+    );
 
     expect(response.status).toBe(504);
   });
@@ -250,7 +268,10 @@ describe("logging", () => {
   it("logs rejected paths without the path itself", async () => {
     await proxyToBackend(bffRequest("/data-api/queries?user=jane.doe"));
 
-    expect(parsedLogs()[0]).toMatchObject({ event: "bff.rejected", status: 404 });
+    expect(parsedLogs()[0]).toMatchObject({
+      event: "bff.rejected",
+      status: 404,
+    });
     expect(logLines.join("\n")).not.toContain("jane.doe");
   });
 });

@@ -47,10 +47,9 @@ describe("RelatedContentsAutoComplete", () => {
       />,
     );
     expect(screen.getByText("Measles vaccine")).toBeInTheDocument();
-    expect(screen.getByLabelText("Related contents (optional)")).toHaveAttribute(
-      "placeholder",
-      "",
-    );
+    expect(
+      screen.getByLabelText("Related contents (optional)"),
+    ).toHaveAttribute("placeholder", "");
   });
 
   it("filters by title and adds the picked content to the selection", async () => {
@@ -64,14 +63,24 @@ describe("RelatedContentsAutoComplete", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Related contents (optional)"), "Mea");
+    await user.type(
+      screen.getByLabelText("Related contents (optional)"),
+      "Mea",
+    );
 
     // Only the matching title is offered.
-    expect(await screen.findByRole("option", { name: "Measles vaccine" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Nutrition for toddlers" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("option", { name: "Measles vaccine" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Nutrition for toddlers" }),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("option", { name: "Measles vaccine" }));
-    expect(handleContentChange).toHaveBeenLastCalledWith([contents[0], contents[1]]);
+    expect(handleContentChange).toHaveBeenLastCalledWith([
+      contents[0],
+      contents[1],
+    ]);
   });
 
   it("says when nothing matches", async () => {
@@ -84,7 +93,10 @@ describe("RelatedContentsAutoComplete", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Related contents (optional)"), "zzz");
+    await user.type(
+      screen.getByLabelText("Related contents (optional)"),
+      "zzz",
+    );
     expect(await screen.findByText("No contents found")).toBeInTheDocument();
   });
 
@@ -102,7 +114,10 @@ describe("RelatedContentsAutoComplete", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Related contents (optional)"), "Draft");
+    await user.type(
+      screen.getByLabelText("Related contents (optional)"),
+      "Draft",
+    );
     await user.click(await screen.findByRole("option", { name: "Draft card" }));
     expect(handleContentChange).toHaveBeenLastCalledWith([]);
   });

@@ -12,7 +12,10 @@ export interface SearchBarProps {
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({
+  searchTerm,
+  setSearchTerm,
+}) => {
   return (
     <InputGroup className="h-9 bg-card">
       <InputGroupInput

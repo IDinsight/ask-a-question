@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AddExistingUserData, AddExistingUserErrors, AddExistingUserResponses, ArchiveContentData, ArchiveContentErrors, ArchiveContentResponses, BulkUploadContentsData, BulkUploadContentsErrors, BulkUploadContentsResponses, ChatData, ChatErrors, ChatResponses, CheckIfUsernameExistsData, CheckIfUsernameExistsErrors, CheckIfUsernameExistsResponses, ClassifyTextData, ClassifyTextErrors, ClassifyTextResponses, CreateContentData, CreateContentErrors, CreateContentResponses, CreateFirstUserData, CreateFirstUserErrors, CreateFirstUserResponses, CreateNewUserData, CreateNewUserErrors, CreateNewUserResponses, CreatePlotData, CreatePlotErrors, CreatePlotResponses, CreateTagData, CreateTagErrors, CreateTagResponses, CreateUrgencyRuleData, CreateUrgencyRuleErrors, CreateUrgencyRuleResponses, CreateWorkspacesData, CreateWorkspacesErrors, CreateWorkspacesResponses, DeleteContentData, DeleteContentErrors, DeleteContentResponses, DeleteTagData, DeleteTagErrors, DeleteTagResponses, DeleteUrgencyRuleData, DeleteUrgencyRuleErrors, DeleteUrgencyRuleResponses, EditContentData, EditContentErrors, EditContentResponses, EditTagData, EditTagErrors, EditTagResponses, FeedbackData, FeedbackErrors, FeedbackResponses, GetAllJobsData, GetAllJobsResponses, GetJobsRunningForUserData, GetJobsRunningForUserResponses, GetNewApiKeyData, GetNewApiKeyResponses, GetNextUnvalidatedContentData, GetNextUnvalidatedContentResponses, GetUnvalidatedCardCountData, GetUnvalidatedCardCountResponses, GetUrgencyRuleData, GetUrgencyRuleErrors, GetUrgencyRuleResponses, GetUrgencyRulesData, GetUrgencyRulesResponses, GetUserData, GetUserResponses, IsRegisterRequiredData, IsRegisterRequiredResponses, LoginData, LoginErrors, LoginGoogleData, LoginGoogleErrors, LoginGoogleResponses, LoginResponses, RefreshInsightsFrequencyData, RefreshInsightsFrequencyErrors, RefreshInsightsFrequencyResponses, RemoveUserFromWorkspaceData, RemoveUserFromWorkspaceErrors, RemoveUserFromWorkspaceResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, RetrieveAllUsersInCurrentWorkspaceData, RetrieveAllUsersInCurrentWorkspaceResponses, RetrieveAllWorkspacesData, RetrieveAllWorkspacesResponses, RetrieveContentAiSummaryData, RetrieveContentAiSummaryErrors, RetrieveContentAiSummaryResponses, RetrieveContentByIdData, RetrieveContentByIdErrors, RetrieveContentByIdResponses, RetrieveContentData, RetrieveContentDetailsData, RetrieveContentDetailsErrors, RetrieveContentDetailsResponses, RetrieveContentErrors, RetrieveContentResponses, RetrieveCurrentWorkspaceData, RetrieveCurrentWorkspaceResponses, RetrieveInsightsFrequencyData, RetrieveInsightsFrequencyErrors, RetrieveInsightsFrequencyResponses, RetrieveOverviewFrequencyData, RetrieveOverviewFrequencyErrors, RetrieveOverviewFrequencyResponses, RetrievePerformanceFrequencyData, RetrievePerformanceFrequencyErrors, RetrievePerformanceFrequencyResponses, RetrieveTagByIdData, RetrieveTagByIdErrors, RetrieveTagByIdResponses, RetrieveTagData, RetrieveTagErrors, RetrieveTagResponses, RetrieveWorkspaceByWorkspaceIdData, RetrieveWorkspaceByWorkspaceIdErrors, RetrieveWorkspaceByWorkspaceIdResponses, RetrieveWorkspacesByUserIdData, RetrieveWorkspacesByUserIdErrors, RetrieveWorkspacesByUserIdResponses, SearchData, SearchErrors, SearchResponses, SwitchWorkspaceData, SwitchWorkspaceErrors, SwitchWorkspaceResponses, UpdateUrgencyRuleData, UpdateUrgencyRuleErrors, UpdateUrgencyRuleResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses, UploadDocumentData, UploadDocumentErrors, UploadDocumentResponses, ValidateContentCardData, ValidateContentCardErrors, ValidateContentCardResponses } from './types.gen';
+import type { AddExistingUserData, AddExistingUserErrors, AddExistingUserResponses, ArchiveContentData, ArchiveContentErrors, ArchiveContentResponses, BulkUploadContentsData, BulkUploadContentsErrors, BulkUploadContentsResponses, ChatData, ChatErrors, ChatResponses, CheckIfUsernameExistsData, CheckIfUsernameExistsErrors, CheckIfUsernameExistsResponses, ClassifyTextData, ClassifyTextErrors, ClassifyTextResponses, CreateContentData, CreateContentErrors, CreateContentResponses, CreateFirstUserData, CreateFirstUserErrors, CreateFirstUserResponses, CreateNewUserData, CreateNewUserErrors, CreateNewUserResponses, CreatePlotData, CreatePlotErrors, CreatePlotResponses, CreateTagData, CreateTagErrors, CreateTagResponses, CreateUrgencyRuleData, CreateUrgencyRuleErrors, CreateUrgencyRuleResponses, CreateWorkspacesData, CreateWorkspacesErrors, CreateWorkspacesResponses, DeleteContentData, DeleteContentErrors, DeleteContentResponses, DeleteTagData, DeleteTagErrors, DeleteTagResponses, DeleteUrgencyRuleData, DeleteUrgencyRuleErrors, DeleteUrgencyRuleResponses, EditContentData, EditContentErrors, EditContentResponses, EditTagData, EditTagErrors, EditTagResponses, FeedbackData, FeedbackErrors, FeedbackResponses, GetAllJobsData, GetAllJobsResponses, GetJobsRunningForUserData, GetJobsRunningForUserResponses, GetNewApiKeyData, GetNewApiKeyResponses, GetNextUnvalidatedContentData, GetNextUnvalidatedContentResponses, GetUnvalidatedCardCountData, GetUnvalidatedCardCountResponses, GetUrgencyRuleData, GetUrgencyRuleErrors, GetUrgencyRuleResponses, GetUrgencyRulesData, GetUrgencyRulesResponses, GetUserData, GetUserResponses, IsRegisterRequiredData, IsRegisterRequiredResponses, LoginData, LoginErrors, LoginGoogleData, LoginGoogleErrors, LoginGoogleResponses, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RefreshAccessTokenData, RefreshAccessTokenErrors, RefreshAccessTokenResponses, RefreshInsightsFrequencyData, RefreshInsightsFrequencyErrors, RefreshInsightsFrequencyResponses, RemoveUserFromWorkspaceData, RemoveUserFromWorkspaceErrors, RemoveUserFromWorkspaceResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, RetrieveAllUsersInCurrentWorkspaceData, RetrieveAllUsersInCurrentWorkspaceResponses, RetrieveAllWorkspacesData, RetrieveAllWorkspacesResponses, RetrieveContentAiSummaryData, RetrieveContentAiSummaryErrors, RetrieveContentAiSummaryResponses, RetrieveContentByIdData, RetrieveContentByIdErrors, RetrieveContentByIdResponses, RetrieveContentData, RetrieveContentDetailsData, RetrieveContentDetailsErrors, RetrieveContentDetailsResponses, RetrieveContentErrors, RetrieveContentResponses, RetrieveCurrentWorkspaceData, RetrieveCurrentWorkspaceResponses, RetrieveInsightsFrequencyData, RetrieveInsightsFrequencyErrors, RetrieveInsightsFrequencyResponses, RetrieveOverviewFrequencyData, RetrieveOverviewFrequencyErrors, RetrieveOverviewFrequencyResponses, RetrievePerformanceFrequencyData, RetrievePerformanceFrequencyErrors, RetrievePerformanceFrequencyResponses, RetrieveTagByIdData, RetrieveTagByIdErrors, RetrieveTagByIdResponses, RetrieveTagData, RetrieveTagErrors, RetrieveTagResponses, RetrieveWorkspaceByWorkspaceIdData, RetrieveWorkspaceByWorkspaceIdErrors, RetrieveWorkspaceByWorkspaceIdResponses, RetrieveWorkspacesByUserIdData, RetrieveWorkspacesByUserIdErrors, RetrieveWorkspacesByUserIdResponses, SearchData, SearchErrors, SearchResponses, SwitchWorkspaceData, SwitchWorkspaceErrors, SwitchWorkspaceResponses, UpdateUrgencyRuleData, UpdateUrgencyRuleErrors, UpdateUrgencyRuleResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses, UploadDocumentData, UploadDocumentErrors, UploadDocumentResponses, ValidateContentCardData, ValidateContentCardErrors, ValidateContentCardResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -25,6 +25,8 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  *
  * Parameters
  * ----------
+ * request
+ * The request object.
  * form_data
  * Form data containing username and password.
  *
@@ -83,6 +85,65 @@ export const login = <ThrowOnError extends boolean = true>(options: Options<Logi
  */
 export const loginGoogle = <ThrowOnError extends boolean = true>(options: Options<LoginGoogleData, ThrowOnError>): RequestResult<LoginGoogleResponses, LoginGoogleErrors, ThrowOnError> => (options.client ?? client).post<LoginGoogleResponses, LoginGoogleErrors, ThrowOnError>({
     url: '/login-google',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Refresh Access Token
+ *
+ * Exchange a refresh token for a new access token and a new refresh token.
+ *
+ * Each refresh token works once. Sending one that was already used revokes the
+ * whole login session, since it means the token was copied.
+ *
+ * Parameters
+ * ----------
+ * request
+ * The request object.
+ * body
+ * The refresh token from the last login or refresh.
+ *
+ * Returns
+ * -------
+ * AuthenticationDetails
+ * The new access token and refresh token.
+ *
+ * Raises
+ * ------
+ * UnauthorizedError
+ * If the refresh token is invalid, expired, already used or revoked, or the
+ * user no longer belongs to the token's workspace.
+ */
+export const refreshAccessToken = <ThrowOnError extends boolean = true>(options: Options<RefreshAccessTokenData, ThrowOnError>): RequestResult<RefreshAccessTokenResponses, RefreshAccessTokenErrors, ThrowOnError> => (options.client ?? client).post<RefreshAccessTokenResponses, RefreshAccessTokenErrors, ThrowOnError>({
+    url: '/refresh',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Logout
+ *
+ * Revoke the login session the refresh token belongs to. Always returns 204.
+ *
+ * The access token is not revoked; it stays valid until it expires
+ * (ACCESS_TOKEN_EXPIRE_MINUTES), so clients should also discard it.
+ *
+ * Parameters
+ * ----------
+ * request
+ * The request object.
+ * body
+ * The refresh token to revoke.
+ */
+export const logout = <ThrowOnError extends boolean = true>(options: Options<LogoutData, ThrowOnError>): RequestResult<LogoutResponses, LogoutErrors, ThrowOnError> => (options.client ?? client).post<LogoutResponses, LogoutErrors, ThrowOnError>({
+    url: '/logout',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1747,6 +1808,8 @@ export const isRegisterRequired = <ThrowOnError extends boolean = true>(options?
  *
  * Parameters
  * ----------
+ * request
+ * The request object.
  * user
  * The user object with the new password and recovery code.
  * asession
@@ -2161,6 +2224,8 @@ export const getNewApiKey = <ThrowOnError extends boolean = true>(options?: Opti
  * ----------
  * calling_user_db
  * The user object associated with the user switching workspaces.
+ * request
+ * The request object (for the Redis client that stores refresh tokens).
  * workspace_switch
  * The workspace switch object containing the workspace name to switch into.
  * asession

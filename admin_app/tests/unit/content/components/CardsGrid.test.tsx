@@ -5,7 +5,10 @@ import { vi } from "vitest";
 import { CardsGrid } from "@/components/features/content/components/CardsGrid";
 import type { Content, Tag } from "@/components/features/content/types";
 
-const makeContent = (id: number, overrides: Partial<Content> = {}): Content => ({
+const makeContent = (
+  id: number,
+  overrides: Partial<Content> = {},
+): Content => ({
   content_id: id,
   display_number: id,
   content_title: `Card ${id}`,
@@ -45,7 +48,9 @@ const cardTitles = () =>
 // a test fakes a size.
 const fakeGridSize = (width: number, height: number) => {
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(width);
-  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(height);
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(
+    height,
+  );
 };
 
 describe("CardsGrid", () => {
@@ -68,9 +73,15 @@ describe("CardsGrid", () => {
   });
 
   it("hides the add-content prompt without edit access", () => {
-    render(<CardsGrid {...baseProps({ cards: [], allCards: [], editAccess: false })} />);
+    render(
+      <CardsGrid
+        {...baseProps({ cards: [], allCards: [], editAccess: false })}
+      />,
+    );
     expect(screen.getByText("No content yet")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Add content" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Add content" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says nothing matches when filters hide every card", () => {
@@ -173,7 +184,11 @@ describe("CardsGrid", () => {
     const cards = [makeContent(1), { ...makeContent(2), content_id: null }];
     render(
       <CardsGrid
-        {...baseProps({ cards, allCards: cards, tags: undefined as unknown as Tag[] })}
+        {...baseProps({
+          cards,
+          allCards: cards,
+          tags: undefined as unknown as Tag[],
+        })}
       />,
     );
     expect(cardTitles()).toEqual(["Card 1"]);
@@ -183,14 +198,25 @@ describe("CardsGrid", () => {
   it("passes related contents and select mode through to cards", async () => {
     const user = userEvent.setup();
     fakeGridSize(900, 230);
-    const cards = [makeContent(1, { related_contents_id: [2] }), makeContent(2)];
-    render(<CardsGrid {...baseProps({ cards, allCards: cards, selectedContents: [2] })} />);
+    const cards = [
+      makeContent(1, { related_contents_id: [2] }),
+      makeContent(2),
+    ];
+    render(
+      <CardsGrid
+        {...baseProps({ cards, allCards: cards, selectedContents: [2] })}
+      />,
+    );
 
     // Select mode: the selected card's checkbox is ticked.
-    expect(screen.getByRole("checkbox", { name: "Select content #2" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Select content #2" }),
+    ).toBeChecked();
 
     // Opening card 1 lists card 2 as related; clicking it looks up its relations.
-    await user.click(screen.getByRole("button", { name: "Open content #1: Card 1" }));
+    await user.click(
+      screen.getByRole("button", { name: "Open content #1: Card 1" }),
+    );
     await user.click(screen.getByRole("button", { name: "Card 2" }));
     expect(screen.getByRole("dialog")).toHaveTextContent("Content #2");
   });

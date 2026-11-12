@@ -53,9 +53,11 @@ export const KeyRenewConfirmationModal = ({
         </AlertDialogTitle>
         <AlertDialogDescription className="text-sm">
           Your current key beginning with{" "}
-          <b className="font-mono font-semibold text-foreground">{currentKey}</b> will
-          stop working straight away. You’ll need to update your applications with the
-          new key.
+          <b className="font-mono font-semibold text-foreground">
+            {currentKey}
+          </b>{" "}
+          will stop working straight away. You’ll need to update your
+          applications with the new key.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
@@ -104,7 +106,9 @@ export const NewKeyModal = ({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="flex flex-col gap-5 p-6 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Save your new key</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            Save your new key
+          </DialogTitle>
           <DialogDescription className="text-sm">
             Save this secret key somewhere safe and accessible.{" "}
             <b className="font-semibold text-foreground">

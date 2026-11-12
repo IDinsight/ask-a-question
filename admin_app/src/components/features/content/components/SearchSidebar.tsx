@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   IconBraces,
@@ -34,6 +34,8 @@ import {
   IconButtonWithTooltip,
 } from "@/components/common/AssistantParts";
 import { MARKDOWN_CLASSES } from "./ContentModal";
+import type { QueryResult } from "../queries";
+import type { QuerySearchResult } from "@/client";
 
 /** One content card returned by the search service. */
 interface SearchResult {
@@ -54,7 +56,7 @@ interface SearchResultListWithLLM extends SearchResultList {
 interface SearchResponseBoxData {
   dateTime: string;
   parsedData: SearchResultList | SearchResultListWithLLM | string; // string is for error messages
-  rawJson: any;
+  rawJson: unknown;
 }
 
 interface SearchResponseBoxProps {
@@ -66,14 +68,17 @@ interface SearchResponseBoxProps {
 type FeedbackSentimentType = "positive" | "negative";
 
 /** Runs a test search; resolves with `{status, ...body}` (see useSearchMutation). */
-type SearchFn = (question: string, generateLLMResponse: boolean) => Promise<any>;
+type SearchFn = (
+  question: string,
+  generateLLMResponse: boolean,
+) => Promise<QueryResult>;
 
 /** Sends thumbs up/down feedback on a search response. */
 type SendFeedbackFn = (args: {
   queryId: number;
   sentiment: FeedbackSentimentType;
   feedbackSecretKey: string;
-}) => Promise<any>;
+}) => Promise<unknown>;
 
 /**
  * TestSidebar (shared with urgency rules) renders `ResponseBox` itself, so the
@@ -87,7 +92,7 @@ const SendFeedbackContext = createContext<SendFeedbackFn | null>(null);
  */
 const toSearchResults = (contentResponse: unknown): SearchResult[] => {
   if (!contentResponse || typeof contentResponse !== "object") return [];
-  return Object.entries(contentResponse as Record<string, any>)
+  return Object.entries(contentResponse as Record<string, QuerySearchResult>)
     .sort(([a], [b]) => Number(a) - Number(b))
     .map(([key, item]) => ({
       index: key,
@@ -102,7 +107,9 @@ const getSearchResponse = (
   question: string,
   generateLLMResponse: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setResponse: React.Dispatch<React.SetStateAction<SearchResponseBoxData | null>>,
+  setResponse: React.Dispatch<
+    React.SetStateAction<SearchResponseBoxData | null>
+  >,
   // Passed in by TestSidebar; only used to skip sending while logged out.
   token: string | null,
 ) => {
@@ -111,9 +118,8 @@ const getSearchResponse = (
   }
   setLoading(true);
   search(question, generateLLMResponse)
-    // getSearch spreads the response body onto its result, but its declared
-    // type doesn't list those fields, so read it as `any`
-    .then((response: any) => {
+    // useSearchMutation spreads the response body onto its result.
+    .then((response) => {
       if (response?.status === 200) {
         const search_results = toSearchResults(response.search_results);
         setResponse({
@@ -138,7 +144,8 @@ const getSearchResponse = (
       console.error(error);
       setResponse({
         dateTime: new Date().toISOString(),
-        parsedData: "The search request failed. Open the raw response for details.",
+        parsedData:
+          "The search request failed. Open the raw response for details.",
         rawJson: { error: error.message },
       });
     })
@@ -166,7 +173,9 @@ const ReferenceCard = ({ result }: { result: SearchResult }) => {
           <span className="flex size-5 shrink-0 items-center justify-center bg-muted text-[10px] font-medium text-muted-foreground tabular-nums">
             {rank}
           </span>
-          <span className="min-w-0 flex-1 truncate font-medium">{result.title}</span>
+          <span className="min-w-0 flex-1 truncate font-medium">
+            {result.title}
+          </span>
           <IconChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover/ref:translate-x-0.5" />
         </span>
         <span className="line-clamp-2 text-xs text-muted-foreground">
@@ -184,7 +193,9 @@ const ReferenceCard = ({ result }: { result: SearchResult }) => {
               Reference {rank} · Content #{result.id}
             </DialogDescription>
           </DialogHeader>
-          <div className={`min-h-0 flex-1 overflow-y-auto text-sm ${MARKDOWN_CLASSES}`}>
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto text-sm ${MARKDOWN_CLASSES}`}
+          >
             <ReactMarkdown>{result.text}</ReactMarkdown>
           </div>
         </DialogContent>
@@ -225,10 +236,13 @@ const RenderSearchResponse = ({
 
       <section className="flex flex-col gap-2">
         <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {"llm_response" in parsedData ? "References" : "Results"} ({results.length})
+          {"llm_response" in parsedData ? "References" : "Results"} (
+          {results.length})
         </h3>
         {results.length === 0 ? (
-          <p className="text-muted-foreground">No matching content was found.</p>
+          <p className="text-muted-foreground">
+            No matching content was found.
+          </p>
         ) : (
           <ol className="flex flex-col gap-2">
             {results.map((result) => (
@@ -254,11 +268,15 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
   const [thumbsDown, setThumbsDown] = useState<boolean>(false);
   const sendFeedback = useContext(SendFeedbackContext);
 
-  // Each new search is a new query, so clear the feedback given on the last one
-  useEffect(() => {
+  // Each new search is a new query, so clear the feedback given on the last
+  // one. Done during render (tracking the previous data) rather than in an effect.
+  const [prevResponseBoxData, setPrevResponseBoxData] =
+    useState(responseBoxData);
+  if (responseBoxData !== prevResponseBoxData) {
+    setPrevResponseBoxData(responseBoxData);
     setThumbsUp(false);
     setThumbsDown(false);
-  }, [responseBoxData]);
+  }
 
   if (loading) {
     return (
@@ -312,7 +330,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
         feedbackSecretKey,
       })
         .then((response) => {
-          console.log("Feedback sent successfully: ", response.parsedData);
+          console.log("Feedback sent successfully: ", response);
         })
         .catch((error: Error) => {
           console.error(error);
@@ -332,8 +350,8 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
   };
 
   const canSendFeedback =
-    responseBoxData.rawJson &&
     typeof responseBoxData.rawJson === "object" &&
+    responseBoxData.rawJson !== null &&
     "feedback_secret_key" in responseBoxData.rawJson;
 
   return (

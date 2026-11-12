@@ -30,17 +30,25 @@ const DASHBOARD_TITLES: Record<string, string> = {
  * Breadcrumb trail after the workspace name for the current route.
  * Titles match the sidebar labels. Unknown routes get no page crumb.
  */
-const pageCrumbs = (pathname: string, searchParams: URLSearchParams): Crumb[] => {
+const pageCrumbs = (
+  pathname: string,
+  searchParams: URLSearchParams,
+): Crumb[] => {
   if (pathname.startsWith("/content/edit")) {
     return [
       { label: "Question answering", href: "/content" },
-      { label: searchParams.get("content_id") ? "Edit content" : "Add content" },
+      {
+        label: searchParams.get("content_id") ? "Edit content" : "Add content",
+      },
     ];
   }
   if (pathname.startsWith("/content")) return [{ label: "Question answering" }];
-  if (pathname.startsWith("/urgency-rules")) return [{ label: "Urgency detection" }];
+  if (pathname.startsWith("/urgency-rules"))
+    return [{ label: "Urgency detection" }];
   if (pathname.startsWith("/dashboard")) {
-    return [{ label: DASHBOARD_TITLES[searchParams.get("page") ?? ""] ?? "Overview" }];
+    return [
+      { label: DASHBOARD_TITLES[searchParams.get("page") ?? ""] ?? "Overview" },
+    ];
   }
   if (pathname.startsWith("/integrations")) return [{ label: "Integrations" }];
   if (pathname.startsWith("/workspace-management"))

@@ -1190,7 +1190,9 @@ async def content_with_query_history(
             await save_content_for_query_to_db(
                 asession=rollback_asession,
                 contents={
-                    idx * 100 + offset + i: QuerySearchResult(
+                    idx * 100
+                    + offset
+                    + i: QuerySearchResult(
                         distance=0.5,
                         id=content_id,
                         text="test text",

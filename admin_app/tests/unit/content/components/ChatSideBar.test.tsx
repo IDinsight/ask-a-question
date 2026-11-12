@@ -58,7 +58,9 @@ describe("ChatSideBar", () => {
   it("starts empty with send and new-chat disabled", () => {
     setup();
     expect(screen.getByText("Start a test conversation")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Send question" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Send question" }),
+    ).toBeDisabled();
     expect(screen.getByRole("button", { name: "New chat" })).toBeDisabled();
   });
 
@@ -89,14 +91,18 @@ describe("ChatSideBar", () => {
 
     await act(async () => request.resolve(reply()));
 
-    expect(screen.queryByText("Searching your content...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Searching your content..."),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("bed net").tagName).toBe("STRONG");
 
     // Sources are collapsed under a summary line; expand to see them in rank order.
     await user.click(screen.getByText("Used 2 content cards"));
     const first = screen.getByText("First card");
     const second = screen.getByText("Second card");
-    expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("Shift+Enter adds a new line instead of sending", async () => {
@@ -116,7 +122,9 @@ describe("ChatSideBar", () => {
     await screen.findByText("bed net");
 
     await user.type(input, "Second?{Enter}");
-    await waitFor(() => expect(getResponse).toHaveBeenLastCalledWith("Second?", 42));
+    await waitFor(() =>
+      expect(getResponse).toHaveBeenLastCalledWith("Second?", 42),
+    );
 
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "New chat" })).toBeEnabled(),
@@ -133,21 +141,29 @@ describe("ChatSideBar", () => {
     const getResponse = vi.fn().mockResolvedValue(
       reply({
         llm_response: null,
-        search_results: { "0": { id: 1, title: "Only card", text: "t", distance: 0 } },
+        search_results: {
+          "0": { id: 1, title: "Only card", text: "t", distance: 0 },
+        },
       }),
     );
     const { user, input } = setup(getResponse);
 
     await user.type(input, "Anything?{Enter}");
 
-    expect(await screen.findByText("No answer text was returned.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No answer text was returned."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Used 1 content card")).toBeInTheDocument();
     // Nothing to copy when there's no answer.
-    expect(screen.queryByRole("button", { name: "Copy answer" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy answer" }),
+    ).not.toBeInTheDocument();
   });
 
   it("handles a reply without search results", async () => {
-    const getResponse = vi.fn().mockResolvedValue(reply({ search_results: undefined }));
+    const getResponse = vi
+      .fn()
+      .mockResolvedValue(reply({ search_results: undefined }));
     const { user, input } = setup(getResponse);
 
     await user.type(input, "Anything?{Enter}");
@@ -167,12 +183,14 @@ describe("ChatSideBar", () => {
     ).toBeInTheDocument();
     expect(setSnackMessage).toHaveBeenCalledWith("Service down");
     // Error replies can't be copied, but the raw response is still available.
-    expect(screen.queryByRole("button", { name: "Copy answer" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy answer" }),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "View raw response" }));
-    expect(await screen.findByRole("dialog", { name: "Raw response" })).toHaveTextContent(
-      "Service down",
-    );
+    expect(
+      await screen.findByRole("dialog", { name: "Raw response" }),
+    ).toHaveTextContent("Service down");
   });
 
   it("copies the answer and briefly shows Copied", async () => {
@@ -188,11 +206,15 @@ describe("ChatSideBar", () => {
     await user.click(screen.getByRole("button", { name: "Copy answer" }));
 
     expect(writeText).toHaveBeenCalledWith("Use a **bed net** every night.");
-    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Copied" }),
+    ).toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(1600);
     });
-    expect(screen.getByRole("button", { name: "Copy answer" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy answer" }),
+    ).toBeInTheDocument();
   });
 });

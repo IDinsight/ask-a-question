@@ -1,27 +1,27 @@
 import asyncio
 import os
-from datetime import datetime, timezone
-from typing import Dict, List, Union
+from datetime import datetime
+from typing import TYPE_CHECKING, Dict, List, Union
 
 import boto3
 import pandas as pd
 from dateutil import tz
 from fastapi.testclient import TestClient
-from litellm import embedding
-from sqlalchemy.orm import Session
 
-from app.contents.models import ContentDB
-from app.core.config import (
-    LITELLM_API_KEY,
-    LITELLM_ENDPOINT,
-    LITELLM_MODEL_EMBEDDING,
-    N_TOP_CONTENT,
-)
+from app.core.config import LITELLM_MODEL_EMBEDDING, N_TOP_CONTENT
 from app.core.observability import setup_logger
 from app.question_answer.schemas import QueryBase
-from core_backend.add_users_to_db import ADMIN_API_KEY  # temp
+
+if TYPE_CHECKING:  # Fixture from validation/conftest.py; imported for typing only.
+    from validation.conftest import ValidationWorkspace
 
 logger = setup_logger()
+
+
+def _storage_options(path: str, aws_profile: Union[str, None]) -> Union[dict, None]:
+    """fsspec options for reading `path`: the AWS profile for remote paths (e.g.
+    s3://...), none for local files (pandas rejects options for those)."""
+    return dict(profile=aws_profile) if "://" in path else None
 
 
 class TestRetrievalPerformance:
@@ -36,7 +36,7 @@ class TestRetrievalPerformance:
         content_data_text_col: str,
         notification_topic: Union[str, None],
         aws_profile: Union[str, None],
-        db_session: Session,
+        validation_workspace: "ValidationWorkspace",
     ) -> None:
         """Test retrieval performance of the system"""
         content_df = self.prepare_content_data(
@@ -45,13 +45,15 @@ class TestRetrievalPerformance:
             content_data_text_col=content_data_text_col,
             aws_profile=aws_profile,
         )
-        self.load_content_to_db(
+        self.load_content(
+            client,
+            access_token=validation_workspace.access_token,
             content_dataframe=content_df,
-            db_session=db_session,
         )
 
         val_df = self.generate_retrieval_results(
             client,
+            api_key=validation_workspace.api_key,
             validation_data_path=validation_data_path,
             validation_data_question_col=validation_data_question_col,
             validation_data_label_col=validation_data_label_col,
@@ -89,10 +91,9 @@ class TestRetrievalPerformance:
         """Prepare content data for loading to content table"""
         df = pd.read_csv(
             content_data_path,
-            storage_options=dict(profile=aws_profile),
+            storage_options=_storage_options(content_data_path, aws_profile),
             nrows=5,
         )
-        df["content_id"] = list(range(len(df)))
         df = df.rename(
             columns={
                 content_data_label_col: "content_title",
@@ -101,46 +102,36 @@ class TestRetrievalPerformance:
         )
         return df
 
-    def load_content_to_db(
-        self, content_dataframe: pd.DataFrame, db_session: Session
+    def load_content(
+        self,
+        client: TestClient,
+        access_token: str,
+        content_dataframe: pd.DataFrame,
     ) -> None:
-        """Load content to content table"""
-        # TODO: Update to use a batch upsert API once created
+        """Load content into the validation workspace through POST /content/, which
+        embeds each item the same way production does."""
         n_content = content_dataframe.shape[0]
-        logger.info(f"Loading {n_content} content item to vector table...")
+        logger.info(f"Loading {n_content} content items...")
 
-        embedding_results = embedding(
-            LITELLM_MODEL_EMBEDDING,
-            input=content_dataframe["content_text"].tolist(),
-            api_base=LITELLM_ENDPOINT,
-            api_key=LITELLM_API_KEY,
-        )
-        content_embeddings = [x["embedding"] for x in embedding_results.data]
-
-        contents = [
-            ContentDB(
-                content_id=int(content_id),
-                content_embedding=content_embedding,
-                content_title=content_title,
-                content_text=content_text,
-                content_metadata={},
-                created_datetime_utc=datetime.now(timezone.utc),
-                updated_datetime_utc=datetime.now(timezone.utc),
+        for title, text in zip(
+            content_dataframe["content_title"], content_dataframe["content_text"]
+        ):
+            response = client.post(
+                "/content/",
+                headers={"Authorization": f"Bearer {access_token}"},
+                json={"content_text": str(text), "content_title": str(title)},
             )
-            for content_id, content_embedding, content_title, content_text in zip(
-                content_dataframe["content_id"],
-                content_embeddings,
-                content_dataframe["content_title"],
-                content_dataframe["content_text"],
-            )
-        ]
-        db_session.add_all(contents)
-        db_session.commit()
-        logger.info(f"Completed loading {n_content} content items to vector table.")
+            if response.status_code != 200:
+                raise RuntimeError(
+                    f"Failed to load content '{title}' "
+                    f"(HTTP {response.status_code}): {response.text}"
+                )
+        logger.info(f"Completed loading {n_content} content items.")
 
     def generate_retrieval_results(
         self,
         client: TestClient,
+        api_key: str,
         validation_data_path: str,
         validation_data_question_col: str,
         validation_data_label_col: str,
@@ -149,13 +140,13 @@ class TestRetrievalPerformance:
         """Generate retrieval results for all queries in validation data"""
         df = pd.read_csv(
             validation_data_path,
-            storage_options=dict(profile=aws_profile),
+            storage_options=_storage_options(validation_data_path, aws_profile),
         )
 
         logger.info("Retrieving content for each validation query...")
 
         df = asyncio.run(
-            self.retrieve_results(df, client, validation_data_question_col)
+            self.retrieve_results(df, client, api_key, validation_data_question_col)
         )
 
         logger.info("Completed retrieving content for each validation query.")
@@ -176,12 +167,13 @@ class TestRetrievalPerformance:
         self,
         query_text: str,
         client: TestClient,
+        api_key: str,
     ) -> List[str]:
         """Single POST /search request"""
         request_json = QueryBase(
             query_text=query_text, generate_llm_response=False
         ).model_dump()
-        headers = {"Authorization": f"Bearer {ADMIN_API_KEY}"}
+        headers = {"Authorization": f"Bearer {api_key}"}
         response = client.post("/search", json=request_json, headers=headers)
 
         if response.status_code != 200:
@@ -196,11 +188,12 @@ class TestRetrievalPerformance:
         self,
         df: pd.DataFrame,
         client: TestClient,
+        api_key: str,
         validation_data_question_col: str,
     ) -> pd.DataFrame:
         """Asynchronously retrieve similar content for all queries in validation data"""
         tasks = [
-            self.call_embeddings_search(query, client)
+            self.call_embeddings_search(query, client, api_key)
             for query in df[validation_data_question_col]
         ]
         df["retrieved_content_titles"] = await asyncio.gather(*tasks)

@@ -20,7 +20,6 @@ class FeedbackSentiment(str, Enum):
     UNKNOWN = "unknown"
 
 
-
 # ---- from core/languages
 class IdentifiedLanguage(str, Enum):
     """Identified language of the user's input."""
@@ -256,5 +255,3 @@ class TurnTextMessage(TurnMessage):
 
     type: Literal["text"] = "text"
     text: TurnMessageBody
-
-

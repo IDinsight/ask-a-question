@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SidebarMenuTrigger } from "./SidebarMenuTrigger";
+import { useLocalStorageItem } from "@/hooks/use-browser-state";
 import type {
   UserRole,
   Workspace,
@@ -44,7 +45,10 @@ interface WorkspaceMenuProps {
   workspaceName: string | null;
   userRole: UserRole | null;
   setOpenCreateWorkspaceModal: (value: boolean) => void;
-  editUser: (user_id: number, user: UserBodyUpdate) => Promise<any>;
+  editUser: (
+    user_id: number,
+    user: UserBodyUpdate,
+  ) => Promise<{ username?: string } | undefined>;
   loginWorkspace: (workspace: Workspace) => void;
 }
 
@@ -68,29 +72,26 @@ const WorkspaceMenu = ({
 
   // Auth context resets on a hard refresh, so fall back to the values the
   // auth provider writes to localStorage.
-  const [persistedWorkspaceName, setPersistedWorkspaceName] = React.useState("");
-  const [persistedUserRole, setPersistedUserRole] = React.useState<UserRole | null>(
-    null,
-  );
+  const storedWorkspace = useLocalStorageItem("workspaceName");
+  const storedRole = useLocalStorageItem("userRole");
+  const persistedWorkspaceName = workspaceName || storedWorkspace || "";
+  const persistedUserRole: UserRole | null =
+    userRole ??
+    (storedRole === "admin" || storedRole === "read_only" ? storedRole : null);
 
   // Dialog state: which workspace the user wants to switch to, and whether
   // the "set as default" confirmation / success dialogs are open.
-  const [switchTarget, setSwitchTarget] = React.useState<Workspace | null>(null);
+  const [switchTarget, setSwitchTarget] = React.useState<Workspace | null>(
+    null,
+  );
   const [confirmDefaultOpen, setConfirmDefaultOpen] = React.useState(false);
   const [defaultSuccessOpen, setDefaultSuccessOpen] = React.useState(false);
 
-  // Keep localStorage in step with the auth context and read it back (not
-  // data fetching: this only syncs browser storage).
+  // Keep localStorage in step with the auth context (not data fetching: this
+  // only syncs browser storage). Reads happen above via useLocalStorageItem.
   React.useEffect(() => {
     if (workspaceName) localStorage.setItem("workspaceName", workspaceName);
     if (userRole != null) localStorage.setItem("userRole", userRole);
-
-    const storedWorkspace = localStorage.getItem("workspaceName");
-    if (storedWorkspace) setPersistedWorkspaceName(storedWorkspace);
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole === "admin" || storedRole === "read_only") {
-      setPersistedUserRole(storedRole);
-    }
   }, [workspaceName, userRole]);
 
   const isAdmin = persistedUserRole === "admin";
@@ -143,7 +144,8 @@ const WorkspaceMenu = ({
           <DropdownMenuGroup>
             <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
             {workspaces.map((workspace) => {
-              const isCurrent = workspace.workspace_name === persistedWorkspaceName;
+              const isCurrent =
+                workspace.workspace_name === persistedWorkspaceName;
               return (
                 <DropdownMenuItem
                   key={workspace.workspace_id ?? workspace.workspace_name}
@@ -178,7 +180,9 @@ const WorkspaceMenu = ({
               Create new workspace
             </DropdownMenuItem>
             {isAdmin && (
-              <DropdownMenuItem onClick={() => router.push("/workspace-management")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/workspace-management")}
+              >
                 <IconSettings />
                 Manage workspace
               </DropdownMenuItem>
@@ -213,11 +217,15 @@ const WorkspaceMenu = ({
       </AlertDialog>
 
       {/* Confirm setting the current workspace as default */}
-      <AlertDialog open={confirmDefaultOpen} onOpenChange={setConfirmDefaultOpen}>
+      <AlertDialog
+        open={confirmDefaultOpen}
+        onOpenChange={setConfirmDefaultOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Make <strong>{currentWorkspace?.workspace_name}</strong> your default?
+              Make <strong>{currentWorkspace?.workspace_name}</strong> your
+              default?
             </AlertDialogTitle>
             <AlertDialogDescription>
               You will go straight to this workspace next time you log in.
@@ -233,7 +241,10 @@ const WorkspaceMenu = ({
       </AlertDialog>
 
       {/* Default workspace changed */}
-      <AlertDialog open={defaultSuccessOpen} onOpenChange={setDefaultSuccessOpen}>
+      <AlertDialog
+        open={defaultSuccessOpen}
+        onOpenChange={setDefaultSuccessOpen}
+      >
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Default workspace changed</AlertDialogTitle>

@@ -7,7 +7,10 @@ import type { UserBody } from "@/components/features/workspace-management/types"
 
 type Props = React.ComponentProps<typeof UserCreateModal>;
 
-const existingMember: UserBody = { username: "member@example.com", role: "read_only" };
+const existingMember: UserBody = {
+  username: "member@example.com",
+  role: "read_only",
+};
 
 const renderModal = (overrides: Partial<Props> = {}) => {
   const props: Props = {
@@ -111,13 +114,19 @@ describe("UserWorkspaceModal", () => {
 
     it("shows a spinner and disables actions while saving", async () => {
       const user = userEvent.setup();
-      renderModal({ createUser: vi.fn(() => new Promise(() => {})) });
+      renderModal({
+        createUser: vi.fn(
+          () => new Promise<{ recovery_codes?: string[] }>(() => {}),
+        ),
+      });
       await user.type(usernameInput(), "new@example.com");
       await user.type(passwordInput(), "placeholder-pw");
       await user.type(confirmInput(), "placeholder-pw");
       await user.click(screen.getByRole("button", { name: "Create user" }));
 
-      expect(screen.getByRole("button", { name: /Create user/ })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /Create user/ }),
+      ).toBeDisabled();
       expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
     });
 
@@ -137,14 +146,18 @@ describe("UserWorkspaceModal", () => {
 
     it("shows nothing when the rejection carries no error", async () => {
       const user = userEvent.setup();
-      const { props } = renderModal({ createUser: vi.fn().mockRejectedValue(undefined) });
+      const { props } = renderModal({
+        createUser: vi.fn().mockRejectedValue(undefined),
+      });
       await user.type(usernameInput(), "new@example.com");
       await user.type(passwordInput(), "placeholder-pw");
       await user.type(confirmInput(), "placeholder-pw");
       await user.click(screen.getByRole("button", { name: "Create user" }));
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: "Create user" })).toBeEnabled(),
+        expect(
+          screen.getByRole("button", { name: "Create user" }),
+        ).toBeEnabled(),
       );
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       expect(props.setSnackMessage).not.toHaveBeenCalled();
@@ -174,7 +187,9 @@ describe("UserWorkspaceModal", () => {
       renderModal({ formType: "add" });
       expect(screen.getByText("Add an existing user")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Verify" })).toBeDisabled();
-      expect(screen.getByRole("button", { name: "Add to workspace" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      ).toBeDisabled();
       expect(screen.queryByLabelText("Role")).not.toBeInTheDocument();
 
       // Enter in the field submits the form, which the guard ignores when unverified.
@@ -193,7 +208,9 @@ describe("UserWorkspaceModal", () => {
       expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
 
       await user.selectOptions(roleSelect(), "admin");
-      await user.click(screen.getByRole("button", { name: "Add to workspace" }));
+      await user.click(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      );
 
       expect(props.addUserToWorkspace).toHaveBeenCalledWith(
         "someone@example.com",
@@ -222,7 +239,9 @@ describe("UserWorkspaceModal", () => {
       ).toBeInTheDocument();
       await user.type(passwordInput(), "placeholder-pw");
       await user.type(confirmInput(), "placeholder-pw");
-      await user.click(screen.getByRole("button", { name: "Add to workspace" }));
+      await user.click(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      );
 
       expect(props.createUser).toHaveBeenCalledWith(
         "fresh@example.com",
@@ -240,11 +259,56 @@ describe("UserWorkspaceModal", () => {
       });
       await user.type(usernameInput(), "fresh@example.com");
       await user.click(screen.getByRole("button", { name: "Verify" }));
-      await screen.findByLabelText("Password");
-      await user.click(screen.getByRole("button", { name: "Add to workspace" }));
+      await user.type(
+        await screen.findByLabelText("Password"),
+        "placeholder-pw",
+      );
+      await user.type(confirmInput(), "placeholder-pw");
+      await user.click(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      );
 
       await waitFor(() => expect(props.createUser).toHaveBeenCalled());
       expect(props.onContinue).not.toHaveBeenCalled();
+    });
+
+    // Regression: possible-bugs.md #1. Creating a new user from "add" mode
+    // used to skip the password checks and send a blank or mismatched password.
+    it("requires a password when creating a new user from add", async () => {
+      const user = userEvent.setup();
+      const { props } = renderModal({
+        formType: "add",
+        checkUserExists: vi.fn().mockResolvedValue(false),
+      });
+      await user.type(usernameInput(), "fresh@example.com");
+      await user.click(screen.getByRole("button", { name: "Verify" }));
+      await screen.findByLabelText("Password");
+      await user.click(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      );
+
+      expect(screen.getByText("Password is required.")).toBeInTheDocument();
+      expect(props.createUser).not.toHaveBeenCalled();
+    });
+
+    it("rejects mismatched passwords when creating a new user from add", async () => {
+      const user = userEvent.setup();
+      const { props } = renderModal({
+        formType: "add",
+        checkUserExists: vi.fn().mockResolvedValue(false),
+      });
+      await user.type(usernameInput(), "fresh@example.com");
+      await user.click(screen.getByRole("button", { name: "Verify" }));
+      await user.type(await screen.findByLabelText("Password"), "pw-one");
+      await user.type(confirmInput(), "pw-two");
+      await user.click(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      );
+
+      expect(screen.getByText("Passwords do not match.")).toBeInTheDocument();
+      expect(passwordInput()).toHaveValue("");
+      expect(confirmInput()).toHaveValue("");
+      expect(props.createUser).not.toHaveBeenCalled();
     });
 
     it("refuses a user already in the workspace", async () => {
@@ -258,7 +322,9 @@ describe("UserWorkspaceModal", () => {
           `User ${existingMember.username} is already in the workspace.`,
         ),
       ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Add to workspace" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      ).toBeDisabled();
     });
 
     it("shows a spinner on Verify while checking", async () => {
@@ -280,7 +346,9 @@ describe("UserWorkspaceModal", () => {
       });
       await user.type(usernameInput(), "x@example.com");
       await user.click(screen.getByRole("button", { name: "Verify" }));
-      expect(await screen.findByText("Error verifying user.")).toBeInTheDocument();
+      expect(
+        await screen.findByText("Error verifying user."),
+      ).toBeInTheDocument();
     });
 
     it("editing the username after verifying asks to verify again", async () => {
@@ -292,7 +360,9 @@ describe("UserWorkspaceModal", () => {
 
       await user.type(usernameInput(), "x");
       expect(screen.getByRole("button", { name: "Verify" })).toBeEnabled();
-      expect(screen.getByRole("button", { name: "Add to workspace" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Add to workspace" }),
+      ).toBeDisabled();
     });
   });
 
@@ -312,7 +382,10 @@ describe("UserWorkspaceModal", () => {
       await user.selectOptions(roleSelect(), "read_only");
       await user.click(screen.getByRole("button", { name: "Save" }));
 
-      expect(props.editUser).toHaveBeenCalledWith("member@example.com", "read_only");
+      expect(props.editUser).toHaveBeenCalledWith(
+        "member@example.com",
+        "read_only",
+      );
       expect(props.setSnackMessage).toHaveBeenCalledWith({
         message: "User successfully edited",
         severity: "success",
@@ -325,7 +398,9 @@ describe("UserWorkspaceModal", () => {
         user: { username: "admin@example.com", role: "admin" },
       });
       expect(roleSelect()).toBeDisabled();
-      expect(screen.getByText("You can’t change your own role.")).toBeInTheDocument();
+      expect(
+        screen.getByText("You can’t change your own role."),
+      ).toBeInTheDocument();
     });
 
     it("hides the role field for a user without a role", () => {

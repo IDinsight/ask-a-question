@@ -38,10 +38,16 @@ interface FirstUserSetupProps {
   /** True once the check says no user exists yet (false while loading or on error). */
   requireRegister: boolean;
   /** Creates the first user (the Wrapper's register mutation). */
-  registerUser: (username: string, password: string) => Promise<any>;
+  registerUser: (
+    username: string,
+    password: string,
+  ) => Promise<{ recovery_codes?: string[] } | undefined>;
 }
 
-export function FirstUserSetup({ requireRegister, registerUser }: FirstUserSetupProps) {
+export function FirstUserSetup({
+  requireRegister,
+  registerUser,
+}: FirstUserSetupProps) {
   // null = the user hasn't moved through the flow yet, so the step follows the
   // check: the alert opens as soon as `requireRegister` turns true.
   const [chosenStep, setStep] = useState<SetupStep | null>(null);
@@ -95,7 +101,11 @@ interface RecoveryCodesModalProps {
  * Lists the recovery codes with a copy button. Backdrop clicks are ignored so
  * the codes (which can't be shown again) aren't lost to a stray click.
  */
-function RecoveryCodesModal({ open, recoveryCodes, onDone }: RecoveryCodesModalProps) {
+function RecoveryCodesModal({
+  open,
+  recoveryCodes,
+  onDone,
+}: RecoveryCodesModalProps) {
   const [copied, setCopied] = useState(false);
 
   // After a copy, show "Copied" for a few seconds, then go back to "Copy codes".
@@ -139,8 +149,8 @@ function RecoveryCodesModal({ open, recoveryCodes, onDone }: RecoveryCodesModalP
               Admin user created
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Save these recovery codes somewhere safe. You need one to reset your
-              password, each works once, and you won&apos;t see them again.
+              Save these recovery codes somewhere safe. You need one to reset
+              your password, each works once, and you won&apos;t see them again.
             </DialogDescription>
           </div>
         </DialogHeader>

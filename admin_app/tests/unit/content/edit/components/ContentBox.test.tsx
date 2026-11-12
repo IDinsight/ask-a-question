@@ -51,7 +51,9 @@ const Harness = ({
   initialContent: Content | null;
   onContent: (c: Content | null) => void;
 }) => {
-  const [content, setContentState] = React.useState<Content | null>(initialContent);
+  const [content, setContentState] = React.useState<Content | null>(
+    initialContent,
+  );
   const [isSaved, setIsSaved] = React.useState(false);
   const setContent: Props["setContent"] = (next) => {
     setContentState((prev) => {
@@ -113,26 +115,41 @@ describe("ContentBox", () => {
       await user.click(screen.getByRole("button", { name: "Save" }));
 
       expect(screen.getByText("Title should not be empty")).toBeInTheDocument();
-      expect(screen.getByText("Content should not be empty")).toBeInTheDocument();
+      expect(
+        screen.getByText("Content should not be empty"),
+      ).toBeInTheDocument();
       expect(saveContent).not.toHaveBeenCalled();
     });
 
     it("flags an empty title, then clears the error on typing", async () => {
-      const { user } = setup({ initialContent: makeContent({ content_title: "" }) });
+      const { user } = setup({
+        initialContent: makeContent({ content_title: "" }),
+      });
 
       await user.click(screen.getByRole("button", { name: "Save" }));
       expect(screen.getByText("Title should not be empty")).toBeInTheDocument();
-      expect(screen.getByLabelText("Title")).toHaveAttribute("aria-invalid", "true");
+      expect(screen.getByLabelText("Title")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
 
       await user.type(screen.getByLabelText("Title"), "A");
-      expect(screen.queryByText("Title should not be empty")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Title should not be empty"),
+      ).not.toBeInTheDocument();
     });
 
     it("flags empty content text", async () => {
-      const { user } = setup({ initialContent: makeContent({ content_text: "" }) });
+      const { user } = setup({
+        initialContent: makeContent({ content_text: "" }),
+      });
       await user.click(screen.getByRole("button", { name: "Save" }));
-      expect(screen.getByText("Content should not be empty")).toBeInTheDocument();
-      expect(screen.queryByText("Title should not be empty")).not.toBeInTheDocument();
+      expect(
+        screen.getByText("Content should not be empty"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Title should not be empty"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -172,25 +189,36 @@ describe("ContentBox", () => {
         content_tags: [],
         related_contents_id: [],
       });
-      await waitFor(() => expect(onSaved).toHaveBeenCalledWith("Content edited successfully"));
+      await waitFor(() =>
+        expect(onSaved).toHaveBeenCalledWith("Content edited successfully"),
+      );
       // isSaved flips to true, which disables the button until the next edit.
       expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     });
 
     it("reports creation for a new card", async () => {
-      const saveContent = vi.fn().mockResolvedValue(makeContent({ content_id: 50 }));
+      const saveContent = vi
+        .fn()
+        .mockResolvedValue(makeContent({ content_id: 50 }));
       const { user, onSaved } = setup({ initialContent: null, saveContent });
 
       await user.type(screen.getByLabelText("Title"), "T");
       await user.type(screen.getByLabelText("Content"), "B");
       await user.click(screen.getByRole("button", { name: "Save" }));
 
-      expect(saveContent).toHaveBeenCalledWith(null, expect.objectContaining({ content_title: "T" }));
-      await waitFor(() => expect(onSaved).toHaveBeenCalledWith("Content created successfully"));
+      expect(saveContent).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining({ content_title: "T" }),
+      );
+      await waitFor(() =>
+        expect(onSaved).toHaveBeenCalledWith("Content created successfully"),
+      );
     });
 
     it("does not report success if the API returns no id", async () => {
-      const saveContent = vi.fn().mockResolvedValue(makeContent({ content_id: null }));
+      const saveContent = vi
+        .fn()
+        .mockResolvedValue(makeContent({ content_id: null }));
       const { user, onSaved } = setup({ saveContent });
 
       await user.click(screen.getByRole("button", { name: "Save" }));
@@ -199,11 +227,25 @@ describe("ContentBox", () => {
     });
 
     it.each([
-      ["a quota error (403)", { status: 403, message: "Content limit reached" }, "Content limit reached"],
-      ["any other error", { status: 500, message: "Server exploded" }, "Server exploded"],
-      ["an error without a message", { status: 500 }, "Failed to save content. Please try again later."],
+      [
+        "a quota error (403)",
+        { status: 403, message: "Content limit reached" },
+        "Content limit reached",
+      ],
+      [
+        "any other error",
+        { status: 500, message: "Server exploded" },
+        "Server exploded",
+      ],
+      [
+        "an error without a message",
+        { status: 500 },
+        "Failed to save content. Please try again later.",
+      ],
     ])("shows %s", async (_label, error, shown) => {
-      const { user, onSaved } = setup({ saveContent: vi.fn().mockRejectedValue(error) });
+      const { user, onSaved } = setup({
+        saveContent: vi.fn().mockRejectedValue(error),
+      });
 
       await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -225,7 +267,10 @@ describe("ContentBox", () => {
       setup({ initialContent: makeContent({ content_tags: [2, 999] }) });
       expect(screen.getByText("water")).toBeInTheDocument();
       expect(screen.queryByText("hygiene")).not.toBeInTheDocument();
-      expect(screen.getByLabelText("Tags (optional)")).toHaveAttribute("placeholder", "");
+      expect(screen.getByLabelText("Tags (optional)")).toHaveAttribute(
+        "placeholder",
+        "",
+      );
     });
 
     it("renders with lists still loading", () => {
@@ -251,24 +296,35 @@ describe("ContentBox", () => {
       await user.type(screen.getByLabelText("Tags (optional)"), "wat");
       await user.click(await screen.findByRole("option", { name: /water/ }));
 
-      expect(lastContent(onContent)).toMatchObject({ content_id: null, content_tags: [2] });
+      expect(lastContent(onContent)).toMatchObject({
+        content_id: null,
+        content_tags: [2],
+      });
     });
 
     it("offers to create a tag that doesn't exist, and adds it", async () => {
-      const addTag = vi.fn().mockResolvedValue({ tag_id: 7, tag_name: "Fever" });
+      const addTag = vi
+        .fn()
+        .mockResolvedValue({ tag_id: 7, tag_name: "Fever" });
       const { user, onContent } = setup({ addTag });
 
       await user.type(screen.getByLabelText("Tags (optional)"), "Fever");
-      await user.click(await screen.findByRole("option", { name: 'Create "Fever"' }));
+      await user.click(
+        await screen.findByRole("option", { name: 'Create "Fever"' }),
+      );
 
       expect(addTag).toHaveBeenCalledWith("Fever");
-      await waitFor(() => expect(lastContent(onContent).content_tags).toEqual([7]));
+      await waitFor(() =>
+        expect(lastContent(onContent).content_tags).toEqual([7]),
+      );
     });
 
     it("does not offer to create a tag that already exists (case-insensitive)", async () => {
       const { user } = setup();
       await user.type(screen.getByLabelText("Tags (optional)"), "HYGIENE");
-      expect(screen.queryByRole("option", { name: /Create/ })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: /Create/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("toasts when creating a tag fails", async () => {
@@ -276,10 +332,15 @@ describe("ContentBox", () => {
       const { user } = setup({ addTag });
 
       await user.type(screen.getByLabelText("Tags (optional)"), "Fever");
-      await user.click(await screen.findByRole("option", { name: 'Create "Fever"' }));
+      await user.click(
+        await screen.findByRole("option", { name: 'Create "Fever"' }),
+      );
 
       await waitFor(() =>
-        expect(toastAdd).toHaveBeenCalledWith({ title: "Tag limit", type: "error" }),
+        expect(toastAdd).toHaveBeenCalledWith({
+          title: "Tag limit",
+          type: "error",
+        }),
       );
     });
 
@@ -291,15 +352,21 @@ describe("ContentBox", () => {
       });
 
       await user.click(screen.getByLabelText("Tags (optional)"));
-      await user.click(await screen.findByRole("button", { name: "Delete tag hygiene" }));
+      await user.click(
+        await screen.findByRole("button", { name: "Delete tag hygiene" }),
+      );
 
       expect(
-        await screen.findByRole("alertdialog", { name: 'Delete tag "hygiene"?' }),
+        await screen.findByRole("alertdialog", {
+          name: 'Delete tag "hygiene"?',
+        }),
       ).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Delete" }));
 
       expect(deleteTag).toHaveBeenCalledWith(1);
-      await waitFor(() => expect(lastContent(onContent).content_tags).toEqual([2]));
+      await waitFor(() =>
+        expect(lastContent(onContent).content_tags).toEqual([2]),
+      );
       expect(toastAdd).toHaveBeenCalledWith({
         title: 'Tag "hygiene" deleted successfully',
         type: "success",
@@ -311,30 +378,45 @@ describe("ContentBox", () => {
       const { user } = setup({ deleteTag });
 
       await user.click(screen.getByLabelText("Tags (optional)"));
-      await user.click(await screen.findByRole("button", { name: "Delete tag water" }));
+      await user.click(
+        await screen.findByRole("button", { name: "Delete tag water" }),
+      );
       await user.click(await screen.findByRole("button", { name: "Cancel" }));
 
-      await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
       expect(deleteTag).not.toHaveBeenCalled();
     });
   });
 
   describe("related contents", () => {
     it("shows the card's related contents and excludes the card itself", async () => {
-      const { user } = setup({ initialContent: makeContent({ related_contents_id: [3, 999] }) });
+      const { user } = setup({
+        initialContent: makeContent({ related_contents_id: [3, 999] }),
+      });
 
       expect(screen.getByText("Latrine use")).toBeInTheDocument();
 
       await user.click(screen.getByLabelText("Related contents (optional)"));
-      expect(await screen.findByRole("option", { name: "Hand washing" })).toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "Clean water" })).not.toBeInTheDocument();
+      expect(
+        await screen.findByRole("option", { name: "Hand washing" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Clean water" }),
+      ).not.toBeInTheDocument();
     });
 
     it("links a related content to the card", async () => {
       const { user, onContent } = setup();
 
-      await user.type(screen.getByLabelText("Related contents (optional)"), "Hand");
-      await user.click(await screen.findByRole("option", { name: "Hand washing" }));
+      await user.type(
+        screen.getByLabelText("Related contents (optional)"),
+        "Hand",
+      );
+      await user.click(
+        await screen.findByRole("option", { name: "Hand washing" }),
+      );
 
       expect(lastContent(onContent).related_contents_id).toEqual([2]);
     });
@@ -342,8 +424,13 @@ describe("ContentBox", () => {
     it("offers every content for a new card and doesn't create one on pick", async () => {
       const { user, onContent } = setup({ initialContent: null });
 
-      await user.type(screen.getByLabelText("Related contents (optional)"), "Clean");
-      await user.click(await screen.findByRole("option", { name: "Clean water" }));
+      await user.type(
+        screen.getByLabelText("Related contents (optional)"),
+        "Clean",
+      );
+      await user.click(
+        await screen.findByRole("option", { name: "Clean water" }),
+      );
 
       // No card exists yet, so nothing is written back.
       expect(onContent).not.toHaveBeenCalled();
@@ -362,18 +449,24 @@ describe("setSnackMessage / handleCustomError", () => {
   it("shows success for messages mentioning 'successfully', error otherwise", () => {
     setSnackMessage("Saved SUCCESSFULLY");
     setSnackMessage("Oops");
-    expect(toastAdd).toHaveBeenNthCalledWith(1, { title: "Saved SUCCESSFULLY", type: "success" });
-    expect(toastAdd).toHaveBeenNthCalledWith(2, { title: "Oops", type: "error" });
+    expect(toastAdd).toHaveBeenNthCalledWith(1, {
+      title: "Saved SUCCESSFULLY",
+      type: "success",
+    });
+    expect(toastAdd).toHaveBeenNthCalledWith(2, {
+      title: "Oops",
+      type: "error",
+    });
   });
 
   it("uses the error's message, a generic text for non-string messages, or the default", () => {
     handleCustomError({ message: "Bad tag" }, "default");
     handleCustomError({ message: { detail: "x" } }, "default");
     handleCustomError(null, "default");
-    expect(toastAdd.mock.calls.map(([arg]: unknown[]) => (arg as { title: string }).title)).toEqual([
-      "Bad tag",
-      "An unknown error occurred",
-      "default",
-    ]);
+    expect(
+      toastAdd.mock.calls.map(
+        ([arg]: unknown[]) => (arg as { title: string }).title,
+      ),
+    ).toEqual(["Bad tag", "An unknown error occurred", "default"]);
   });
 });

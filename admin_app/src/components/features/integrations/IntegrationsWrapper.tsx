@@ -9,7 +9,8 @@ import { DailyLimit, KeyManagement } from "./components/WorkspaceCards";
 import { useCurrentWorkspaceQuery, useRotateApiKeyMutation } from "./queries";
 
 /** Error toast; rendered by the Toaster in integrations/layout.tsx. */
-const showError = (message: string) => toast.add({ title: message, type: "error" });
+const showError = (message: string) =>
+  toast.add({ title: message, type: "error" });
 
 /**
  * The integrations feature. Owns:
@@ -50,9 +51,12 @@ const IntegrationsPage = () => {
     <div className="px-4 pt-8 pb-16 sm:px-8 md:pt-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Integrations</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Integrations
+          </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Use your workspace API key to connect Ask a Question to your chat manager.
+            Use your workspace API key to connect Ask a Question to your chat
+            manager.
           </p>
         </header>
 
@@ -82,8 +86,8 @@ const IntegrationsPage = () => {
               Connect a chat manager
             </h2>
             <p className="mt-1 text-[13px] text-muted-foreground">
-              Choose a connection to see step-by-step instructions for using it with Ask
-              a Question.
+              Choose a connection to see step-by-step instructions for using it
+              with Ask a Question.
             </p>
           </div>
           <ConnectionsGrid />

@@ -32,7 +32,7 @@
           "Authentication"
         ],
         "summary": "Login",
-        "description": "Login route for users to authenticate and receive a JWT token.\n\nParameters\n----------\nform_data\n    Form data containing username and password.\n\nReturns\n-------\nAuthenticationDetails\n    A Pydantic model containing the JWT token, token type, access level, and\n    username.\n\nRaises\n------\nHTTPException\n    If the user credentials are invalid.",
+        "description": "Login route for users to authenticate and receive a JWT token.\n\nParameters\n----------\nrequest\n    The request object.\nform_data\n    Form data containing username and password.\n\nReturns\n-------\nAuthenticationDetails\n    A Pydantic model containing the JWT token, token type, access level, and\n    username.\n\nRaises\n------\nHTTPException\n    If the user credentials are invalid.",
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -96,6 +96,83 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh Access Token",
+        "description": "Exchange a refresh token for a new access token and a new refresh token.\n\nEach refresh token works once. Sending one that was already used revokes the\nwhole login session, since it means the token was copied.\n\nParameters\n----------\nrequest\n    The request object.\nbody\n    The refresh token from the last login or refresh.\n\nReturns\n-------\nAuthenticationDetails\n    The new access token and refresh token.\n\nRaises\n------\nUnauthorizedError\n    If the refresh token is invalid, expired, already used or revoked, or the\n    user no longer belongs to the token's workspace.",
+        "operationId": "refresh_access_token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "description": "Revoke the login session the refresh token belongs to. Always returns 204.\n\nThe access token is not revoked; it stays valid until it expires\n(ACCESS_TOKEN_EXPIRE_MINUTES), so clients should also discard it.\n\nParameters\n----------\nrequest\n    The request object.\nbody\n    The refresh token to revoke.",
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -1306,7 +1383,7 @@
         ],
         "summary": "Get Urgency Rules",
         "description": "Get all urgency rules for a workspace.\n\nParameters\n----------\nworkspace_db\n    The authenticated workspace object.\nasession\n    The SQLAlchemy async session to use for all database connections.\n\nReturns\n-------\nlist[UrgencyRuleRetrieve]\n    A list of `UrgencyRuleRetrieve` objects containing all urgency rules for the\n    workspace.",
-        "operationId": "get_urgency_rules",
+        "operationId": "get_data_api_urgency_rules",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1317,7 +1394,7 @@
                     "$ref": "#/components/schemas/UrgencyRuleRetrieve"
                   },
                   "type": "array",
-                  "title": "Response Get Urgency Rules"
+                  "title": "Response Get Data Api Urgency Rules"
                 }
               }
             }
@@ -2797,7 +2874,7 @@
           "User"
         ],
         "summary": "Reset Password",
-        "description": "Reset user password. Takes a user object, generates a new password, replaces the\nold one in the database, and returns the updated user object.\n\nNB: When this endpoint is called, the assumption is that the calling user is the\nuser that is requesting to reset their own password. In other words, an admin of a\ngiven workspace **cannot** reset the password of a user in their workspace. This is\nbecause a user can belong to multiple workspaces with different admins. However, a\nuser's password is universal and belongs to the user and not a workspace. Thus,\nonly a user can reset their own password.\n\nNB: Since the `retrieve_all_users_in_current_workspace` endpoint should be invoked\nfirst to display the correct users for the calling user's workspaces, there should\nbe no scenarios where a user is resetting the password of another user.\n\nThe process is as follows:\n\n1. The user password is reset in the `UserDB` database.\n2. The user's role in all workspaces is retrieved for the return object.\n\nParameters\n----------\nuser\n    The user object with the new password and recovery code.\nasession\n    The async session to use for the database connection.\n\nReturns\n-------\nUserRetrieve\n    The updated user object.",
+        "description": "Reset user password. Takes a user object, generates a new password, replaces the\nold one in the database, and returns the updated user object.\n\nNB: When this endpoint is called, the assumption is that the calling user is the\nuser that is requesting to reset their own password. In other words, an admin of a\ngiven workspace **cannot** reset the password of a user in their workspace. This is\nbecause a user can belong to multiple workspaces with different admins. However, a\nuser's password is universal and belongs to the user and not a workspace. Thus,\nonly a user can reset their own password.\n\nNB: Since the `retrieve_all_users_in_current_workspace` endpoint should be invoked\nfirst to display the correct users for the calling user's workspaces, there should\nbe no scenarios where a user is resetting the password of another user.\n\nThe process is as follows:\n\n1. The user password is reset in the `UserDB` database.\n2. The user's role in all workspaces is retrieved for the return object.\n\nParameters\n----------\nrequest\n    The request object.\nuser\n    The user object with the new password and recovery code.\nasession\n    The async session to use for the database connection.\n\nReturns\n-------\nUserRetrieve\n    The updated user object.",
         "operationId": "reset_password",
         "requestBody": {
           "content": {
@@ -3213,7 +3290,7 @@
           "Workspace"
         ],
         "summary": "Switch Workspace",
-        "description": "Switch to a different workspace.\n\nNB: A user should first be authenticated before they are allowed to switch to\nanother workspace.\n\nParameters\n----------\ncalling_user_db\n    The user object associated with the user switching workspaces.\nworkspace_switch\n    The workspace switch object containing the workspace name to switch into.\nasession\n    The SQLAlchemy async session to use for all database connections.\n\nReturns\n-------\nAuthenticationDetails\n    The authentication details object containing the new access token.\n\nRaises\n------\nHTTPException\n    If the workspace to switch into does not exist.\n    If the calling user's role in the workspace to switch into is not valid.",
+        "description": "Switch to a different workspace.\n\nNB: A user should first be authenticated before they are allowed to switch to\nanother workspace.\n\nParameters\n----------\ncalling_user_db\n    The user object associated with the user switching workspaces.\nrequest\n    The request object (for the Redis client that stores refresh tokens).\nworkspace_switch\n    The workspace switch object containing the workspace name to switch into.\nasession\n    The SQLAlchemy async session to use for all database connections.\n\nReturns\n-------\nAuthenticationDetails\n    The authentication details object containing the new access token.\n\nRaises\n------\nHTTPException\n    If the workspace to switch into does not exist.\n    If the calling user's role in the workspace to switch into is not valid.",
         "operationId": "switch_workspace",
         "requestBody": {
           "content": {
@@ -3289,6 +3366,14 @@
             "type": "string",
             "title": "Access Token"
           },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
           "token_type": {
             "type": "string",
             "const": "bearer",
@@ -3310,13 +3395,15 @@
         "required": [
           "access_level",
           "access_token",
+          "expires_in",
+          "refresh_token",
           "token_type",
           "user_role",
           "username",
           "workspace_name"
         ],
         "title": "AuthenticationDetails",
-        "description": "Pydantic model for authentication details."
+        "description": "Pydantic model for authentication details.\n\n`access_token` is short-lived (`expires_in` seconds). Before it expires, the\nclient exchanges `refresh_token` for a new pair at POST /refresh. Each refresh\ntoken works once."
       },
       "Body_bulk_upload_contents": {
         "properties": {
@@ -5026,6 +5113,20 @@
         ],
         "title": "QueryStats",
         "description": "Pydantic model for query stats."
+      },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
+        "description": "Pydantic model for the body of POST /refresh and POST /logout."
       },
       "RequireRegisterResponse": {
         "properties": {

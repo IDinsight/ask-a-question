@@ -17,7 +17,9 @@ describe("TopContentTable", () => {
   it("shows an empty state with a link to add content", () => {
     render(<TopContentTable rows={[]} />);
 
-    expect(screen.getByRole("heading", { name: "Most sent content" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Most sent content" }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Nothing has been sent yet/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Add content" })).toHaveAttribute(
       "href",
@@ -31,7 +33,11 @@ describe("TopContentTable", () => {
       <TopContentTable
         rows={[
           first,
-          row({ title: "[DELETED] Old card", positive_votes: 0, negative_votes: 0 }),
+          row({
+            title: "[DELETED] Old card",
+            positive_votes: 0,
+            negative_votes: 0,
+          }),
         ]}
       />,
     );
@@ -47,7 +53,9 @@ describe("TopContentTable", () => {
     );
     expect(cells[2]).toHaveTextContent("42");
     expect(
-      within(rows[0]).getByRole("img", { name: "75% upvotes, 25% downvotes (4 votes)" }),
+      within(rows[0]).getByRole("img", {
+        name: "75% upvotes, 25% downvotes (4 votes)",
+      }),
     ).toBeInTheDocument();
     expect(within(rows[0]).getByText("75% / 25%")).toBeInTheDocument();
 
@@ -55,7 +63,9 @@ describe("TopContentTable", () => {
     expect(within(rows[1]).getByText("[DELETED] Old card")).toHaveClass(
       "text-muted-foreground",
     );
-    expect(within(rows[1]).getByRole("img", { name: "No votes yet" })).toBeInTheDocument();
+    expect(
+      within(rows[1]).getByRole("img", { name: "No votes yet" }),
+    ).toBeInTheDocument();
     expect(within(rows[1]).getByText("No votes")).toBeInTheDocument();
   });
 });

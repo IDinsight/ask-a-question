@@ -23,8 +23,20 @@ describe("LineChart", () => {
         chartColors={["#111111"]}
         data={[
           // Out of order, and the series only partly overlap.
-          { name: "Card A", data: [{ x: d3, y: 1 }, { x: d1, y: 2 }] },
-          { name: "Card B", data: [{ x: d2, y: 5 }, { x: d1, y: 0 }] },
+          {
+            name: "Card A",
+            data: [
+              { x: d3, y: 1 },
+              { x: d1, y: 2 },
+            ],
+          },
+          {
+            name: "Card B",
+            data: [
+              { x: d2, y: 5 },
+              { x: d1, y: 0 },
+            ],
+          },
         ]}
       />,
     );
@@ -39,8 +51,13 @@ describe("LineChart", () => {
 
     // More than one series gets a legend; data present means an auto y-scale.
     expect(screen.getByTestId("legend")).toBeInTheDocument();
-    expect(screen.getByTestId("y-axis")).toHaveAttribute("data-domain", '[0,"auto"]');
-    expect(screen.queryByText("No content sent in this period")).not.toBeInTheDocument();
+    expect(screen.getByTestId("y-axis")).toHaveAttribute(
+      "data-domain",
+      '[0,"auto"]',
+    );
+    expect(
+      screen.queryByText("No content sent in this period"),
+    ).not.toBeInTheDocument();
   });
 
   it("falls back to the first colour when there are more series than colours", () => {
@@ -60,7 +77,12 @@ describe("LineChart", () => {
   });
 
   it("hides the legend for a single series", () => {
-    render(<LineChart chartColors={["#111"]} data={[{ name: "A", data: [{ x: d1, y: 3 }] }]} />);
+    render(
+      <LineChart
+        chartColors={["#111"]}
+        data={[{ name: "A", data: [{ x: d1, y: 3 }] }]}
+      />,
+    );
     expect(screen.queryByTestId("legend")).not.toBeInTheDocument();
   });
 
@@ -72,8 +94,13 @@ describe("LineChart", () => {
       />,
     );
 
-    expect(screen.getByText("No content sent in this period")).toBeInTheDocument();
+    expect(
+      screen.getByText("No content sent in this period"),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("tooltip")).not.toBeInTheDocument();
-    expect(screen.getByTestId("y-axis")).toHaveAttribute("data-domain", "[0,20]");
+    expect(screen.getByTestId("y-axis")).toHaveAttribute(
+      "data-domain",
+      "[0,20]",
+    );
   });
 });

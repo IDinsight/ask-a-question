@@ -42,13 +42,15 @@ const pages: Page[] = [
     name: "Overview",
     title: "Overview",
     slug: "overview",
-    description: "See how people use your chatbot and whether the answers are helping.",
+    description:
+      "See how people use your chatbot and whether the answers are helping.",
   },
   {
     name: "Content Performance",
     title: "Content performance",
     slug: "content-performance",
-    description: "Find the cards your users rely on most, and the ones that need work.",
+    description:
+      "Find the cards your users rely on most, and the ones that need work.",
   },
   {
     name: "Query Topics",
@@ -65,7 +67,10 @@ const pages: Page[] = [
 const NO_ROWS: RowDataType[] = [];
 
 /** Bar size the backend uses for each preset period (see core_backend routers). */
-const presetFrequency: Record<Exclude<Period, "custom">, CustomDashboardFrequency> = {
+const presetFrequency: Record<
+  Exclude<Period, "custom">,
+  CustomDashboardFrequency
+> = {
   day: "Hour",
   week: "Day",
   month: "Day",
@@ -77,7 +82,10 @@ const presetFrequency: Record<Exclude<Period, "custom">, CustomDashboardFrequenc
  * Mirrors the backend's ranges (see core_backend dashboard routers).
  * Returns null for a custom period that hasn't been set yet.
  */
-const describeRange = (period: Period, custom: CustomDateParams): string | null => {
+const describeRange = (
+  period: Period,
+  custom: CustomDateParams,
+): string | null => {
   const now = new Date();
   let start: Date;
   let end = now;
@@ -153,7 +161,11 @@ const DashboardWrapper: React.FC = () => {
     end: string,
     frequency: CustomDashboardFrequency,
   ) => {
-    setCustomDateParams({ startDate: start, endDate: end, frequency: frequency });
+    setCustomDateParams({
+      startDate: start,
+      endDate: end,
+      frequency: frequency,
+    });
     setTimePeriod("custom");
     setIsDialogOpen(false);
   };
@@ -166,17 +178,25 @@ const DashboardWrapper: React.FC = () => {
   const overview = useOverviewQuery(params, onPage("Overview"));
   const hasContent = useHasContentQuery(onPage("Overview"));
   const frequency =
-    timePeriod === "custom" ? customDateParams.frequency : presetFrequency[timePeriod];
+    timePeriod === "custom"
+      ? customDateParams.frequency
+      : presetFrequency[timePeriod];
 
   // Content performance: table/chart share sort, page and visible rows.
-  const performance = usePerformanceQuery(params, onPage("Content Performance"));
+  const performance = usePerformanceQuery(
+    params,
+    onPage("Content Performance"),
+  );
   const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);
   const [sortColumn, setSortColumn] = useState("query_count");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("descending");
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("descending");
   const [tablePage, setTablePage] = useState(1);
   // The clicked row stays selected after the drawer closes, so the close
   // animation still has data to show.
-  const [selectedContentId, setSelectedContentId] = useState<number | null>(null);
+  const [selectedContentId, setSelectedContentId] = useState<number | null>(
+    null,
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawer = usePerformanceDrawerQuery(params, selectedContentId);
   const aiSummary = usePerformanceAISummaryQuery(params, selectedContentId);
@@ -192,7 +212,10 @@ const DashboardWrapper: React.FC = () => {
       ? selectedTopicId
       : topicIds[0] ?? null;
   const [plotOpen, setPlotOpen] = useState(false);
-  const embedding = useEmbeddingQuery(params, onPage("Query Topics") && plotOpen);
+  const embedding = useEmbeddingQuery(
+    params,
+    onPage("Query Topics") && plotOpen,
+  );
 
   const showPage = () => {
     switch (dashboardPage.name) {

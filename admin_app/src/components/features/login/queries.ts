@@ -34,7 +34,10 @@ export const useRegisterOptionQuery = () => {
       try {
         return await queryFn!(context);
       } catch (error) {
-        console.error("Could not check whether first-user setup is needed:", error);
+        console.error(
+          "Could not check whether first-user setup is needed:",
+          error,
+        );
         throw error;
       }
     },
@@ -72,7 +75,9 @@ export const useRegisterUserMutation = () => {
     // A user exists now, so the check's cached answer is out of date. Not
     // awaited: the recovery codes should show without waiting for a refetch.
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: isRegisterRequiredQueryKey() });
+      void queryClient.invalidateQueries({
+        queryKey: isRegisterRequiredQueryKey(),
+      });
     },
   });
 };

@@ -67,5 +67,28 @@ export interface DocIndexingStatusRow {
 
 export interface DocumentUploadResponse {
   status: number;
-  detail: any;
+  /** The upload endpoint's response body. */
+  detail: unknown;
+}
+
+/** One row of GET /docmuncher/status/data, as the backend sends it. */
+export interface IndexingHistoryEntry {
+  parent_file_name: string;
+  overall_status: string;
+  docs_indexed: number;
+  docs_total: number;
+  error_trace?: string | null;
+  created_datetime_utc: string;
+  finished_datetime_utc: string;
+  tasks?: DocIndexingTask[] | null;
+}
+
+/**
+ * Result of a CSV bulk upload. `detail` is only set when the backend rejects
+ * the file; it then carries per-row `errors` (or a plain message string).
+ */
+export interface CsvUploadResult {
+  status: number;
+  data?: unknown;
+  detail?: { errors?: { description: string }[] } | string;
 }

@@ -104,7 +104,8 @@ def upgrade() -> None:
                 "workspace_name": workspace_name,
             },
         )
-        new_workspace_id = result.fetchone()[0]
+        # INSERT ... RETURNING yields exactly one row.
+        new_workspace_id = result.scalar_one()
 
         # 4. NB: All existing users must be created as ADMIN users in their own
         # workspace. Otherwise, we would have workspaces with no admin users.
@@ -154,14 +155,14 @@ def upgrade() -> None:
             "urgency_response",
             "urgency_rule",
         ]:
+            # `table_name` comes from the fixed list above (identifiers cannot be
+            # bound); the values are bound parameters.
+            update_sql = (
+                f"UPDATE {table_name} "  # nosec B608
+                "SET workspace_id = :new_workspace_id WHERE user_id = :old_user_id"
+            )
             connection.execute(
-                sa.text(
-                    f"""
-                        UPDATE {table_name}
-                        SET workspace_id = :new_workspace_id
-                        WHERE user_id = :old_user_id
-                    """
-                ),
+                sa.text(update_sql),
                 {"new_workspace_id": new_workspace_id, "old_user_id": user_id},
             )
 

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   IconAlertCircle,
   IconCircleCheckFilled,
@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { Spinner } from "@/components/ui/spinner";
 
 import type { UserBody } from "../types";
@@ -33,7 +36,11 @@ interface UserCreateModalProps {
   adminUsername: string;
   checkUserExists: (username: string) => Promise<boolean>;
   addUserToWorkspace: (username: string, role: UserRole) => Promise<void>;
-  createUser: (username: string, password: string, role: UserRole) => Promise<any>;
+  createUser: (
+    username: string,
+    password: string,
+    role: UserRole,
+  ) => Promise<{ recovery_codes?: string[] }>;
   formType: "add" | "create" | "edit";
   /** Saves the edit. The caller also logs out an admin who demotes themselves. */
   editUser?: (username: string, role: UserRole) => Promise<void>;
@@ -109,19 +116,26 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
       } else {
         setIsVerified(true);
       }
-    } catch (err) {
+    } catch {
       setError({ text: "Error verifying user.", severity: "error" });
     } finally {
       setLoading(false);
     }
-  }, [username, checkUserExists]);
+  }, [username, checkUserExists, isUserInWorkspace]);
+
+  // Password fields show when creating a user, and in "add" mode once the
+  // username is verified as not existing yet (the admin creates it on the
+  // spot). validateInputs uses this same flag, so whenever the fields are
+  // visible their checks run too.
+  const showPasswordFields =
+    (isVerified && userExists === false) || formType == "create";
 
   const validateInputs = useCallback(() => {
     if (!username) {
       setError({ text: "Username is required.", severity: "error" });
       return false;
     }
-    if (formType == "create") {
+    if (showPasswordFields) {
       if (!password) {
         setError({ text: "Password is required.", severity: "error" });
         return false;
@@ -135,9 +149,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     }
     setError(null);
     return true;
-  }, [username, password, confirmPassword, formType]);
+  }, [username, password, confirmPassword, showPasswordFields]);
 
-  const handleError = (error: any) => {
+  const handleError = (error: unknown) => {
     let errorMsg = "Error processing request";
     if (error) {
       const customError = error as CustomError;
@@ -147,7 +161,10 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
       setError({ text: errorMsg, severity: "error" });
     }
   };
-  const actions: Record<"add" | "create" | "edit", () => Promise<void> | undefined> = {
+  const actions: Record<
+    "add" | "create" | "edit",
+    () => Promise<void> | undefined
+  > = {
     create: async () =>
       await createUser(username, password, role).then((data) => {
         if (data.recovery_codes) {
@@ -182,7 +199,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     },
   };
 
-  const handleAction = useCallback(async () => {
+  // Plain function rather than useCallback: `actions` is rebuilt every render,
+  // so memoising this would never hit anyway.
+  const handleAction = async () => {
     if (!validateInputs()) return;
     setLoading(true);
     setError(null);
@@ -190,7 +209,11 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
       await actions[formType]?.();
       setSnackMessage({
         message: `User successfully ${
-          formType === "add" ? "added" : formType === "edit" ? "edited" : formType + "d"
+          formType === "add"
+            ? "added"
+            : formType === "edit"
+            ? "edited"
+            : formType + "d"
         }`,
         severity: "success",
       });
@@ -202,18 +225,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [
-    formType,
-    username,
-    password,
-    confirmPassword,
-    role,
-    isVerified,
-    userExists,
-    addUserToWorkspace,
-    createUser,
-    editUser,
-  ]);
+  };
 
   const getTitle = (formType: "add" | "create" | "edit") => {
     const titles = {
@@ -243,17 +255,24 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     return buttonTitles[formType] || "Create user";
   };
 
-  useEffect(() => {
+  // Prefill the form when editing. Runs whenever `user` or `formType` changes,
+  // adjusting state during render (tracking the previous values) rather than
+  // in an effect.
+  const [prevUser, setPrevUser] = useState<UserBody | undefined>(undefined);
+  const [prevFormType, setPrevFormType] = useState<typeof formType | null>(
+    null,
+  );
+  if (user !== prevUser || formType !== prevFormType) {
+    setPrevUser(user);
+    setPrevFormType(formType);
     if (formType === "edit" && user) {
       setUsername(user.username);
       if (user.role) {
         setRole(user.role);
       }
     }
-  }, [user, formType, user?.role]);
+  }
 
-  const showPasswordFields =
-    (isVerified && userExists === false) || formType == "create";
   const showRole =
     (formType == "add" && isVerified) ||
     formType === "create" ||
@@ -268,7 +287,8 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            if (!(loading || (formType == "add" && !isVerified))) handleAction();
+            if (!(loading || (formType == "add" && !isVerified)))
+              handleAction();
           }}
           className="flex flex-col gap-5"
         >
@@ -301,7 +321,10 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               {formType == "add" &&
                 (isVerified && userExists ? (
                   <span className="flex h-10 shrink-0 items-center gap-1.5 px-2 text-sm font-medium text-chart-1">
-                    <IconCircleCheckFilled className="size-5" aria-hidden="true" />
+                    <IconCircleCheckFilled
+                      className="size-5"
+                      aria-hidden="true"
+                    />
                     Verified
                   </span>
                 ) : (
@@ -320,7 +343,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           </Field>
 
           {error && (
-            <Alert variant={error.severity === "error" ? "destructive" : "default"}>
+            <Alert
+              variant={error.severity === "error" ? "destructive" : "default"}
+            >
               {error.severity === "error" ? (
                 <IconAlertCircle aria-hidden="true" />
               ) : (
@@ -328,7 +353,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               )}
               <AlertDescription
                 className={
-                  error.severity === "error" ? "text-sm text-destructive" : "text-sm"
+                  error.severity === "error"
+                    ? "text-sm text-destructive"
+                    : "text-sm"
                 }
               >
                 {error.text}
@@ -380,10 +407,14 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
                 onChange={(e) => setRole(e.target.value as UserRole)}
               >
                 <NativeSelectOption value="admin">Admin</NativeSelectOption>
-                <NativeSelectOption value="read_only">Read only</NativeSelectOption>
+                <NativeSelectOption value="read_only">
+                  Read only
+                </NativeSelectOption>
               </NativeSelect>
               {roleLocked && (
-                <FieldDescription>You can’t change your own role.</FieldDescription>
+                <FieldDescription>
+                  You can’t change your own role.
+                </FieldDescription>
               )}
             </Field>
           )}
@@ -403,7 +434,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               size="lg"
               disabled={loading || (formType == "add" && !isVerified)}
             >
-              {loading && formType !== "add" && <Spinner data-icon="inline-start" />}
+              {loading && formType !== "add" && (
+                <Spinner data-icon="inline-start" />
+              )}
               {getButtonTitle(formType)}
             </Button>
           </DialogFooter>

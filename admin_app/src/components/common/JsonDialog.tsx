@@ -51,7 +51,9 @@ export const JsonDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[80vh] flex-col gap-4 p-6 sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Raw response</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            Raw response
+          </DialogTitle>
         </DialogHeader>
         {/* Only mount (and highlight) while the dialog is open */}
         {open && <JsonCodeBlock value={formatJson(json)} />}

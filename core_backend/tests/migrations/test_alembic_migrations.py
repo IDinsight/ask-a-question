@@ -11,13 +11,14 @@ from typing import Any, Callable
 
 import alembic
 from pytest_alembic import create_alembic_fixture, tests
+from pytest_alembic.runner import MigrationContext
 
 migration_history = create_alembic_fixture()
 
 
 def test_single_head_revision(
     alembic_runner: Callable[[dict[str, Any] | alembic.config.Config | None], Callable],
-    migration_history: Callable,
+    migration_history: MigrationContext,
 ) -> None:
     """Assert that there only exists one head revision.
 
@@ -34,7 +35,7 @@ def test_single_head_revision(
 
 def test_upgrade(
     alembic_runner: Callable[[dict[str, Any] | alembic.config.Config | None], Callable],
-    migration_history: Callable,
+    migration_history: MigrationContext,
 ) -> None:
     """Assert that the revision history can be run through from base to head.
 
@@ -51,7 +52,7 @@ def test_upgrade(
 
 def test_model_definitions_match_ddl(
     alembic_runner: Callable[[dict[str, Any] | alembic.config.Config | None], Callable],
-    migration_history: Callable,
+    migration_history: MigrationContext,
 ) -> None:
     """Assert that the state of the migrations matches the state of the models
     describing the DDL.
@@ -74,7 +75,7 @@ def test_model_definitions_match_ddl(
 
 # def test_up_down_consistency(
 #     alembic_runner: Callable[[dict[str, Any] | alembic.config.Config | None], Callable],  # noqa: E501
-#     migration_history: Callable,
+#     migration_history: MigrationContext,
 # ) -> None:
 #     """Assert that all downgrades succeed.
 #

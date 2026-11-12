@@ -3,11 +3,12 @@
 from typing import Any
 from unittest.mock import patch
 
-import httpx
-from app.users.schemas import UserRoles
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
+
+from app.users.schemas import UserRoles
 
 # Define scenario(s).
 scenarios("google_user_sign_in.feature")
@@ -39,7 +40,7 @@ def reset_databases(
     "Wamuyu signs in using her gmail",
     target_fixture="wamuyu_google_create_response",
 )
-def wamuyu_signs_in_using_gmail(client: TestClient) -> httpx.Response:
+def wamuyu_signs_in_using_gmail(client: TestClient) -> httpx2.Response:
     """Wamuyu signs in using her gmail.
 
     Parameters
@@ -49,7 +50,7 @@ def wamuyu_signs_in_using_gmail(client: TestClient) -> httpx.Response:
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from Wamuyu signing in using her gmail.
     """
 
@@ -67,7 +68,9 @@ def wamuyu_signs_in_using_gmail(client: TestClient) -> httpx.Response:
 
 
 @then("Wamuyu should be added to Wamuyu's Workspace")
-def check_wamuyu_create_response(wamuyu_google_create_response: httpx.Response) -> None:
+def check_wamuyu_create_response(
+    wamuyu_google_create_response: httpx2.Response,
+) -> None:
     """Check that Wamuyu was added to Wamuyu's Workspace.
 
     Parameters
@@ -118,7 +121,7 @@ def wamuyu_signs_in_again(client: TestClient) -> None:
 )
 def zia_create_wamuyu_gmail_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Zia tries creates to create a workspace called "wamuyu@gmail.com".
 
     Parameters
@@ -130,7 +133,7 @@ def zia_create_wamuyu_gmail_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from Zia creating a workspace.
     """
 
@@ -145,7 +148,7 @@ def zia_create_wamuyu_gmail_workspace(
 
 
 @then("Zia should receive an empty list as a response")
-def check_zia_create_response(zia_create_response: httpx.Response) -> None:
+def check_zia_create_response(zia_create_response: httpx2.Response) -> None:
     """Check that Zia received an empty list as a response.
 
     Parameters
@@ -166,7 +169,7 @@ def check_zia_create_response(zia_create_response: httpx.Response) -> None:
 )
 def zia_create_wamuyu_gmail_workspace_first(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Zia creates Wamuyu's gmail workspace first.
 
     Parameters
@@ -178,7 +181,7 @@ def zia_create_wamuyu_gmail_workspace_first(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from Zia creating Wamuyu's gmail workspace first.
     """
 
@@ -193,7 +196,7 @@ def zia_create_wamuyu_gmail_workspace_first(
 
 
 @then("Zia should be able to create Wamuyu's gmail workspace")
-def check_zia_create_first_response(zia_create_first_response: httpx.Response) -> None:
+def check_zia_create_first_response(zia_create_first_response: httpx2.Response) -> None:
     """Check that Zia received an empty list as a response.
 
     Parameters
@@ -211,7 +214,7 @@ def check_zia_create_first_response(zia_create_first_response: httpx.Response) -
     "Wamuyu tries to sign in using her gmail",
     target_fixture="wamuyu_google_sign_in_response",
 )
-def wamuyu_tries_to_sign_in_using_gmail(client: TestClient) -> httpx.Response:
+def wamuyu_tries_to_sign_in_using_gmail(client: TestClient) -> httpx2.Response:
     """Wamuyu tries to sign in using her gmail.
 
     Parameters
@@ -221,7 +224,7 @@ def wamuyu_tries_to_sign_in_using_gmail(client: TestClient) -> httpx.Response:
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from Wamuyu trying to sign in using her gmail.
     """
 
@@ -239,7 +242,7 @@ def wamuyu_tries_to_sign_in_using_gmail(client: TestClient) -> httpx.Response:
 
 @then("Wamuyu should get an error")
 def check_wamuyu_create_second_response(
-    wamuyu_google_sign_in_response: httpx.Response,
+    wamuyu_google_sign_in_response: httpx2.Response,
 ) -> None:
     """Check that Wamuyu got an error.
 

@@ -30,8 +30,12 @@ describe("DateRangePickerDialog", () => {
   it("prompts for a range and keeps Apply disabled until one is picked", () => {
     setup();
 
-    expect(screen.getByRole("heading", { name: "Custom date range" })).toBeInTheDocument();
-    expect(screen.getByText("Pick a start date, then an end date.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Custom date range" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Pick a start date, then an end date."),
+    ).toBeInTheDocument();
     expect(frequency()).toHaveValue("Day");
     expect(apply()).toBeDisabled();
   });
@@ -52,12 +56,18 @@ describe("DateRangePickerDialog", () => {
     expect(frequency()).toHaveValue("Hour");
 
     await user.click(apply());
-    expect(onSelectDateRange).toHaveBeenCalledWith("2026-03-01", "2026-03-10", "Hour");
+    expect(onSelectDateRange).toHaveBeenCalledWith(
+      "2026-03-01",
+      "2026-03-10",
+      "Hour",
+    );
   });
 
   it("needs both ends of the range", () => {
     setup({ initialStartDate: "2026-03-01T00:00:00" });
-    expect(screen.getByText("Pick a start date, then an end date.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Pick a start date, then an end date."),
+    ).toBeInTheDocument();
     expect(apply()).toBeDisabled();
   });
 
@@ -68,7 +78,11 @@ describe("DateRangePickerDialog", () => {
     });
 
     await user.click(apply());
-    expect(onSelectDateRange).toHaveBeenCalledWith("2026-03-01", "2026-03-10", "Day");
+    expect(onSelectDateRange).toHaveBeenCalledWith(
+      "2026-03-01",
+      "2026-03-10",
+      "Day",
+    );
   });
 
   it("steps up to the first frequency that fits a long range and disables the rest", () => {
@@ -114,13 +128,21 @@ describe("DateRangePickerDialog", () => {
     // In range mode, clicking a later day extends the range to it.
     const day12 = screen
       .getAllByRole("button")
-      .find((b) => /March 12(th)?,? 2026/.test(b.getAttribute("aria-label") ?? ""));
+      .find((b) =>
+        /March 12(th)?,? 2026/.test(b.getAttribute("aria-label") ?? ""),
+      );
     expect(day12).toBeDefined();
     await user.click(day12!);
 
-    expect(screen.getByText(/Mar 2, 2026 – Mar 12, 2026 \(11 days\)/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Mar 2, 2026 – Mar 12, 2026 \(11 days\)/),
+    ).toBeInTheDocument();
     await user.click(apply());
-    expect(onSelectDateRange).toHaveBeenCalledWith("2026-03-02", "2026-03-12", "Day");
+    expect(onSelectDateRange).toHaveBeenCalledWith(
+      "2026-03-02",
+      "2026-03-12",
+      "Day",
+    );
   });
 
   it("closes on Cancel or Escape", async () => {

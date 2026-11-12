@@ -13,7 +13,12 @@ import "server-only";
 
 type Level = "debug" | "info" | "warn" | "error";
 
-const LEVEL_ORDER: Record<Level, number> = { debug: 10, info: 20, warn: 30, error: 40 };
+const LEVEL_ORDER: Record<Level, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+};
 
 /** Minimum level to emit; set LOG_LEVEL=debug|info|warn|error. Defaults to info. */
 const minLevel = (): number => {
@@ -21,7 +26,11 @@ const minLevel = (): number => {
   return LEVEL_ORDER[configured] ?? LEVEL_ORDER.info;
 };
 
-const write = (level: Level, event: string, fields: Record<string, unknown>) => {
+const write = (
+  level: Level,
+  event: string,
+  fields: Record<string, unknown>,
+) => {
   if (LEVEL_ORDER[level] < minLevel()) return;
   const line = JSON.stringify({
     ts: new Date().toISOString(),

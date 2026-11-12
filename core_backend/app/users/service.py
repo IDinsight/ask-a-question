@@ -15,6 +15,7 @@ from redis import asyncio as aioredis
 from sqlalchemy import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.service import revoke_all_refresh_tokens
 from app.core.exceptions import (
     BadRequestError,
     ForbiddenError,
@@ -459,7 +460,7 @@ async def check_register_required(*, asession: AsyncSession) -> RequireRegisterR
 
 
 async def reset_user_password(
-    *, asession: AsyncSession, user: UserResetPassword
+    *, asession: AsyncSession, redis: aioredis.Redis, user: UserResetPassword
 ) -> UserRetrieve:
     """Reset a user's password using one of their recovery codes.
 
@@ -467,12 +468,16 @@ async def reset_user_password(
 
     1. The user password is reset in the `UserDB` database and the used recovery code
         is discarded.
-    2. The user's role in all workspaces is retrieved for the return object.
+    2. All the user's refresh tokens are revoked, so sessions started with the old
+        password (possibly by someone else) end at their next refresh.
+    3. The user's role in all workspaces is retrieved for the return object.
 
     Parameters
     ----------
     asession
         The SQLAlchemy async session to use for all database connections.
+    redis
+        The Redis client holding refresh token state.
     user
         The user object with the new password and recovery code.
 
@@ -498,6 +503,9 @@ async def reset_user_password(
     )
 
     # 2.
+    await revoke_all_refresh_tokens(redis=redis, username=updated_user_db.username)
+
+    # 3.
     updated_user_workspace_roles = await get_user_role_in_all_workspaces(
         asession=asession, user_db=updated_user_db
     )

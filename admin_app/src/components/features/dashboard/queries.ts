@@ -249,7 +249,9 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
   const queryClient = useQueryClient();
   // The insights endpoint takes only the timeframe, so all custom ranges share
   // one cached result, as on the backend.
-  const topicsOptions = retrieveInsightsFrequencyOptions({ path: timeframe(params) });
+  const topicsOptions = retrieveInsightsFrequencyOptions({
+    path: timeframe(params),
+  });
   const key = topicsOptions.queryKey;
   const keyId = JSON.stringify(key);
 
@@ -259,7 +261,9 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
   const query = useQuery({
     queryKey: key,
     queryFn: async (context): Promise<TopicModelingResponse> =>
-      (await topicsOptions.queryFn!(context)) as unknown as TopicModelingResponse,
+      (await topicsOptions.queryFn!(
+        context,
+      )) as unknown as TopicModelingResponse,
     enabled: enabled && !!token && isComplete(params),
     refetchInterval: (q) =>
       q.state.data?.status === "in_progress" && !timedOut[keyId]
@@ -276,7 +280,8 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
     const timer = setTimeout(() => {
       setTimedOut((prev) => ({ ...prev, [keyId]: true }));
       toast.add({
-        title: "The processing is taking longer than expected. Please try again later.",
+        title:
+          "The processing is taking longer than expected. Please try again later.",
         type: "error",
       });
     }, POLLING_TIMEOUT);
@@ -325,7 +330,10 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
     },
     onError: (error: { message?: string }) => {
       waiting.current[keyId] = false;
-      toast.add({ title: error.message || "There was a system error.", type: "error" });
+      toast.add({
+        title: error.message || "There was a system error.",
+        type: "error",
+      });
     },
   });
 
@@ -339,7 +347,8 @@ export const useTopicInsights = (params: PeriodParams, enabled: boolean) => {
 
   return {
     data: query.data ?? EMPTY_TOPICS,
-    refreshing: refresh.isPending || (status === "in_progress" && !timedOut[keyId]),
+    refreshing:
+      refresh.isPending || (status === "in_progress" && !timedOut[keyId]),
     runRefresh: () => refresh.mutate(),
   };
 };

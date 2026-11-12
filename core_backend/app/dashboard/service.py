@@ -335,7 +335,8 @@ def create_session_id(
         prefix
         + "-"
         + f"{start_dt:%Y%m%d_%H%M%S}-{end_dt:%Y%m%d_%H%M%S}-"
-        + f"{random.randint(0, 1000):04}"
+        # A tracing label, not a secret: `random` is fine.
+        + f"{random.randint(0, 1000):04}"  # nosec B311
     )
 
 
@@ -1552,7 +1553,8 @@ def produce_bokeh_plot(*, embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     random.seed(42)  # Set seed for reproducibility between re-rendering plot
 
     if len(known_topics) <= len(palette):
-        topic_colors = random.sample(palette, len(known_topics))
+        # Cosmetic colour choice, not security related.
+        topic_colors = random.sample(palette, len(known_topics))  # nosec B311
     else:
         # If there are more topics than palette colors, cycle through the palette.
         topic_colors = [palette[i % len(palette)] for i in range(len(known_topics))]

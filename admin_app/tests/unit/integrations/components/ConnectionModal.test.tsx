@@ -27,10 +27,18 @@ describe("ChatManagerModal", () => {
 
   it("renders an empty body when there is no guide", () => {
     render(
-      <ChatManagerModal name="" logo={null} ModalContent={null} open onClose={() => {}} />,
+      <ChatManagerModal
+        name=""
+        logo={null}
+        ModalContent={null}
+        open
+        onClose={() => {}}
+      />,
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.queryByText("Step one: do the thing.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Step one: do the thing."),
+    ).not.toBeInTheDocument();
   });
 
   it("calls onClose when the dialog is dismissed", async () => {

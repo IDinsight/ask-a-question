@@ -47,10 +47,12 @@ const useRuleListCache = () => {
   const queryClient = useQueryClient();
   return {
     /** Stop an in-flight refetch from overwriting an optimistic patch. */
-    cancel: () => queryClient.cancelQueries({ queryKey: urgencyRuleKeys.list() }),
+    cancel: () =>
+      queryClient.cancelQueries({ queryKey: urgencyRuleKeys.list() }),
     patch: (fn: (rules: UrgencyRuleRetrieve[]) => UrgencyRuleRetrieve[]) =>
-      queryClient.setQueryData<UrgencyRuleRetrieve[]>(urgencyRuleKeys.list(), (old) =>
-        fn(old ?? []),
+      queryClient.setQueryData<UrgencyRuleRetrieve[]>(
+        urgencyRuleKeys.list(),
+        (old) => fn(old ?? []),
       ),
     // Not awaited, so the mutation settles as soon as the request does.
     invalidate: () => {
@@ -97,7 +99,9 @@ export const useUpdateUrgencyRuleMutation = () => {
     },
     onSuccess: (saved) => {
       cache.patch((rules) =>
-        rules.map((r) => (r.urgency_rule_id === saved.urgency_rule_id ? saved : r)),
+        rules.map((r) =>
+          r.urgency_rule_id === saved.urgency_rule_id ? saved : r,
+        ),
       );
     },
     onSettled: cache.invalidate,

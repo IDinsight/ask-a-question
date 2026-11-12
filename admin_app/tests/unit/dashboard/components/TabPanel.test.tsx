@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
-import TabPanel, { periodLabel } from "@/components/features/dashboard/components/TabPanel";
+import TabPanel, {
+  periodLabel,
+} from "@/components/features/dashboard/components/TabPanel";
 import type { Period } from "@/components/features/dashboard/types";
 
 describe("TabPanel", () => {
@@ -11,7 +13,12 @@ describe("TabPanel", () => {
 
     const group = screen.getByRole("group", { name: "Time range" });
     expect(group).toBeInTheDocument();
-    for (const label of ["Last 24 hours", "Last month", "Last year", "Custom"]) {
+    for (const label of [
+      "Last 24 hours",
+      "Last month",
+      "Last year",
+      "Custom",
+    ]) {
       expect(screen.getByRole("button", { name: label })).toHaveAttribute(
         "aria-pressed",
         "false",
@@ -49,7 +56,11 @@ describe("TabPanel", () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
     const { rerender } = render(
-      <TabPanel tabValue="custom" handleChange={() => {}} onEditCustomPeriod={onEdit} />,
+      <TabPanel
+        tabValue="custom"
+        handleChange={() => {}}
+        onEditCustomPeriod={onEdit}
+      />,
     );
     expect(
       screen.queryByRole("button", { name: "Edit custom date range" }),
@@ -63,7 +74,9 @@ describe("TabPanel", () => {
         customDateParamsSet
       />,
     );
-    await user.click(screen.getByRole("button", { name: "Edit custom date range" }));
+    await user.click(
+      screen.getByRole("button", { name: "Edit custom date range" }),
+    );
     expect(onEdit).toHaveBeenCalledOnce();
   });
 });

@@ -7,14 +7,19 @@ that hit `app.main.app` use the shared session `client`.
 
 import logging
 import string
+from typing import Any
 
 import pytest
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
+from limits import parse
+from slowapi import Limiter
+from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 from starlette.types import Receive, Scope, Send
 
-from app.core.config import DOMAIN
+from app.core import security as core_security
+from app.core.config import DOMAIN, RATE_LIMIT_AUTH
 from app.core.exceptions import register_exception_handlers
 from app.core.observability import RedactingFormatter, redact, scrub_sentry_event
 from app.core.security import (
@@ -22,14 +27,21 @@ from app.core.security import (
     InsecureConfigurationError,
     LegacySha256Hasher,
     SecurityHeadersMiddleware,
+    create_access_token,
     generate_recovery_codes,
+    get_client_ip,
+    get_key_hash,
     get_random_string,
+    get_rate_limit_key,
     hash_password,
     hash_recovery_code,
+    limiter,
     protect_metrics_app,
     validate_security_settings,
     verify_password,
 )
+from app.main import app as main_app
+from app.users.schemas import UserRoles
 
 STRONG_SECRET = "0123456789abcdef0123456789abcdef"  # pragma: allowlist secret
 PASSWORD = "core_security_password"  # pragma: allowlist secret
@@ -399,9 +411,7 @@ class TestSafeErrors:
     def test_main_app_debug_off(self) -> None:
         """`app.main.app` does not run in debug mode (which returns tracebacks)."""
 
-        from app.main import app
-
-        assert app.debug is False
+        assert main_app.debug is False
 
 
 class TestRedaction:
@@ -461,3 +471,170 @@ class TestRedaction:
         assert request["data"] == {"password": "[REDACTED]", "username": "bob"}
         assert request["cookies"] == {"session": "[REDACTED]"}
         assert "abc" not in request["query_string"]
+
+
+def _request(headers: dict[str, str] | None = None) -> Request:
+    """Build a bare request from socket peer 10.0.0.1 with the given headers.
+
+    Parameters
+    ----------
+    headers
+        Request headers.
+
+    Returns
+    -------
+    Request
+        The request.
+    """
+
+    return Request(
+        {
+            "client": ("10.0.0.1", 1234),
+            "headers": [
+                (k.lower().encode(), v.encode()) for k, v in (headers or {}).items()
+            ],
+            "method": "GET",
+            "path": "/",
+            "type": "http",
+        }
+    )
+
+
+class TestRateLimitKeys:
+    """Who a request is counted against."""
+
+    @pytest.mark.parametrize(
+        "hops, forwarded_for, expected",
+        [
+            (0, "1.1.1.1", "10.0.0.1"),  # Header ignored when no proxy is trusted.
+            (1, None, "10.0.0.1"),  # No header: the socket peer.
+            (1, "1.1.1.1", "1.1.1.1"),
+            # A client-supplied entry on the left is ignored.
+            (1, "6.6.6.6, 1.1.1.1", "1.1.1.1"),
+            (2, "6.6.6.6, 1.1.1.1, 2.2.2.2", "1.1.1.1"),
+            (2, "1.1.1.1", "1.1.1.1"),  # Fewer entries than hops.
+        ],
+    )
+    def test_client_ip(
+        self,
+        expected: str,
+        forwarded_for: str | None,
+        hops: int,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """The client IP is read `hops` entries from the right of X-Forwarded-For.
+
+        Parameters
+        ----------
+        expected
+            The IP that should be used.
+        forwarded_for
+            The X-Forwarded-For header, if any.
+        hops
+            RATE_LIMIT_TRUSTED_PROXY_HOPS.
+        monkeypatch
+            Pytest monkeypatch fixture.
+        """
+
+        monkeypatch.setattr(core_security, "RATE_LIMIT_TRUSTED_PROXY_HOPS", hops)
+        headers = {"X-Forwarded-For": forwarded_for} if forwarded_for else {}
+        assert get_client_ip(_request(headers)) == expected
+
+    def test_key_for_user_jwt(self) -> None:
+        """A valid user JWT is keyed on the username."""
+
+        token = create_access_token(
+            user_role=UserRoles.ADMIN, username="alice", workspace_name="ws"
+        )
+        request = _request({"Authorization": f"Bearer {token}"})
+        assert get_rate_limit_key(request) == "user:alice"
+
+    def test_key_for_api_key(self) -> None:
+        """Any other bearer token is keyed on its hash, never the raw value."""
+
+        request = _request({"Authorization": "Bearer raw-api-key"})
+        key = get_rate_limit_key(request)
+        assert key == f"key:{get_key_hash(key='raw-api-key')}"
+        assert "raw-api-key" not in key
+
+    def test_key_for_anonymous(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Anonymous requests are keyed on the client IP.
+
+        Parameters
+        ----------
+        monkeypatch
+            Pytest monkeypatch fixture.
+        """
+
+        monkeypatch.setattr(core_security, "RATE_LIMIT_TRUSTED_PROXY_HOPS", 1)
+        request = _request({"X-Forwarded-For": "1.1.1.1"})
+        assert get_rate_limit_key(request) == "ip:1.1.1.1"
+
+
+class TestRateLimiting:
+    """Limits enforced by `app.main.app`. The suite runs with RATE_LIMIT_ENABLED
+    false (see tests/test.env), so each test switches limiting on and cleans up."""
+
+    def test_auth_endpoint_limited_per_ip(self, client: TestClient) -> None:
+        """Credential endpoints return 429 with Retry-After past RATE_LIMIT_AUTH,
+        counted per client IP.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        """
+
+        allowed = parse(RATE_LIMIT_AUTH).amount
+        limiter.enabled = True
+        try:
+            limiter.reset()
+
+            def logout(ip: str) -> Any:
+                """POST /logout from the given client IP."""
+                return client.post(
+                    "/logout",
+                    headers={"X-Forwarded-For": ip},
+                    json={"refresh_token": "junk"},
+                )
+
+            for _ in range(allowed):
+                assert logout("203.0.113.7").status_code == status.HTTP_204_NO_CONTENT
+
+            response = logout("203.0.113.7")
+            assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+            assert int(response.headers["Retry-After"]) >= 1
+            assert "Rate limit exceeded" in response.json()["detail"]
+
+            # Another client IP has its own budget.
+            assert logout("203.0.113.8").status_code == status.HTTP_204_NO_CONTENT
+        finally:
+            limiter.reset()
+            limiter.enabled = False
+
+    def test_default_limit_on_every_route(self, client: TestClient) -> None:
+        """Routes without their own limit get the default one from the middleware.
+
+        The app's limiter is swapped for one with a tiny default limit and memory
+        storage; the middleware reads it from `app.state.limiter`.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        """
+
+        original = main_app.state.limiter
+        main_app.state.limiter = Limiter(
+            key_func=get_rate_limit_key,
+            default_limits=["2/minute"],
+            storage_uri="memory://",
+        )
+        try:
+            for _ in range(2):
+                response = client.get("/user/require-register")
+                assert response.status_code == status.HTTP_200_OK
+            response = client.get("/user/require-register")
+            assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        finally:
+            main_app.state.limiter = original

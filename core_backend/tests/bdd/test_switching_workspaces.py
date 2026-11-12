@@ -4,7 +4,7 @@ workspaces.
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -41,7 +41,7 @@ def reset_databases(
 )
 def suzin_switches_workspaces(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Suzin switches to Workspace Carlos and Workspace Amir.
 
     NB: Suzin is all powerful since she is the OG admin and created workspace for
@@ -57,7 +57,7 @@ def suzin_switches_workspaces(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The responses from switching to Workspace Carlos and Workspace Amir.
     """
 
@@ -80,7 +80,7 @@ def suzin_switches_workspaces(
 
 @then("Suzin should be able to switch to both workspaces")
 def check_suzin_workspace_switch_responses(
-    suzin_switch_workspaces_response: dict[str, httpx.Response],
+    suzin_switch_workspaces_response: dict[str, httpx2.Response],
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Suzin can switch to both workspaces.
@@ -107,7 +107,7 @@ def check_suzin_workspace_switch_responses(
 )
 def mark_switches_workspaces(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Mark switches to Workspace Carlos and Workspace Amir.
 
     Parameters
@@ -119,7 +119,7 @@ def mark_switches_workspaces(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The responses from switching to Workspace Carlos and Workspace Amir.
     """
 
@@ -142,7 +142,7 @@ def mark_switches_workspaces(
 
 @then("Mark should get an error")
 def check_mark_workspace_switch_responses(
-    mark_switch_workspaces_response: dict[str, httpx.Response],
+    mark_switch_workspaces_response: dict[str, httpx2.Response],
 ) -> None:
     """Check that Mark is not allowed to switch workspaces.
 
@@ -162,7 +162,7 @@ def check_mark_workspace_switch_responses(
 )
 def carlos_switches_workspaces(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Carlos switches to Workspace Suzin and Workspace Amir.
 
     Parameters
@@ -174,7 +174,7 @@ def carlos_switches_workspaces(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The responses from switching to Workspace Suzin and Workspace Amir.
     """
 
@@ -197,7 +197,7 @@ def carlos_switches_workspaces(
 
 @then("Carlos should get an error")
 def check_carlos_workspace_switch_responses(
-    carlos_switch_workspaces_response: dict[str, httpx.Response],
+    carlos_switch_workspaces_response: dict[str, httpx2.Response],
 ) -> None:
     """Check that Carlos is not allowed to switch workspaces.
 
@@ -217,7 +217,7 @@ def check_carlos_workspace_switch_responses(
 )
 def zia_switches_workspaces(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Zia switches to Workspace Suzin and Workspace Amir.
 
     Parameters
@@ -229,7 +229,7 @@ def zia_switches_workspaces(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The responses from switching to Workspace Suzin and Workspace Amir.
     """
 
@@ -252,7 +252,7 @@ def zia_switches_workspaces(
 
 @then("Zia should get an error")
 def check_zia_workspace_switch_responses(
-    zia_switch_workspaces_response: dict[str, httpx.Response],
+    zia_switch_workspaces_response: dict[str, httpx2.Response],
 ) -> None:
     """Check that Zia is not allowed to switch workspaces.
 
@@ -272,7 +272,7 @@ def check_zia_workspace_switch_responses(
 )
 def amir_switches_workspaces(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Amir switches to Workspace Suzin and Workspace Carlos.
 
     Parameters
@@ -284,7 +284,7 @@ def amir_switches_workspaces(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The responses from switching to Workspace Suzin and Workspace Carlos.
     """
 
@@ -307,7 +307,7 @@ def amir_switches_workspaces(
 
 @then("Amir should get an error")
 def check_amir_workspace_switch_responses(
-    amir_switch_workspaces_response: dict[str, httpx.Response],
+    amir_switch_workspaces_response: dict[str, httpx2.Response],
 ) -> None:
     """Check that Amir is not allowed to switch workspaces.
 
@@ -327,7 +327,7 @@ def check_amir_workspace_switch_responses(
 )
 def sid_switches_workspaces(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Sid switches to Workspace Suzin and Workspace Carlos.
 
     Parameters
@@ -339,7 +339,7 @@ def sid_switches_workspaces(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The responses from switching to Workspace Suzin and Workspace Carlos.
     """
 
@@ -362,7 +362,7 @@ def sid_switches_workspaces(
 
 @then("Sid should get an error")
 def check_sid_workspace_switch_responses(
-    sid_switch_workspaces_response: dict[str, httpx.Response],
+    sid_switch_workspaces_response: dict[str, httpx2.Response],
 ) -> None:
     """Check that Sid is not allowed to switch workspaces.
 
@@ -382,7 +382,7 @@ def check_sid_workspace_switch_responses(
 )
 def poornima_switches_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> dict[str, httpx.Response]:
+) -> dict[str, httpx2.Response]:
     """Poornima switches to Workspace Suzin.
 
     Parameters
@@ -394,7 +394,7 @@ def poornima_switches_workspace(
 
     Returns
     -------
-    dict[str, httpx.Response]
+    dict[str, httpx2.Response]
         The response from switching to Workspace Suzin.
     """
 
@@ -409,7 +409,7 @@ def poornima_switches_workspace(
 
 @then("Poornima should be able to switch to workspace Suzin")
 def check_poornima_workspace_switch_response(
-    poornima_switch_workspace_response: dict[str, httpx.Response],
+    poornima_switch_workspace_response: dict[str, httpx2.Response],
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Poornima can switch to workspace Suzin.

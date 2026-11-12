@@ -6,6 +6,7 @@ import hmac
 import re
 import secrets
 import string
+import time
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -13,14 +14,22 @@ import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from redis import asyncio as aioredis
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
 from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import PlainTextResponse
+from starlette.requests import Request
+from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_ALGORITHM,
     JWT_SECRET,
+    RATE_LIMIT_DEFAULT,
+    RATE_LIMIT_ENABLED,
+    RATE_LIMIT_STORAGE_URI,
+    RATE_LIMIT_TRUSTED_PROXY_HOPS,
+    REFRESH_TOKEN_EXPIRE_MINUTES,
 )
 from app.users.schemas import UserRoles
 
@@ -414,6 +423,211 @@ def create_access_token(
     payload["workspace_name"] = workspace_name
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def create_refresh_token(
+    *, family_id: str, token_id: str, username: str, workspace_name: str
+) -> str:
+    """Create a refresh token for the user.
+
+    The token is a signed JWT, but signature and expiry alone do not make it usable:
+    `app.auth.service` also requires its `jti` to still be registered in Redis. That
+    is what makes refresh tokens single-use and revocable.
+
+    The role is deliberately left out. It is re-read from the database on every
+    refresh, so a role change takes effect at the next refresh.
+
+    Parameters
+    ----------
+    family_id
+        ID shared by every token issued from one login. Reusing an already-rotated
+        token revokes the whole family.
+    token_id
+        Unique ID of this token (the `jti` claim).
+    username
+        The username of the user to create the refresh token for.
+    workspace_name
+        The name of the workspace the token is scoped to.
+
+    Returns
+    -------
+    str
+        The refresh token.
+    """
+
+    now = datetime.now(timezone.utc)
+    payload: dict[str, str | datetime] = {
+        "exp": now + timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES),
+        "fam": family_id,
+        "iat": now,
+        "jti": token_id,
+        "sub": username,
+        "type": "refresh_token",
+        "username": username,
+        "workspace_name": workspace_name,
+    }
+
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+# ---------------------------------------------------------------------------
+# Request rate limiting (slowapi).
+# ---------------------------------------------------------------------------
+
+
+def get_client_ip(request: Request) -> str:
+    """Return the client IP to rate limit on.
+
+    The backend sits behind proxies (Caddy, and for admin app calls also the Next.js
+    /bff proxy), so the socket peer is a proxy, not the user. The real client IP is
+    read from X-Forwarded-For, counting `RATE_LIMIT_TRUSTED_PROXY_HOPS` entries from
+    the right. Entries further left were written by the client and could be spoofed.
+
+    Parameters
+    ----------
+    request
+        The incoming request.
+
+    Returns
+    -------
+    str
+        The client IP address (or "unknown" if there is none).
+    """
+
+    if RATE_LIMIT_TRUSTED_PROXY_HOPS > 0:
+        forwarded_for = request.headers.get("x-forwarded-for", "")
+        hops = [ip.strip() for ip in forwarded_for.split(",") if ip.strip()]
+        if hops:
+            # With fewer entries than trusted hops, the leftmost entry is still one
+            # that a trusted proxy wrote.
+            return hops[-min(RATE_LIMIT_TRUSTED_PROXY_HOPS, len(hops))]
+    return request.client.host if request.client else "unknown"
+
+
+def get_rate_limit_key(request: Request) -> str:
+    """Key for the default per-endpoint limit: who is calling.
+
+    - A valid user JWT is keyed on the username, so refreshing the token does not
+      reset the counter and colleagues behind one NAT do not share a bucket.
+    - Any other bearer token (a workspace API key) is keyed on its hash, so the raw
+      key never reaches the limiter storage.
+    - Anonymous requests are keyed on the client IP.
+
+    Parameters
+    ----------
+    request
+        The incoming request.
+
+    Returns
+    -------
+    str
+        The rate limit key.
+    """
+
+    scheme, _, credentials = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() == "bearer" and credentials:
+        try:
+            payload = jwt.decode(
+                credentials,
+                JWT_SECRET,
+                algorithms=[JWT_ALGORITHM],
+                options={"require": ["exp", "iat"]},
+            )
+            username = payload.get("username")
+            if isinstance(username, str) and username:
+                return f"user:{username}"
+        except jwt.InvalidTokenError:
+            pass
+        return f"key:{get_key_hash(key=credentials)}"
+    return f"ip:{get_client_ip(request)}"
+
+
+# One limiter for the whole app. `default_limits` is applied to every route by
+# `SlowAPIMiddleware` (added in `app.main`); credential endpoints add a stricter
+# per-IP limit with `@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)`.
+# `swallow_errors` keeps the API up (unlimited) if Redis is briefly unreachable.
+limiter = Limiter(
+    key_func=get_rate_limit_key,
+    default_limits=[RATE_LIMIT_DEFAULT],
+    enabled=RATE_LIMIT_ENABLED,
+    key_prefix="rate-limit",
+    storage_uri=RATE_LIMIT_STORAGE_URI,
+    swallow_errors=True,
+)
+
+
+def enforce_default_rate_limit(request: Request) -> None:
+    """App-wide dependency that applies `RATE_LIMIT_DEFAULT` to every route that has
+    no `@limiter.limit` of its own.
+
+    Why not slowapi's middleware: it finds the endpoint by scanning `app.routes`, but
+    FastAPI >= 0.16x nests included routers there, so it finds nothing and silently
+    limits nothing. A dependency runs after routing, when the endpoint is in the
+    request scope. `tests/core/test_security.py` checks this keeps working.
+
+    It is a sync function on purpose: slowapi talks to Redis synchronously, and
+    FastAPI runs sync dependencies in its threadpool, off the event loop.
+
+    Parameters
+    ----------
+    request
+        The incoming request.
+
+    Raises
+    ------
+    RateLimitExceeded
+        If the caller is over the default limit (turned into a 429 by
+        `rate_limit_exceeded_handler`).
+    """
+
+    # Read from app state (not the module global) so tests can swap the limiter.
+    app_limiter: Limiter = request.app.state.limiter
+    endpoint = request.scope.get("endpoint")
+    if not app_limiter.enabled or endpoint is None:
+        return
+
+    # Routes with their own `@limiter.limit` are checked by that decorator instead.
+    # slowapi registers them under "<module>.<function name>".
+    name = f"{endpoint.__module__}.{endpoint.__name__}"
+    # pylint: disable=protected-access
+    if name in app_limiter._route_limits or name in app_limiter._exempt_routes:
+        return
+    # `in_middleware=True` makes slowapi apply its default (and application) limits.
+    app_limiter._check_request_limit(request, endpoint, in_middleware=True)
+    # pylint: enable=protected-access
+
+
+def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Response:
+    """Turn slowapi's `RateLimitExceeded` into a 429 shaped like the app's other
+    errors (`{"detail": ...}`), with a `Retry-After` header.
+
+    Parameters
+    ----------
+    request
+        The request that went over the limit.
+    exc
+        The `RateLimitExceeded` raised by slowapi.
+
+    Returns
+    -------
+    Response
+        The 429 response.
+    """
+
+    assert isinstance(exc, RateLimitExceeded)
+    headers: dict[str, str] = {}
+    # `view_rate_limit` is (limit item, keys) for the limit that was hit.
+    current_limit = getattr(request.state, "view_rate_limit", None)
+    if current_limit is not None:
+        reset_at, _ = limiter.limiter.get_window_stats(
+            current_limit[0], *current_limit[1]
+        )
+        headers["Retry-After"] = str(max(1, int(reset_at - time.time())))
+    return JSONResponse(
+        status_code=429,
+        content={"detail": f"Rate limit exceeded: {exc.detail}. Try again later."},
+        headers=headers,
+    )
 
 
 # ---------------------------------------------------------------------------

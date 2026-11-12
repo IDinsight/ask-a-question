@@ -1,6 +1,7 @@
 """This module contains fixtures for the API tests."""
 
 # pylint: disable=W0613, W0621
+import builtins
 import json
 import os
 import shutil
@@ -28,6 +29,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import NullPool
 
 from app.contents.models import ContentDB
+from app.core import security as core_security
 from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -45,26 +47,12 @@ from app.core.database import (
     get_connection_url,
     get_session_context_manager,
 )
-from app.core import security as core_security
 from app.core.security import (
     create_access_token,
     get_key_hash,
     hash_password,
 )
 from app.main import app
-
-# Production Argon2 parameters (64 MiB, 3 passes) make every hash/verify cost tens of
-# milliseconds, which more than doubles the suite's run time. Tests swap in the
-# cheapest valid Argon2 parameters. Hashes keep the same `$argon2id$` format and the
-# same verify/upgrade code paths; only the work factor changes. This is a test-only
-# monkeypatch: there is deliberately no setting that lowers the cost in production.
-core_security.password_hash = core_security.PasswordHash(
-    (
-        core_security.Argon2Hasher(time_cost=1, memory_cost=8, parallelism=1),
-        core_security.LegacySha256Hasher(),
-    )
-)
-core_security._DUMMY_PASSWORD_HASH = core_security.password_hash.hash("dummy")
 
 # process_input / process_output were merged into the question_answer service module.
 from app.question_answer import service as process_input
@@ -82,6 +70,19 @@ from app.users.models import UserDB, UserWorkspaceDB
 from app.users.schemas import UserRoles
 from app.workspaces.models import WorkspaceDB
 from app.workspaces.repository import get_workspace_by_workspace_name
+
+# Production Argon2 parameters (64 MiB, 3 passes) make every hash/verify cost tens of
+# milliseconds, which more than doubles the suite's run time. Tests swap in the
+# cheapest valid Argon2 parameters. Hashes keep the same `$argon2id$` format and the
+# same verify/upgrade code paths; only the work factor changes. This is a test-only
+# monkeypatch: there is deliberately no setting that lowers the cost in production.
+core_security.password_hash = core_security.PasswordHash(
+    (
+        core_security.Argon2Hasher(time_cost=1, memory_cost=8, parallelism=1),
+        core_security.LegacySha256Hasher(),
+    )
+)
+core_security._DUMMY_PASSWORD_HASH = core_security.password_hash.hash("dummy")
 
 # Fixture data files live next to this conftest, so paths do not depend on the
 # directory pytest is launched from.
@@ -2192,3 +2193,115 @@ async def patched_llm_rag_answer(*args: Any, **kwargs: Any) -> RAG:
     """
 
     return RAG(answer="patched llm response", extracted_info=[])
+
+
+class FakeRedis:
+    """In-memory stand-in for the async Redis client, for unit tests that must not
+    touch the network.
+
+    Implements only the commands the refresh-token code uses. Expiry is accepted and
+    ignored; tests that need expiry use the real Redis via `redis_client`.
+    """
+
+    def __init__(self) -> None:
+        """Start with an empty keyspace."""
+
+        self.data: dict[str, Any] = {}
+
+    async def set(self, key: str, value: Any, ex: int | None = None) -> bool:
+        """Store a string value."""
+
+        self.data[key] = value
+        return True
+
+    async def delete(self, *keys: str) -> int:
+        """Delete keys and return how many existed."""
+
+        return sum(self.data.pop(key, None) is not None for key in keys)
+
+    async def exists(self, *keys: str) -> int:
+        """Return how many of the keys exist."""
+
+        return sum(key in self.data for key in keys)
+
+    async def sadd(self, key: str, *members: str) -> int:
+        """Add members to a set."""
+
+        members_set = self.data.setdefault(key, set())
+        before = len(members_set)
+        members_set.update(m.encode() for m in members)
+        return len(members_set) - before
+
+    async def srem(self, key: str, *members: str) -> int:
+        """Remove members from a set."""
+
+        members_set = self.data.get(key, set())
+        before = len(members_set)
+        members_set.difference_update(m.encode() for m in members)
+        return before - len(members_set)
+
+    # `builtins.set`: inside this class body, `set` is the method above.
+    async def smembers(self, key: str) -> "builtins.set[bytes]":
+        """Return a set's members as bytes, like redis-py without decoding."""
+
+        return set(self.data.get(key, set()))
+
+    async def expire(self, key: str, seconds: int) -> bool:
+        """Accept and ignore an expiry."""
+
+        return key in self.data
+
+    def pipeline(self, transaction: bool = True) -> "_FakePipeline":
+        """Return a pipeline that runs the queued commands on `execute()`."""
+
+        return _FakePipeline(self)
+
+
+class _FakePipeline:
+    """Queues `FakeRedis` commands and runs them in order on `execute()`."""
+
+    def __init__(self, redis: FakeRedis) -> None:
+        """Bind to the fake client."""
+
+        self._redis = redis
+        self._calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+
+    def __getattr__(self, name: str) -> Callable[..., "_FakePipeline"]:
+        """Queue any command the fake client implements."""
+
+        getattr(self._redis, name)  # Fail fast on unsupported commands.
+
+        def _queue(*args: Any, **kwargs: Any) -> "_FakePipeline":
+            self._calls.append((name, args, kwargs))
+            return self
+
+        return _queue
+
+    async def execute(self) -> list[Any]:
+        """Run the queued commands."""
+
+        return [
+            await getattr(self._redis, name)(*args, **kwargs)
+            for name, args, kwargs in self._calls
+        ]
+
+    async def __aenter__(self) -> "_FakePipeline":
+        """Enter the `async with` block."""
+
+        return self
+
+    async def __aexit__(self, *exc_info: Any) -> None:
+        """Exit the `async with` block."""
+
+
+@pytest.fixture
+def fake_redis() -> FakeRedis:
+    """In-memory Redis stand-in. See `FakeRedis`.
+
+    Returns
+    -------
+    FakeRedis
+        A fresh fake client.
+    """
+
+    return FakeRedis()

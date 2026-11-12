@@ -363,3 +363,139 @@ class TestNoSecretsInResponses:
         assert "hashed_password" not in response.text
         assert "recovery_code" not in response.text
         assert "$argon2" not in response.text
+
+
+class TestRefreshAndLogout:
+    """Tests for POST /refresh and POST /logout against the real Redis."""
+
+    @pytest.fixture
+    def tokens(self, client: TestClient, login_user: dict[str, Any]) -> dict[str, Any]:
+        """Log the fresh user in.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        login_user
+            A fresh user with a known password.
+
+        Returns
+        -------
+        dict[str, Any]
+            The /login response body.
+        """
+
+        response = client.post(
+            "/login",
+            data={"password": LOGIN_PASSWORD, "username": login_user["username"]},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        return response.json()
+
+    def test_refresh_issues_working_tokens(
+        self, client: TestClient, tokens: dict[str, Any]
+    ) -> None:
+        """Test that /refresh returns a new pair whose access token works and whose
+        old refresh token no longer does.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        tokens
+            The /login response body.
+        """
+
+        assert tokens["refresh_token"]
+        assert tokens["expires_in"] > 0
+
+        response = client.post(
+            "/refresh", json={"refresh_token": tokens["refresh_token"]}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        refreshed = response.json()
+        assert refreshed["refresh_token"] != tokens["refresh_token"]
+        assert refreshed["workspace_name"] == TEST_WORKSPACE_NAME_1
+
+        response = client.get(
+            "/user/current-user",
+            headers={"Authorization": f"Bearer {refreshed['access_token']}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Reuse of the rotated-out token is rejected and revokes the new one too.
+        response = client.post(
+            "/refresh", json={"refresh_token": tokens["refresh_token"]}
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        response = client.post(
+            "/refresh", json={"refresh_token": refreshed["refresh_token"]}
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_logout_revokes_refresh_token(
+        self, client: TestClient, tokens: dict[str, Any]
+    ) -> None:
+        """Test that /logout returns 204 and the refresh token stops working.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        tokens
+            The /login response body.
+        """
+
+        response = client.post(
+            "/logout", json={"refresh_token": tokens["refresh_token"]}
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        response = client.post(
+            "/refresh", json={"refresh_token": tokens["refresh_token"]}
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_access_token_is_not_a_refresh_token(
+        self, client: TestClient, tokens: dict[str, Any]
+    ) -> None:
+        """Test that an access token is rejected by /refresh.
+
+        Parameters
+        ----------
+        client
+            Test client.
+        tokens
+            The /login response body.
+        """
+
+        response = client.post(
+            "/refresh", json={"refresh_token": tokens["access_token"]}
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_switch_workspace_issues_refresh_token(
+        self, access_token_admin_1: str, client: TestClient
+    ) -> None:
+        """Test that switching workspace returns a refresh token for the new
+        workspace that can be exchanged.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            Admin access token in workspace 1.
+        client
+            Test client.
+        """
+
+        response = client.post(
+            "/workspace/switch-workspace",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={"workspace_name": TEST_WORKSPACE_NAME_1},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response = client.post(
+            "/refresh", json={"refresh_token": response.json()["refresh_token"]}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["workspace_name"] == TEST_WORKSPACE_NAME_1

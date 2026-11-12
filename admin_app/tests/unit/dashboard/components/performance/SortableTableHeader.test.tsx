@@ -31,14 +31,20 @@ const renderHeader = (props: {
 describe("SortableTableHeader", () => {
   it("marks an inactive column as unsorted", () => {
     renderHeader({ sortColumn: "b", sortOrder: "ascending" });
-    expect(screen.getByRole("columnheader")).toHaveAttribute("aria-sort", "none");
+    expect(screen.getByRole("columnheader")).toHaveAttribute(
+      "aria-sort",
+      "none",
+    );
   });
 
   it.each(["ascending", "descending"] as const)(
     "reports %s on the active column",
     (order) => {
       renderHeader({ sortColumn: "a", sortOrder: order });
-      expect(screen.getByRole("columnheader")).toHaveAttribute("aria-sort", order);
+      expect(screen.getByRole("columnheader")).toHaveAttribute(
+        "aria-sort",
+        order,
+      );
     },
   );
 

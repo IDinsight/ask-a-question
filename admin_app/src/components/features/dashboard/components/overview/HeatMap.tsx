@@ -27,7 +27,10 @@ const getLocalTime = (time: string) => {
  */
 const HeatMap = ({ data }: { data: DayHourUsageData }) => {
   const times = Object.keys(data);
-  const max = Math.max(0, ...times.flatMap((t) => DAYS.map((d) => data[t][d] ?? 0)));
+  const max = Math.max(
+    0,
+    ...times.flatMap((t) => DAYS.map((d) => data[t][d] ?? 0)),
+  );
 
   if (times.length === 0) return null;
 
@@ -35,7 +38,8 @@ const HeatMap = ({ data }: { data: DayHourUsageData }) => {
   let busiest = { day: "", time: "", n: 0 };
   times.forEach((t) =>
     DAYS.forEach((d) => {
-      if ((data[t][d] ?? 0) > busiest.n) busiest = { day: d, time: t, n: data[t][d] };
+      if ((data[t][d] ?? 0) > busiest.n)
+        busiest = { day: d, time: t, n: data[t][d] };
     }),
   );
 

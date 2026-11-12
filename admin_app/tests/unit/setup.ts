@@ -15,7 +15,8 @@ class ResizeObserverStub {
   unobserve() {}
   disconnect() {}
 }
-globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+globalThis.ResizeObserver ??=
+  ResizeObserverStub as unknown as typeof ResizeObserver;
 
 class IntersectionObserverStub {
   root = null;

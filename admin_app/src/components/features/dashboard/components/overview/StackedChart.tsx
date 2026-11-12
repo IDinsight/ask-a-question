@@ -26,7 +26,10 @@ const chartConfig = {
   downvoted: { label: "Downvoted", color: "var(--destructive)" },
 } satisfies ChartConfig;
 
-const tickFormat = (frequency: CustomDashboardFrequency, showDayOfWeek?: boolean) => {
+const tickFormat = (
+  frequency: CustomDashboardFrequency,
+  showDayOfWeek?: boolean,
+) => {
   switch (frequency) {
     case "Hour":
       return "HH:mm";
@@ -64,7 +67,9 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
   frequency,
   showDayOfWeek,
 }) => {
-  const isEmpty = data.every((row) => !row.normal && !row.downvoted && !row.urgent);
+  const isEmpty = data.every(
+    (row) => !row.normal && !row.downvoted && !row.urgent,
+  );
   const labelFormat = tickFormat(frequency, showDayOfWeek);
 
   return (
@@ -96,7 +101,9 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
                   return ts
                     ? format(
                         ts,
-                        frequency === "Hour" ? "EEE d MMM, HH:mm" : "EEE d MMM yyyy",
+                        frequency === "Hour"
+                          ? "EEE d MMM, HH:mm"
+                          : "EEE d MMM yyyy",
                       )
                     : "";
                 }}

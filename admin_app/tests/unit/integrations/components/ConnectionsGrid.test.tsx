@@ -38,7 +38,9 @@ describe("ConnectionsGrid", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Glific: view setup guide" }));
+    await user.click(
+      screen.getByRole("button", { name: "Glific: view setup guide" }),
+    );
     const dialog = screen.getByRole("dialog", { name: "Glific setup guide" });
     expect(
       within(dialog).getByRole("link", { name: "Open Glific Flow" }),
@@ -52,7 +54,9 @@ describe("ConnectionsGrid", () => {
     const user = userEvent.setup();
     render(<ConnectionsGrid />);
 
-    await user.click(screen.getByRole("button", { name: "REST API: view setup guide" }));
+    await user.click(
+      screen.getByRole("button", { name: "REST API: view setup guide" }),
+    );
 
     const dialog = screen.getByRole("dialog", { name: "REST API setup guide" });
     expect(dialog.querySelector("img")).toBeNull();

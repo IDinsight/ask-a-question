@@ -134,7 +134,11 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
   );
 }
 
-function ComboboxItem({ className, children, ...props }: ComboboxPrimitive.Item.Props) {
+function ComboboxItem({
+  className,
+  children,
+  ...props
+}: ComboboxPrimitive.Item.Props) {
   return (
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
@@ -166,7 +170,10 @@ function ComboboxGroup({ className, ...props }: ComboboxPrimitive.Group.Props) {
   );
 }
 
-function ComboboxLabel({ className, ...props }: ComboboxPrimitive.GroupLabel.Props) {
+function ComboboxLabel({
+  className,
+  ...props
+}: ComboboxPrimitive.GroupLabel.Props) {
   return (
     <ComboboxPrimitive.GroupLabel
       data-slot="combobox-label"
@@ -177,7 +184,9 @@ function ComboboxLabel({ className, ...props }: ComboboxPrimitive.GroupLabel.Pro
 }
 
 function ComboboxCollection({ ...props }: ComboboxPrimitive.Collection.Props) {
-  return <ComboboxPrimitive.Collection data-slot="combobox-collection" {...props} />;
+  return (
+    <ComboboxPrimitive.Collection data-slot="combobox-collection" {...props} />
+  );
 }
 
 function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
@@ -193,7 +202,10 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
   );
 }
 
-function ComboboxSeparator({ className, ...props }: ComboboxPrimitive.Separator.Props) {
+function ComboboxSeparator({
+  className,
+  ...props
+}: ComboboxPrimitive.Separator.Props) {
   return (
     <ComboboxPrimitive.Separator
       data-slot="combobox-separator"
@@ -205,21 +217,22 @@ function ComboboxSeparator({ className, ...props }: ComboboxPrimitive.Separator.
 
 // forwardRef (React 18): callers pass `ref={useComboboxAnchor()}` so the popup
 // can anchor to the chips box; a plain function component would drop it.
-const ComboboxChips = React.forwardRef<HTMLDivElement, ComboboxPrimitive.Chips.Props>(
-  function ComboboxChips({ className, ...props }, ref) {
-    return (
-      <ComboboxPrimitive.Chips
-        ref={ref}
-        data-slot="combobox-chips"
-        className={cn(
-          "flex min-h-8 flex-wrap items-center gap-1 rounded-none border border-input bg-transparent bg-clip-padding px-2.5 py-1 text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50 has-aria-invalid:border-destructive has-aria-invalid:ring-1 has-aria-invalid:ring-destructive/20 has-data-[slot=combobox-chip]:px-1 dark:bg-input/30 dark:has-aria-invalid:border-destructive/50 dark:has-aria-invalid:ring-destructive/40",
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
-);
+const ComboboxChips = React.forwardRef<
+  HTMLDivElement,
+  ComboboxPrimitive.Chips.Props
+>(function ComboboxChips({ className, ...props }, ref) {
+  return (
+    <ComboboxPrimitive.Chips
+      ref={ref}
+      data-slot="combobox-chips"
+      className={cn(
+        "flex min-h-8 flex-wrap items-center gap-1 rounded-none border border-input bg-transparent bg-clip-padding px-2.5 py-1 text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50 has-aria-invalid:border-destructive has-aria-invalid:ring-1 has-aria-invalid:ring-destructive/20 has-data-[slot=combobox-chip]:px-1 dark:bg-input/30 dark:has-aria-invalid:border-destructive/50 dark:has-aria-invalid:ring-destructive/40",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 
 function ComboboxChip({
   className,
@@ -252,7 +265,10 @@ function ComboboxChip({
   );
 }
 
-function ComboboxChipsInput({ className, ...props }: ComboboxPrimitive.Input.Props) {
+function ComboboxChipsInput({
+  className,
+  ...props
+}: ComboboxPrimitive.Input.Props) {
   return (
     <ComboboxPrimitive.Input
       data-slot="combobox-chip-input"

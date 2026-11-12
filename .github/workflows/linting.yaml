@@ -26,9 +26,15 @@ jobs:
         working-directory: core_backend
         run: uv sync --locked
 
+      # Whole project; settings (explicit_package_bases, overrides) in pyproject.toml.
       - name: Run MyPy
         working-directory: core_backend
-        run: uv run mypy app --ignore-missing-imports --explicit-package-base
+        run: uv run mypy .
+
+      # SAST. Config (exclusions, skipped checks and why) in [tool.bandit].
+      - name: Run Bandit
+        working-directory: core_backend
+        run: uv run bandit -c pyproject.toml -r . -q
 
       - name: Run ruff
         working-directory: core_backend

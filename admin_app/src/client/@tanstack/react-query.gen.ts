@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addExistingUser, archiveContent, bulkUploadContents, chat, classifyText, createContent, createFirstUser, createNewUser, createPlot, createTag, createUrgencyRule, createWorkspaces, deleteContent, deleteTag, deleteUrgencyRule, editContent, editTag, feedback, getAllJobs, getJobsRunningForUser, getNewApiKey, getNextUnvalidatedContent, getUnvalidatedCardCount, getUrgencyRule, getUrgencyRules, getUser, isRegisterRequired, login, loginGoogle, type Options, refreshInsightsFrequency, removeUserFromWorkspace, resetPassword, retrieveAllUsersInCurrentWorkspace, retrieveAllWorkspaces, retrieveContent, retrieveContentAiSummary, retrieveContentById, retrieveContentDetails, retrieveCurrentWorkspace, retrieveInsightsFrequency, retrieveOverviewFrequency, retrievePerformanceFrequency, retrieveTag, retrieveTagById, retrieveWorkspaceByWorkspaceId, retrieveWorkspacesByUserId, search, switchWorkspace, updateUrgencyRule, updateUser, updateWorkspace, uploadDocument, validateContentCard } from '../sdk.gen';
-import type { AddExistingUserData, AddExistingUserError, AddExistingUserResponse, ArchiveContentData, ArchiveContentError, BulkUploadContentsData, BulkUploadContentsError, BulkUploadContentsResponse, ChatData, ChatError, ChatResponse, ClassifyTextData, ClassifyTextError, ClassifyTextResponse, CreateContentData, CreateContentError, CreateContentResponse, CreateFirstUserData, CreateFirstUserError, CreateFirstUserResponse, CreateNewUserData, CreateNewUserError, CreateNewUserResponse, CreatePlotData, CreatePlotError, CreatePlotResponse, CreateTagData, CreateTagError, CreateTagResponse, CreateUrgencyRuleData, CreateUrgencyRuleError, CreateUrgencyRuleResponse, CreateWorkspacesData, CreateWorkspacesError, CreateWorkspacesResponse, DeleteContentData, DeleteContentError, DeleteTagData, DeleteTagError, DeleteUrgencyRuleData, DeleteUrgencyRuleError, EditContentData, EditContentError, EditContentResponse, EditTagData, EditTagError, EditTagResponse, FeedbackData, FeedbackError, GetAllJobsData, GetAllJobsResponse, GetJobsRunningForUserData, GetJobsRunningForUserResponse, GetNewApiKeyData, GetNewApiKeyResponse, GetNextUnvalidatedContentData, GetNextUnvalidatedContentResponse, GetUnvalidatedCardCountData, GetUnvalidatedCardCountResponse, GetUrgencyRuleData, GetUrgencyRuleError, GetUrgencyRuleResponse, GetUrgencyRulesData, GetUrgencyRulesResponse, GetUserData, GetUserResponse, IsRegisterRequiredData, IsRegisterRequiredResponse, LoginData, LoginError, LoginGoogleData, LoginGoogleError, LoginGoogleResponse, LoginResponse, RefreshInsightsFrequencyData, RefreshInsightsFrequencyError, RefreshInsightsFrequencyResponse, RemoveUserFromWorkspaceData, RemoveUserFromWorkspaceError, RemoveUserFromWorkspaceResponse, ResetPasswordData, ResetPasswordError, ResetPasswordResponse, RetrieveAllUsersInCurrentWorkspaceData, RetrieveAllUsersInCurrentWorkspaceResponse, RetrieveAllWorkspacesData, RetrieveAllWorkspacesResponse, RetrieveContentAiSummaryData, RetrieveContentAiSummaryError, RetrieveContentAiSummaryResponse, RetrieveContentByIdData, RetrieveContentByIdError, RetrieveContentByIdResponse, RetrieveContentData, RetrieveContentDetailsData, RetrieveContentDetailsError, RetrieveContentDetailsResponse, RetrieveContentError, RetrieveContentResponse, RetrieveCurrentWorkspaceData, RetrieveCurrentWorkspaceResponse, RetrieveInsightsFrequencyData, RetrieveInsightsFrequencyError, RetrieveInsightsFrequencyResponse, RetrieveOverviewFrequencyData, RetrieveOverviewFrequencyError, RetrieveOverviewFrequencyResponse, RetrievePerformanceFrequencyData, RetrievePerformanceFrequencyError, RetrievePerformanceFrequencyResponse, RetrieveTagByIdData, RetrieveTagByIdError, RetrieveTagByIdResponse, RetrieveTagData, RetrieveTagError, RetrieveTagResponse, RetrieveWorkspaceByWorkspaceIdData, RetrieveWorkspaceByWorkspaceIdError, RetrieveWorkspaceByWorkspaceIdResponse, RetrieveWorkspacesByUserIdData, RetrieveWorkspacesByUserIdError, RetrieveWorkspacesByUserIdResponse, SearchData, SearchError, SearchResponse, SwitchWorkspaceData, SwitchWorkspaceError, SwitchWorkspaceResponse, UpdateUrgencyRuleData, UpdateUrgencyRuleError, UpdateUrgencyRuleResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UpdateWorkspaceData, UpdateWorkspaceError, UpdateWorkspaceResponse, UploadDocumentData, UploadDocumentError, UploadDocumentResponse, ValidateContentCardData, ValidateContentCardError } from '../types.gen';
+import { addExistingUser, archiveContent, bulkUploadContents, chat, classifyText, createContent, createFirstUser, createNewUser, createPlot, createTag, createUrgencyRule, createWorkspaces, deleteContent, deleteTag, deleteUrgencyRule, editContent, editTag, feedback, getAllJobs, getJobsRunningForUser, getNewApiKey, getNextUnvalidatedContent, getUnvalidatedCardCount, getUrgencyRule, getUrgencyRules, getUser, isRegisterRequired, login, loginGoogle, logout, type Options, refreshAccessToken, refreshInsightsFrequency, removeUserFromWorkspace, resetPassword, retrieveAllUsersInCurrentWorkspace, retrieveAllWorkspaces, retrieveContent, retrieveContentAiSummary, retrieveContentById, retrieveContentDetails, retrieveCurrentWorkspace, retrieveInsightsFrequency, retrieveOverviewFrequency, retrievePerformanceFrequency, retrieveTag, retrieveTagById, retrieveWorkspaceByWorkspaceId, retrieveWorkspacesByUserId, search, switchWorkspace, updateUrgencyRule, updateUser, updateWorkspace, uploadDocument, validateContentCard } from '../sdk.gen';
+import type { AddExistingUserData, AddExistingUserError, AddExistingUserResponse, ArchiveContentData, ArchiveContentError, BulkUploadContentsData, BulkUploadContentsError, BulkUploadContentsResponse, ChatData, ChatError, ChatResponse, ClassifyTextData, ClassifyTextError, ClassifyTextResponse, CreateContentData, CreateContentError, CreateContentResponse, CreateFirstUserData, CreateFirstUserError, CreateFirstUserResponse, CreateNewUserData, CreateNewUserError, CreateNewUserResponse, CreatePlotData, CreatePlotError, CreatePlotResponse, CreateTagData, CreateTagError, CreateTagResponse, CreateUrgencyRuleData, CreateUrgencyRuleError, CreateUrgencyRuleResponse, CreateWorkspacesData, CreateWorkspacesError, CreateWorkspacesResponse, DeleteContentData, DeleteContentError, DeleteTagData, DeleteTagError, DeleteUrgencyRuleData, DeleteUrgencyRuleError, EditContentData, EditContentError, EditContentResponse, EditTagData, EditTagError, EditTagResponse, FeedbackData, FeedbackError, GetAllJobsData, GetAllJobsResponse, GetJobsRunningForUserData, GetJobsRunningForUserResponse, GetNewApiKeyData, GetNewApiKeyResponse, GetNextUnvalidatedContentData, GetNextUnvalidatedContentResponse, GetUnvalidatedCardCountData, GetUnvalidatedCardCountResponse, GetUrgencyRuleData, GetUrgencyRuleError, GetUrgencyRuleResponse, GetUrgencyRulesData, GetUrgencyRulesResponse, GetUserData, GetUserResponse, IsRegisterRequiredData, IsRegisterRequiredResponse, LoginData, LoginError, LoginGoogleData, LoginGoogleError, LoginGoogleResponse, LoginResponse, LogoutData, LogoutError, LogoutResponse, RefreshAccessTokenData, RefreshAccessTokenError, RefreshAccessTokenResponse, RefreshInsightsFrequencyData, RefreshInsightsFrequencyError, RefreshInsightsFrequencyResponse, RemoveUserFromWorkspaceData, RemoveUserFromWorkspaceError, RemoveUserFromWorkspaceResponse, ResetPasswordData, ResetPasswordError, ResetPasswordResponse, RetrieveAllUsersInCurrentWorkspaceData, RetrieveAllUsersInCurrentWorkspaceResponse, RetrieveAllWorkspacesData, RetrieveAllWorkspacesResponse, RetrieveContentAiSummaryData, RetrieveContentAiSummaryError, RetrieveContentAiSummaryResponse, RetrieveContentByIdData, RetrieveContentByIdError, RetrieveContentByIdResponse, RetrieveContentData, RetrieveContentDetailsData, RetrieveContentDetailsError, RetrieveContentDetailsResponse, RetrieveContentError, RetrieveContentResponse, RetrieveCurrentWorkspaceData, RetrieveCurrentWorkspaceResponse, RetrieveInsightsFrequencyData, RetrieveInsightsFrequencyError, RetrieveInsightsFrequencyResponse, RetrieveOverviewFrequencyData, RetrieveOverviewFrequencyError, RetrieveOverviewFrequencyResponse, RetrievePerformanceFrequencyData, RetrievePerformanceFrequencyError, RetrievePerformanceFrequencyResponse, RetrieveTagByIdData, RetrieveTagByIdError, RetrieveTagByIdResponse, RetrieveTagData, RetrieveTagError, RetrieveTagResponse, RetrieveWorkspaceByWorkspaceIdData, RetrieveWorkspaceByWorkspaceIdError, RetrieveWorkspaceByWorkspaceIdResponse, RetrieveWorkspacesByUserIdData, RetrieveWorkspacesByUserIdError, RetrieveWorkspacesByUserIdResponse, SearchData, SearchError, SearchResponse, SwitchWorkspaceData, SwitchWorkspaceError, SwitchWorkspaceResponse, UpdateUrgencyRuleData, UpdateUrgencyRuleError, UpdateUrgencyRuleResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UpdateWorkspaceData, UpdateWorkspaceError, UpdateWorkspaceResponse, UploadDocumentData, UploadDocumentError, UploadDocumentResponse, ValidateContentCardData, ValidateContentCardError } from '../types.gen';
 
 /**
  * Login
@@ -13,6 +13,8 @@ import type { AddExistingUserData, AddExistingUserError, AddExistingUserResponse
  *
  * Parameters
  * ----------
+ * request
+ * The request object.
  * form_data
  * Form data containing username and password.
  *
@@ -77,6 +79,75 @@ export const loginGoogleMutation = (options?: Partial<Options<LoginGoogleData>>)
     const mutationOptions: UseMutationOptions<LoginGoogleResponse, LoginGoogleError, Options<LoginGoogleData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await loginGoogle({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Refresh Access Token
+ *
+ * Exchange a refresh token for a new access token and a new refresh token.
+ *
+ * Each refresh token works once. Sending one that was already used revokes the
+ * whole login session, since it means the token was copied.
+ *
+ * Parameters
+ * ----------
+ * request
+ * The request object.
+ * body
+ * The refresh token from the last login or refresh.
+ *
+ * Returns
+ * -------
+ * AuthenticationDetails
+ * The new access token and refresh token.
+ *
+ * Raises
+ * ------
+ * UnauthorizedError
+ * If the refresh token is invalid, expired, already used or revoked, or the
+ * user no longer belongs to the token's workspace.
+ */
+export const refreshAccessTokenMutation = (options?: Partial<Options<RefreshAccessTokenData>>): UseMutationOptions<RefreshAccessTokenResponse, RefreshAccessTokenError, Options<RefreshAccessTokenData>> => {
+    const mutationOptions: UseMutationOptions<RefreshAccessTokenResponse, RefreshAccessTokenError, Options<RefreshAccessTokenData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await refreshAccessToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Logout
+ *
+ * Revoke the login session the refresh token belongs to. Always returns 204.
+ *
+ * The access token is not revoked; it stays valid until it expires
+ * (ACCESS_TOKEN_EXPIRE_MINUTES), so clients should also discard it.
+ *
+ * Parameters
+ * ----------
+ * request
+ * The request object.
+ * body
+ * The refresh token to revoke.
+ */
+export const logoutMutation = (options?: Partial<Options<LogoutData>>): UseMutationOptions<LogoutResponse, LogoutError, Options<LogoutData>> => {
+    const mutationOptions: UseMutationOptions<LogoutResponse, LogoutError, Options<LogoutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await logout({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1907,6 +1978,8 @@ export const isRegisterRequiredOptions = (options?: Options<IsRegisterRequiredDa
  *
  * Parameters
  * ----------
+ * request
+ * The request object.
  * user
  * The user object with the new password and recovery code.
  * asession
@@ -2320,6 +2393,8 @@ export const getNewApiKeyMutation = (options?: Partial<Options<GetNewApiKeyData>
  * ----------
  * calling_user_db
  * The user object associated with the user switching workspaces.
+ * request
+ * The request object (for the Redis client that stores refresh tokens).
  * workspace_switch
  * The workspace switch object containing the workspace name to switch into.
  * asession

@@ -23,7 +23,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -65,13 +70,20 @@ function AdminAlertModal({ open, onContinue, onClose }: AdminAlertModalProps) {
     >
       <DialogContent className={SETUP_DIALOG_CLASSES}>
         <DialogHeader className="gap-1.5">
-          <DialogTitle className="text-lg font-semibold">Initial setup</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            Initial setup
+          </DialogTitle>
           <DialogDescription className="text-sm">
             You need to register an admin user before proceeding.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button size="lg" className="h-10 text-sm" onClick={onContinue} autoFocus>
+          <Button
+            size="lg"
+            className="h-10 text-sm"
+            onClick={onContinue}
+            autoFocus
+          >
             Continue
           </Button>
         </DialogFooter>
@@ -101,7 +113,10 @@ type RegisterValues = z.infer<typeof registerSchema>;
 interface RegisterModalProps {
   open: boolean;
   /** Calls the API. Expected to resolve with `{ recovery_codes: string[] }`. */
-  registerUser: (username: string, password: string) => Promise<any>;
+  registerUser: (
+    username: string,
+    password: string,
+  ) => Promise<{ recovery_codes?: string[] } | undefined>;
   /** Called with the new user's recovery codes once registration succeeds. */
   onContinue: (recoveryCodes: string[]) => void;
   /** Called when the user closes the dialog (X button or Escape). */
@@ -161,7 +176,9 @@ function RegisterModal({
               <InputGroupInput
                 {...field}
                 id={id}
-                type={options.isPassword && !showPasswords ? "password" : "text"}
+                type={
+                  options.isPassword && !showPasswords ? "password" : "text"
+                }
                 autoComplete={options.autoComplete}
                 autoFocus={options.autoFocus}
                 aria-invalid={fieldState.invalid}
@@ -172,7 +189,9 @@ function RegisterModal({
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
                     size="icon-sm"
-                    aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
+                    aria-label={
+                      showPasswords ? "Hide passwords" : "Show passwords"
+                    }
                     aria-pressed={showPasswords}
                     onClick={() => setShowPasswords((shown) => !shown)}
                   >

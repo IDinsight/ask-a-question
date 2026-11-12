@@ -29,7 +29,7 @@ interface ContentCardProps {
   related_contents: Content[];
   onSuccessfulArchive: (content_id: number) => void;
   onFailedArchive: (content_id: number, error_message: string) => void;
-  archiveContent: (content_id: number) => Promise<any>;
+  archiveContent: (content_id: number) => Promise<unknown>;
   editAccess: boolean;
   isSelectMode: boolean;
   selectedContents: number[];
@@ -57,7 +57,8 @@ const ContentCard: React.FC<ContentCardProps> = ({
   getRelatedContent,
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
-  const [openArchiveModal, setOpenArchiveModal] = React.useState<boolean>(false);
+  const [openArchiveModal, setOpenArchiveModal] =
+    React.useState<boolean>(false);
   const checked = selectedContents.includes(content_id);
 
   // The view modal can hop to related contents, so it shows whichever
@@ -189,7 +190,9 @@ const ContentCard: React.FC<ContentCardProps> = ({
             className="text-muted-foreground hover:text-destructive"
             onClick={(event) => {
               event.stopPropagation();
-              setSelectedContents(selectedContents.filter((id) => id !== content_id));
+              setSelectedContents(
+                selectedContents.filter((id) => id !== content_id),
+              );
               setOpenArchiveModal(true);
             }}
           >

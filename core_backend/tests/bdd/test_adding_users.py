@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -41,7 +41,7 @@ def reset_databases(
 )
 def carlos_adds_tanmay(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos adds Tanmay to workspace Carlos.
 
     Parameters
@@ -53,7 +53,7 @@ def carlos_adds_tanmay(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from adding Tanmay to workspace Carlos.
     """
 
@@ -82,7 +82,7 @@ def carlos_adds_tanmay(
 @then("Tanmay should be added to workspace Carlos")
 def check_tanmay_create_response(
     client: TestClient,
-    tanmay_create_response: httpx.Response,
+    tanmay_create_response: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Tanmay was added to workspace Carlos.
@@ -124,7 +124,7 @@ def check_tanmay_create_response(
 )
 def carlos_adds_jahnavi(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos adds Jahnavi to workspace Jahnavi.
 
     Parameters
@@ -136,7 +136,7 @@ def carlos_adds_jahnavi(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from adding Jahnavi to workspace Jahnavi.
     """
 
@@ -156,7 +156,7 @@ def carlos_adds_jahnavi(
 
 
 @then("Carlos should get an error")
-def check_jahnavi_create_response(jahnavi_create_response: httpx.Response) -> None:
+def check_jahnavi_create_response(jahnavi_create_response: httpx2.Response) -> None:
     """Check that Carlos got an error.
 
     Parameters
@@ -175,7 +175,7 @@ def check_jahnavi_create_response(jahnavi_create_response: httpx.Response) -> No
 )
 def suzin_adds_mark_to_workspace_mark(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin adds Mark to workspace Mark.
 
     Parameters
@@ -187,7 +187,7 @@ def suzin_adds_mark_to_workspace_mark(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from adding Mark to workspace Mark.
     """
 
@@ -206,7 +206,7 @@ def suzin_adds_mark_to_workspace_mark(
 
 
 @then("Suzin should get an error")
-def check_mark_add_response_fail(mark_add_response_fail: httpx.Response) -> None:
+def check_mark_add_response_fail(mark_add_response_fail: httpx2.Response) -> None:
     """Check that Suzin got an error.
 
     Parameters
@@ -225,7 +225,7 @@ def check_mark_add_response_fail(mark_add_response_fail: httpx.Response) -> None
 )
 def suzin_adds_mark_to_workspace_amir(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin adds Mark to workspace Amir.
 
     Parameters
@@ -237,7 +237,7 @@ def suzin_adds_mark_to_workspace_amir(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from adding Mark to workspace Amir.
     """
 
@@ -259,7 +259,7 @@ def suzin_adds_mark_to_workspace_amir(
 @then("Mark should be added to workspace Amir")
 def check_mark_add_response_pass(
     client: TestClient,
-    mark_add_response_pass: httpx.Response,
+    mark_add_response_pass: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Tanmay was added to workspace Carlos.

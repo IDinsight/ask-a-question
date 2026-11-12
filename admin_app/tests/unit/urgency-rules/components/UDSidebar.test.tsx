@@ -17,7 +17,11 @@ const renderSidebar = (
 ) => {
   const closeSidebar = vi.fn();
   render(
-    <UDSidebar closeSidebar={closeSidebar} onDetect={onDetect} canDetect={canDetect} />,
+    <UDSidebar
+      closeSidebar={closeSidebar}
+      onDetect={onDetect}
+      canDetect={canDetect}
+    />,
   );
   return { closeSidebar };
 };
@@ -37,7 +41,9 @@ describe("UDSidebar", () => {
   it("calls closeSidebar from the close button", async () => {
     const user = userEvent.setup();
     const { closeSidebar } = renderSidebar(vi.fn());
-    await user.click(screen.getByRole("button", { name: "Close Test Urgency Detection" }));
+    await user.click(
+      screen.getByRole("button", { name: "Close Test Urgency Detection" }),
+    );
     expect(closeSidebar).toHaveBeenCalledOnce();
   });
 
@@ -48,7 +54,9 @@ describe("UDSidebar", () => {
     await ask(user, "help");
     // The send button's Spinner is also role="status", so match by text.
     expect(screen.getByText("Checking your rules...")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Send question" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Send question" }),
+    ).toBeDisabled();
   });
 
   it("renders an urgent result with a single matched rule", async () => {
@@ -63,14 +71,19 @@ describe("UDSidebar", () => {
     expect(onDetect).toHaveBeenCalledWith("I am bleeding");
     expect(await screen.findByText("Urgent")).toBeInTheDocument();
     expect(screen.getByText(/1 rule matched/)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Matched rule" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Matched rule" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("listitem")).toHaveTextContent("Mentions bleeding");
   });
 
   it("pluralises when several rules match", async () => {
     const user = userEvent.setup();
     renderSidebar(
-      vi.fn().mockResolvedValue({ is_urgent: true, matched_rules: ["Rule A", "Rule B"] }),
+      vi.fn().mockResolvedValue({
+        is_urgent: true,
+        matched_rules: ["Rule A", "Rule B"],
+      }),
     );
     await ask(user, "x");
 
@@ -87,7 +100,9 @@ describe("UDSidebar", () => {
     await ask(user, "hello");
 
     expect(await screen.findByText("Not urgent")).toBeInTheDocument();
-    expect(screen.getByText("No rules matched this message.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No rules matched this message."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
@@ -125,11 +140,17 @@ describe("UDSidebar", () => {
   it("opens the raw JSON dialog from the result", async () => {
     const user = userEvent.setup();
     renderSidebar(
-      vi.fn().mockResolvedValue({ is_urgent: false, matched_rules: [], extra: "raw-field" }),
+      vi.fn().mockResolvedValue({
+        is_urgent: false,
+        matched_rules: [],
+        extra: "raw-field",
+      }),
     );
     await ask(user, "x");
 
-    await user.click(await screen.findByRole("button", { name: "View raw response" }));
+    await user.click(
+      await screen.findByRole("button", { name: "View raw response" }),
+    );
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     expect(screen.getByRole("dialog")).toHaveTextContent("raw-field");
   });

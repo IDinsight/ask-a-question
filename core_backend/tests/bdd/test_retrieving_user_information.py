@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -39,7 +39,7 @@ def reset_databases(
 )
 def suzin_retrieve_users_information(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> list[httpx.Response]:
+) -> list[httpx2.Response]:
     """Suzin retrieves user information from all workspaces.
 
     NB: Suzin is a power user with access to multiple workspaces. Thus, Suzin should be
@@ -54,7 +54,7 @@ def suzin_retrieve_users_information(
 
     Returns
     -------
-    list[httpx.Response]
+    list[httpx2.Response]
         The responses from Suzin retrieving users information.
     """
 
@@ -81,7 +81,7 @@ def suzin_retrieve_users_information(
 
 @then("Suzin should be able to see all users from all workspaces")
 def check_suzin_has_access_to_all_users(
-    suzin_retrieved_users_response: list[httpx.Response],
+    suzin_retrieved_users_response: list[httpx2.Response],
 ) -> None:
     """Check that Suzin can see user information from all workspaces.
 
@@ -116,7 +116,7 @@ def check_suzin_has_access_to_all_users(
 )
 def mark_retrieve_users_information(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Mark retrieves user information from all workspaces.
 
     Parameters
@@ -128,7 +128,7 @@ def mark_retrieve_users_information(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response from Mark retrieving users information.
     """
 
@@ -146,7 +146,7 @@ def mark_retrieve_users_information(
 
 @then("Mark should only see his own information")
 def check_mark_can_only_access_his_own_information(
-    mark_retrieved_users_response: httpx.Response,
+    mark_retrieved_users_response: httpx2.Response,
 ) -> None:
     """Check that Mark can only see his own information.
 
@@ -169,7 +169,7 @@ def check_mark_can_only_access_his_own_information(
 )
 def carlos_retrieve_users_information(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> list[httpx.Response]:
+) -> list[httpx2.Response]:
     """Carlos retrieves user information from all workspaces.
 
     Parameters
@@ -181,7 +181,7 @@ def carlos_retrieve_users_information(
 
     Returns
     -------
-    list[httpx.Response]
+    list[httpx2.Response]
         The response from Carlos retrieving users information.
     """
 
@@ -208,7 +208,7 @@ def carlos_retrieve_users_information(
 
 @then("Carlos should only see users in his workspaces")
 def check_carlos_has_access_to_his_users_only(
-    carlos_retrieved_users_response: list[httpx.Response],
+    carlos_retrieved_users_response: list[httpx2.Response],
 ) -> None:
     """Check that Carlos can only see user information from his workspaces.
 
@@ -234,7 +234,7 @@ def check_carlos_has_access_to_his_users_only(
 )
 def poornima_retrieve_users_information(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> list[httpx.Response]:
+) -> list[httpx2.Response]:
     """Poornima retrieves user information from her workspaces.
 
     Parameters
@@ -246,7 +246,7 @@ def poornima_retrieve_users_information(
 
     Returns
     -------
-    list[httpx.Response]
+    list[httpx2.Response]
         The response from Poornima retrieving users information.
     """
 
@@ -273,7 +273,7 @@ def poornima_retrieve_users_information(
 
 @then("Poornima should be able to see all users in her workspaces")
 def check_poornima_has_access_to_her_users_only(
-    poornima_retrieved_users_response: list[httpx.Response],
+    poornima_retrieved_users_response: list[httpx2.Response],
 ) -> None:
     """Check that Poornima can only see user information from her workspaces.
 

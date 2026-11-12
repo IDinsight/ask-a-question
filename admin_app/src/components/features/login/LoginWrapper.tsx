@@ -41,7 +41,8 @@ import { useRegisterOptionQuery, useRegisterUserMutation } from "./queries";
 type WindowWithGoogle = Window & { google?: typeof google };
 
 // Google sign-in only shows when a client ID is configured (same rule as the old page).
-const GOOGLE_CLIENT_ID: string = env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
+const GOOGLE_CLIENT_ID: string =
+  env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
 
 // Both fields are required; messages match the old page's helper text.
 const formSchema = z.object({
@@ -116,7 +117,9 @@ export default function LoginPage() {
                     <IconUser aria-hidden="true" />
                   </InputGroupAddon>
                 </InputGroup>
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
               </Field>
             )}
           />
@@ -154,7 +157,9 @@ export default function LoginPage() {
                   <InputGroupAddon align="inline-end">
                     <InputGroupButton
                       size="icon-sm"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                       aria-pressed={showPassword}
                       onClick={() => setShowPassword((shown) => !shown)}
                     >
@@ -162,7 +167,9 @@ export default function LoginPage() {
                     </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
               </Field>
             )}
           />
@@ -221,8 +228,11 @@ function GoogleSignInButton({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // Keep the latest callback without re-initialising Google on every render.
+  // The ref is updated in an effect because writing it during render is unsafe.
   const callbackRef = useRef(onCredential);
-  callbackRef.current = onCredential;
+  useEffect(() => {
+    callbackRef.current = onCredential;
+  });
 
   useEffect(() => {
     let cancelled = false;

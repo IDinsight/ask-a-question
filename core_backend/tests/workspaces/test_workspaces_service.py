@@ -28,6 +28,7 @@ from app.workspaces import service
 from app.workspaces.models import WorkspaceDB
 from app.workspaces.repository import WorkspaceNotFoundError
 from app.workspaces.schemas import WorkspaceCreate, WorkspaceUpdate
+from tests.conftest import FakeRedis
 
 NOW = datetime.now(timezone.utc)
 
@@ -506,7 +507,10 @@ class TestSwitchUserWorkspace:
         )
         with pytest.raises(expected):
             await service.switch_user_workspace(
-                asession=asession, calling_user_db=make_user_db(), workspace_name=target
+                asession=asession,
+                calling_user_db=make_user_db(),
+                redis=FakeRedis(),  # type: ignore[arg-type]
+                workspace_name=target,
             )
 
     async def test_switch(self, asession: MagicMock, patch_repo: PatchRepo) -> None:
@@ -525,7 +529,10 @@ class TestSwitchUserWorkspace:
             get_user_workspaces=[make_workspace_db(1, "a"), make_workspace_db(2, "b")],
         )
         result = await service.switch_user_workspace(
-            asession=asession, calling_user_db=make_user_db(), workspace_name="b"
+            asession=asession,
+            calling_user_db=make_user_db(),
+            redis=FakeRedis(),  # type: ignore[arg-type]
+            workspace_name="b",
         )
         assert result.workspace_name == "b"
         assert result.user_role == UserRoles.READ_ONLY
@@ -534,6 +541,12 @@ class TestSwitchUserWorkspace:
         )
         assert payload["workspace_name"] == "b"
         assert payload["username"] == "caller"
+        # The refresh token is scoped to the new workspace too.
+        refresh_payload = jwt.decode(
+            result.refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM]
+        )
+        assert refresh_payload["type"] == "refresh_token"
+        assert refresh_payload["workspace_name"] == "b"
 
 
 class TestUpdateWorkspace:

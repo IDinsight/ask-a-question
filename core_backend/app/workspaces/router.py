@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.router import get_current_user, get_current_workspace_name
@@ -283,6 +284,7 @@ async def get_new_api_key(
 @router.post("/switch-workspace")
 async def switch_workspace(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
     workspace_switch: WorkspaceSwitch,
     asession: AsyncSession = Depends(get_async_session),
 ) -> AuthenticationDetails:
@@ -295,6 +297,8 @@ async def switch_workspace(
     ----------
     calling_user_db
         The user object associated with the user switching workspaces.
+    request
+        The request object (for the Redis client that stores refresh tokens).
     workspace_switch
         The workspace switch object containing the workspace name to switch into.
     asession
@@ -315,6 +319,7 @@ async def switch_workspace(
     return await service.switch_user_workspace(
         asession=asession,
         calling_user_db=calling_user_db,
+        redis=request.app.state.redis,
         workspace_name=workspace_switch.workspace_name,
     )
 

@@ -38,7 +38,10 @@ describe("WorkspaceCreateModal", () => {
   });
 
   it("shows rename copy and prefills the name when editing", () => {
-    renderModal({ isEdit: true, existingWorkspace: { workspace_name: "Old name" } });
+    renderModal({
+      isEdit: true,
+      existingWorkspace: { workspace_name: "Old name" },
+    });
     expect(screen.getByText("Rename workspace")).toBeInTheDocument();
     expect(nameInput()).toHaveValue("Old name");
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
@@ -49,12 +52,16 @@ describe("WorkspaceCreateModal", () => {
     const props = renderModal();
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(screen.getByText("Please enter a workspace name")).toBeInTheDocument();
+    expect(
+      screen.getByText("Please enter a workspace name"),
+    ).toBeInTheDocument();
     expect(nameInput()).toHaveAttribute("aria-invalid", "true");
     expect(props.onCreate).not.toHaveBeenCalled();
 
     await user.type(nameInput(), "a");
-    expect(screen.queryByText("Please enter a workspace name")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Please enter a workspace name"),
+    ).not.toBeInTheDocument();
   });
 
   it("creates, logs in, notifies, then closes after a delay", async () => {
@@ -118,7 +125,9 @@ describe("WorkspaceCreateModal", () => {
     await user.type(nameInput(), "Taken");
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(await screen.findByText("Workspace name already exists")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Workspace name already exists"),
+    ).toBeInTheDocument();
     expect(props.loginWorkspace).not.toHaveBeenCalled();
   });
 
@@ -128,12 +137,16 @@ describe("WorkspaceCreateModal", () => {
     await user.type(nameInput(), "X");
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(await screen.findByText("Error creating workspace")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Error creating workspace"),
+    ).toBeInTheDocument();
   });
 
   it("shows the thrown error's message", async () => {
     const user = userEvent.setup();
-    renderModal({ onCreate: vi.fn().mockRejectedValue({ message: "Quota reached" }) });
+    renderModal({
+      onCreate: vi.fn().mockRejectedValue({ message: "Quota reached" }),
+    });
     await user.type(nameInput(), "X");
     await user.click(screen.getByRole("button", { name: "Create" }));
 
@@ -143,21 +156,28 @@ describe("WorkspaceCreateModal", () => {
   it.each([
     [false, "Error creating workspace"],
     [true, "Error editing workspace"],
-  ])("falls back to a default error when nothing useful is thrown (isEdit=%s)", async (isEdit, text) => {
-    const user = userEvent.setup();
-    renderModal({
-      isEdit,
-      existingWorkspace: { workspace_name: "W" },
-      onCreate: vi.fn().mockRejectedValue(undefined),
-    });
-    await user.click(screen.getByRole("button", { name: isEdit ? "Save" : "Create" }));
+  ])(
+    "falls back to a default error when nothing useful is thrown (isEdit=%s)",
+    async (isEdit, text) => {
+      const user = userEvent.setup();
+      renderModal({
+        isEdit,
+        existingWorkspace: { workspace_name: "W" },
+        onCreate: vi.fn().mockRejectedValue(undefined),
+      });
+      await user.click(
+        screen.getByRole("button", { name: isEdit ? "Save" : "Create" }),
+      );
 
-    expect(await screen.findByText(text)).toBeInTheDocument();
-  });
+      expect(await screen.findByText(text)).toBeInTheDocument();
+    },
+  );
 
   it("Cancel clears the error and calls onClose", async () => {
     const user = userEvent.setup();
-    const props = renderModal({ onCreate: vi.fn().mockRejectedValue({ message: "Boom" }) });
+    const props = renderModal({
+      onCreate: vi.fn().mockRejectedValue({ message: "Boom" }),
+    });
     await user.type(nameInput(), "X");
     await user.click(screen.getByRole("button", { name: "Create" }));
     await screen.findByText("Boom");

@@ -29,10 +29,7 @@ class UrgencyQuery(BaseModel):
 class UrgencyResponse(BaseModel):
     """Pydantic model for urgency detection responses."""
 
-    details: (
-        dict[int, UrgencyRuleCosineDistance]
-        | UrgencyDetectionEntailmentResult
-    )
+    details: dict[int, UrgencyRuleCosineDistance] | UrgencyDetectionEntailmentResult
     is_urgent: bool
     matched_rules: list[str]
 

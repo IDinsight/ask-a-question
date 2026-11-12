@@ -26,7 +26,8 @@ const makeQueryClient = () =>
         // The old useEffect fetches never refetched on focus; keep that behaviour.
         refetchOnWindowFocus: false,
         // Retrying a 4xx won't change the answer, so fail fast. Retry 5xx/network once.
-        retry: (failureCount, error) => !isClientError(error) && failureCount < 1,
+        retry: (failureCount, error) =>
+          !isClientError(error) && failureCount < 1,
       },
       mutations: {
         retry: false,

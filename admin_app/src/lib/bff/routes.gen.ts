@@ -38,16 +38,38 @@ export const BFF_ROUTES: readonly BffRoute[] = [
     template: "/docmuncher/status/is_job_running",
     pattern: /^\/docmuncher\/status\/is_job_running$/,
   },
-  { method: "POST", template: "/docmuncher/upload", pattern: /^\/docmuncher\/upload$/ },
+  {
+    method: "POST",
+    template: "/docmuncher/upload",
+    pattern: /^\/docmuncher\/upload$/,
+  },
   { method: "POST", template: "/login", pattern: /^\/login$/ },
   { method: "POST", template: "/login-google", pattern: /^\/login-google$/ },
-  { method: "POST", template: "/response-feedback", pattern: /^\/response-feedback$/ },
+  { method: "POST", template: "/logout", pattern: /^\/logout$/ },
+  { method: "POST", template: "/refresh", pattern: /^\/refresh$/ },
+  {
+    method: "POST",
+    template: "/response-feedback",
+    pattern: /^\/response-feedback$/,
+  },
   { method: "POST", template: "/search", pattern: /^\/search$/ },
   { method: "GET", template: "/tag/", pattern: /^\/tag\/$/ },
   { method: "POST", template: "/tag/", pattern: /^\/tag\/$/ },
-  { method: "POST", template: "/urgency-detect", pattern: /^\/urgency-detect$/ },
-  { method: "GET", template: "/urgency-rules/", pattern: /^\/urgency-rules\/$/ },
-  { method: "POST", template: "/urgency-rules/", pattern: /^\/urgency-rules\/$/ },
+  {
+    method: "POST",
+    template: "/urgency-detect",
+    pattern: /^\/urgency-detect$/,
+  },
+  {
+    method: "GET",
+    template: "/urgency-rules/",
+    pattern: /^\/urgency-rules\/$/,
+  },
+  {
+    method: "POST",
+    template: "/urgency-rules/",
+    pattern: /^\/urgency-rules\/$/,
+  },
   { method: "GET", template: "/user/", pattern: /^\/user\/$/ },
   { method: "POST", template: "/user/", pattern: /^\/user\/$/ },
   {
@@ -55,7 +77,11 @@ export const BFF_ROUTES: readonly BffRoute[] = [
     template: "/user/add-existing-user-to-workspace",
     pattern: /^\/user\/add-existing-user-to-workspace$/,
   },
-  { method: "GET", template: "/user/current-user", pattern: /^\/user\/current-user$/ },
+  {
+    method: "GET",
+    template: "/user/current-user",
+    pattern: /^\/user\/current-user$/,
+  },
   {
     method: "POST",
     template: "/user/register-first-user",
@@ -93,13 +119,21 @@ export const BFF_ROUTES: readonly BffRoute[] = [
     template: "/content/{content_id}",
     pattern: /^\/content\/[^\/]+$/,
   },
-  { method: "GET", template: "/content/{content_id}", pattern: /^\/content\/[^\/]+$/ },
+  {
+    method: "GET",
+    template: "/content/{content_id}",
+    pattern: /^\/content\/[^\/]+$/,
+  },
   {
     method: "PATCH",
     template: "/content/{content_id}",
     pattern: /^\/content\/[^\/]+$/,
   },
-  { method: "PUT", template: "/content/{content_id}", pattern: /^\/content\/[^\/]+$/ },
+  {
+    method: "PUT",
+    template: "/content/{content_id}",
+    pattern: /^\/content\/[^\/]+$/,
+  },
   {
     method: "PATCH",
     template: "/content/validate/{content_id}",
@@ -148,7 +182,11 @@ export const BFF_ROUTES: readonly BffRoute[] = [
     template: "/urgency-rules/{urgency_rule_id}",
     pattern: /^\/urgency-rules\/[^\/]+$/,
   },
-  { method: "DELETE", template: "/user/{user_id}", pattern: /^\/user\/[^\/]+$/ },
+  {
+    method: "DELETE",
+    template: "/user/{user_id}",
+    pattern: /^\/user\/[^\/]+$/,
+  },
   { method: "PUT", template: "/user/{user_id}", pattern: /^\/user\/[^\/]+$/ },
   { method: "HEAD", template: "/user/{username}", pattern: /^\/user\/[^\/]+$/ },
   {

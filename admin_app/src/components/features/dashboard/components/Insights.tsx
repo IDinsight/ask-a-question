@@ -28,12 +28,16 @@ const Insight: React.FC<InsightProps> = ({
   onRefresh,
   plot,
 }) => {
-  const topics = data.data.map(({ topic_id, topic_name, topic_popularity }) => ({
-    topic_id,
-    topic_name,
-    topic_popularity,
-  }));
-  const selectedTopic = data.data.find((topic) => topic.topic_id === selectedTopicId);
+  const topics = data.data.map(
+    ({ topic_id, topic_name, topic_popularity }) => ({
+      topic_id,
+      topic_name,
+      topic_popularity,
+    }),
+  );
+  const selectedTopic = data.data.find(
+    (topic) => topic.topic_id === selectedTopicId,
+  );
 
   return (
     <div className="flex flex-col gap-6">

@@ -546,7 +546,8 @@ class TestResetPassword:
     """Tests for `reset_user_password` and `check_reset_password_call`."""
 
     async def test_reset_user_password(self, patch_repo: PatchRepo) -> None:
-        """Test that the used recovery code is dropped and the user returned.
+        """Test that the used recovery code is dropped, the user's refresh tokens are
+        revoked and the user returned.
 
         Parameters
         ----------
@@ -559,10 +560,13 @@ class TestResetPassword:
             check_if_user_exists=user_db,
             get_user_role_in_all_workspaces=[role_row()],
             reset_user_password_in_db=user_db,
+            revoke_all_refresh_tokens=None,
         )
+        redis = AsyncMock()
 
         result = await service.reset_user_password(
             asession=AsyncMock(),
+            redis=redis,
             user=UserResetPassword(
                 password=PASSWORD, recovery_code="code_1", username="caller"
             ),
@@ -572,6 +576,9 @@ class TestResetPassword:
         assert mocks["reset_user_password_in_db"].await_args is not None
         reset_kwargs = mocks["reset_user_password_in_db"].await_args.kwargs
         assert reset_kwargs["recovery_codes"] == [hash_recovery_code(code="code_2")]
+        mocks["revoke_all_refresh_tokens"].assert_awaited_once_with(
+            redis=redis, username="caller"
+        )
 
     @pytest.mark.parametrize(
         "user_db, code, expected",

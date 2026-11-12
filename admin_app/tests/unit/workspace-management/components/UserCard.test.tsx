@@ -4,7 +4,9 @@ import { vi } from "vitest";
 
 import { UserCard } from "@/components/features/workspace-management/components/UserCard";
 
-const renderCard = (overrides: Partial<React.ComponentProps<typeof UserCard>> = {}) => {
+const renderCard = (
+  overrides: Partial<React.ComponentProps<typeof UserCard>> = {},
+) => {
   const props = {
     adminUsername: "admin user",
     userId: 7,

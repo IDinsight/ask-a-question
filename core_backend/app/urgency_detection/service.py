@@ -166,7 +166,7 @@ class UrgencyDetectionEntailment:
 
 async def detect_urgency(
     *, message: str, metadata: Optional[dict] = None, urgency_rules: list[str]
-) -> UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult:
+) -> UrgencyDetectionEntailmentResult:
     """Detects the urgency of a message based on a set of urgency rules.
 
     Parameters

@@ -60,8 +60,12 @@ describe("ConfirmationModal", () => {
 
   it("logs, but still shows Copied, when the clipboard write fails", async () => {
     const user = userEvent.setup();
-    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("denied"));
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(
+      new Error("denied"),
+    );
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
     render(<ConfirmationModal open onClose={() => {}} recoveryCodes={codes} />);
     await user.click(screen.getByRole("button", { name: "Copy codes" }));
@@ -94,7 +98,13 @@ describe("ConfirmationModal", () => {
   });
 
   it("renders nothing when closed", () => {
-    render(<ConfirmationModal open={false} onClose={() => {}} recoveryCodes={codes} />);
+    render(
+      <ConfirmationModal
+        open={false}
+        onClose={() => {}}
+        recoveryCodes={codes}
+      />,
+    );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

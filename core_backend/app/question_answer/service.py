@@ -232,6 +232,7 @@ language_code_mapping_stt = {
 # Prompt and response models
 # =====================================================================================
 
+
 class AlignmentScore(BaseModel):
     """Alignment score of the user's input."""
 
@@ -508,9 +509,11 @@ class FeedbackRejectedError(Exception):
         super().__init__(content.get("message"))
         self.content = content
 
+
 # =====================================================================================
 # Helpers: chat history
 # =====================================================================================
+
 
 def _truncate_chat_history(
     *,
@@ -611,9 +614,9 @@ def append_message_content_to_chat_history(
     assert len(name) <= 64, f"`name` must be <= 64 characters: {name}"
     assert role in roles, f"Invalid role: {role}. Valid roles are: {roles}"
     if role not in ["assistant", "function"]:
-        assert message_content is not None, (
-            "`message_content` can only be `None` for `assistant` and `function` roles."
-        )
+        assert (
+            message_content is not None
+        ), "`message_content` can only be `None` for `assistant` and `function` roles."
     message = {"content": message_content, "name": name, "role": role}
     chat_history.append(message)
     if truncate_history:
@@ -913,9 +916,11 @@ async def reset_chat_history(
     await redis_client.delete(chat_cache_key)
     logger.info(f"Finished resetting chat history for session: {session_id}")
 
+
 # =====================================================================================
 # Helpers: RAG
 # =====================================================================================
+
 
 async def get_llm_rag_answer(
     *,
@@ -1165,9 +1170,11 @@ async def generate_llm_query_response(
 
     return response, chat_history
 
+
 # =====================================================================================
 # Helpers: speech (STT / TTS)
 # =====================================================================================
+
 
 def detect_language(*, file_path: str) -> str:
     """Use Faster Whisper's tiny model to detect the language of the audio file.
@@ -1516,9 +1523,11 @@ async def synthesize_speech(*, language: IdentifiedLanguage, text: str) -> Bytes
         logger.error(error_msg)
         raise ValueError(error_msg) from e
 
+
 # =====================================================================================
 # Helpers: Turn.io
 # =====================================================================================
+
 
 async def send_turn_text_message(
     *, httpx_client: httpx.AsyncClient, text: str, turnio_api_key: str, whatsapp_id: str
@@ -1554,9 +1563,11 @@ async def send_turn_text_message(
 
     return response.json()
 
+
 # =====================================================================================
 # Guardrails: input (run before the decorated function)
 # =====================================================================================
+
 
 def identify_language__before(func: Callable) -> Callable:
     """Decorator to identify the language of the question.
@@ -2060,9 +2071,11 @@ async def _paraphrase_question(
     )
     return query_refined, error_response
 
+
 # =====================================================================================
 # Guardrails: output (run after the decorated function)
 # =====================================================================================
+
 
 def check_align_score__after(func: Callable) -> Callable:
     """Decorator to check the alignment score.
@@ -2401,6 +2414,7 @@ async def _generate_tts_response(
         )
 
     return response
+
 
 # =====================================================================================
 # Query pipeline
@@ -2843,9 +2857,7 @@ async def _run_query_pipeline(
     return response
 
 
-async def _download_and_transcribe_audio(
-    *, file_url: str
-) -> tuple[str, str, BytesIO]:
+async def _download_and_transcribe_audio(*, file_url: str) -> tuple[str, str, BytesIO]:
     """Download a voice note, archive it to GCS, save a local temporary copy and
     transcribe it.
 

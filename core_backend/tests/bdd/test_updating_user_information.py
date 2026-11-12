@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import httpx
+import httpx2
 from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
@@ -41,7 +41,7 @@ def reset_databases(
 )
 def suzin_update_poornima_name(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin updates Poornima's name to Poornima_Updated.
 
     Parameters
@@ -53,7 +53,7 @@ def suzin_update_poornima_name(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Poornima's name.
     """
 
@@ -70,7 +70,7 @@ def suzin_update_poornima_name(
 
 @then("Poornima's name should be Poornima_Updated")
 def check_poornima_updated_name(
-    poornima_update_name_response: httpx.Response,
+    poornima_update_name_response: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Poornima's name is updated.
@@ -102,7 +102,7 @@ def check_poornima_updated_name(
 )
 def suzin_update_poornima_default_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin updates Poornima's default workspace to workspace Suzin.
 
     Parameters
@@ -114,7 +114,7 @@ def suzin_update_poornima_default_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Poornima's default workspace.
     """
 
@@ -135,7 +135,7 @@ def suzin_update_poornima_default_workspace(
 
 @then("Poornima's default workspace should be changed to workspace Suzin")
 def check_poornima_updated_default_workspace(
-    poornima_update_default_workspace_response: httpx.Response,
+    poornima_update_default_workspace_response: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Poornima's default workspace is updated.
@@ -169,7 +169,7 @@ def check_poornima_updated_default_workspace(
 )
 def suzin_update_poornima_role(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin updates Poornima's role in workspace Suzin.
 
     Parameters
@@ -181,7 +181,7 @@ def suzin_update_poornima_role(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Poornima's role.
     """
 
@@ -202,7 +202,7 @@ def suzin_update_poornima_role(
 
 @then("Poornima's role should be read-only in workspace Suzin")
 def check_poornima_updated_role(
-    poornima_update_workspace_role_response: httpx.Response,
+    poornima_update_workspace_role_response: httpx2.Response,
     user_workspace_responses: dict[str, dict[str, Any]],
 ) -> None:
     """Check that Poornima's role is updated.
@@ -238,7 +238,7 @@ def check_poornima_updated_role(
 )
 def amir_update_poornima_workspace(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Amir updates Poornima's default workspace to workspace Suzin.
 
     Parameters
@@ -250,7 +250,7 @@ def amir_update_poornima_workspace(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Poornima's default workspace.
     """
 
@@ -270,7 +270,7 @@ def amir_update_poornima_workspace(
 
 @then("Amir should get an error")
 def check_poornima_updated_workspace(
-    poornima_update_default_workspace_response: httpx.Response,
+    poornima_update_default_workspace_response: httpx2.Response,
 ) -> None:
     """Check that Poornima's default workspace is not updated.
 
@@ -293,7 +293,7 @@ def check_poornima_updated_workspace(
 )
 def poornima_update_sid_role(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Poornima updates Sid's role to admin in workspace Amir.
 
     Parameters
@@ -305,7 +305,7 @@ def poornima_update_sid_role(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Sid's role.
     """
 
@@ -325,7 +325,7 @@ def poornima_update_sid_role(
 
 
 @then("Sid's role should be admin in workspace Amir")
-def check_sid_updated_role(sid_update_role_response: httpx.Response) -> None:
+def check_sid_updated_role(sid_update_role_response: httpx2.Response) -> None:
     """Check that Sid's role is updated.
 
     Parameters
@@ -348,7 +348,7 @@ def check_sid_updated_role(sid_update_role_response: httpx.Response) -> None:
 )
 def carlos_update_mark_info(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Carlos updates Mark's information.
 
     Parameters
@@ -360,7 +360,7 @@ def carlos_update_mark_info(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Mark's information.
     """
 
@@ -380,7 +380,7 @@ def carlos_update_mark_info(
 
 
 @then("Carlos should get an error")
-def check_mark_updated_info(mark_update_info_response: httpx.Response) -> None:
+def check_mark_updated_info(mark_update_info_response: httpx2.Response) -> None:
     """Check that Mark's name is not updated.
 
     Parameters
@@ -400,7 +400,7 @@ def check_mark_updated_info(mark_update_info_response: httpx.Response) -> None:
 )
 def carlos_update_mark_name(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Suzin updates Mark's workspace information to workspace Carlos.
 
     Parameters
@@ -412,7 +412,7 @@ def carlos_update_mark_name(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Mark's workspace information.
     """
 
@@ -433,7 +433,7 @@ def carlos_update_mark_name(
 
 @then("Suzin should get an error")
 def check_mark_updated_workspace_info(
-    mark_update_workspace_info_response: httpx.Response,
+    mark_update_workspace_info_response: httpx2.Response,
 ) -> None:
     """Check that Mark's workspace information is not updated.
 
@@ -455,7 +455,7 @@ def check_mark_updated_workspace_info(
 )
 def zia_update_role(
     client: TestClient, user_workspace_responses: dict[str, dict[str, Any]]
-) -> httpx.Response:
+) -> httpx2.Response:
     """Zia tries to update his own role to admin in workspace Carlos.
 
     Parameters
@@ -467,7 +467,7 @@ def zia_update_role(
 
     Returns
     -------
-    httpx.Response
+    httpx2.Response
         The response object from updating Zia's role.
     """
 
@@ -486,7 +486,7 @@ def zia_update_role(
 
 
 @then("Zia should get an error")
-def check_zia_updated_role(zia_update_role_response: httpx.Response) -> None:
+def check_zia_updated_role(zia_update_role_response: httpx2.Response) -> None:
     """Check that Zia's role is not updated.
 
     Parameters

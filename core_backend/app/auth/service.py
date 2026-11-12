@@ -6,6 +6,7 @@ the request and delegate to the functions here. Functions in this module never r
 """
 
 from typing import Any
+from uuid import uuid4
 
 import jwt
 from google.auth.transport import requests
@@ -18,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.schemas import AccessLevel, AuthenticatedUser, AuthenticationDetails
 from app.core.config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
     CHECK_API_LIMIT,
     DEFAULT_API_QUOTA,
     DEFAULT_CONTENT_QUOTA,
@@ -26,6 +28,7 @@ from app.core.config import (
     JWT_SECRET,
     NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
     REDIS_KEY_EXPIRED,
+    REFRESH_TOKEN_EXPIRE_MINUTES,
 )
 from app.core.database import get_sqlalchemy_async_engine
 from app.core.exceptions import (
@@ -36,6 +39,7 @@ from app.core.exceptions import (
 from app.core.observability import setup_logger
 from app.core.security import (
     create_access_token,
+    create_refresh_token,
     get_key_hash,
     update_api_limits,
     verify_dummy_password,
@@ -83,12 +87,63 @@ def _credentials_error() -> UnauthorizedError:
     )
 
 
-def decode_access_token(*, token: str) -> tuple[str, str]:
-    """Get username and workspace name from the JWT token.
+def _decode_token(*, expected_type: str, token: str) -> dict[str, Any]:
+    """Verify a JWT issued by this app and check it is of the expected type.
+
+    The `type` check stops a refresh token being used as an access token (and the
+    other way round), since both are signed with the same secret.
 
     NB: We have to check that both the username and workspace name are present in the
     payload. If either one is missing, then this corresponds to the situation where
     there are neither users nor workspaces present.
+
+    Parameters
+    ----------
+    expected_type
+        The required `type` claim ("access_token" or "refresh_token").
+    token
+        The JWT token.
+
+    Returns
+    -------
+    dict[str, Any]
+        The verified payload. `username` and `workspace_name` are non-empty strings.
+
+    Raises
+    ------
+    UnauthorizedError
+        If the token is invalid, expired, of the wrong type or missing claims.
+    """
+
+    try:
+        # Pin the algorithm list (never trust the token header) and require the time
+        # claims, so a token without `exp` cannot live forever.
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            options={"require": ["exp", "iat"]},
+        )
+    except InvalidTokenError as err:
+        raise _credentials_error() from err
+
+    if payload.get("type") != expected_type:
+        raise _credentials_error()
+
+    username = payload.get("username", None)
+    workspace_name = payload.get("workspace_name", None)
+    if not (
+        isinstance(username, str)
+        and username
+        and isinstance(workspace_name, str)
+        and workspace_name
+    ):
+        raise _credentials_error()
+    return payload
+
+
+def decode_access_token(*, token: str) -> tuple[str, str]:
+    """Get username and workspace name from a JWT access token.
 
     Parameters
     ----------
@@ -106,47 +161,258 @@ def decode_access_token(*, token: str) -> tuple[str, str]:
         If the credentials are invalid.
     """
 
-    try:
-        # Pin the algorithm list (never trust the token header) and require the time
-        # claims, so a token without `exp` cannot live forever.
-        payload = jwt.decode(
-            token,
-            JWT_SECRET,
-            algorithms=[JWT_ALGORITHM],
-            options={"require": ["exp", "iat"]},
+    payload = _decode_token(expected_type="access_token", token=token)
+    return payload["username"], payload["workspace_name"]
+
+
+# ---------------------------------------------------------------------------
+# Refresh tokens.
+#
+# A refresh token is a signed JWT plus Redis state, so it can be revoked:
+#
+#   refresh-token:<jti>         exists until the token is used (single use)
+#   refresh-family:<family id>  exists while the login session is valid
+#   refresh-user:<username>     set of the user's family ids (to revoke them all)
+#
+# Every refresh deletes the presented token and issues a new one in the same family
+# (rotation). Presenting a token that was already used means it was copied, so the
+# whole family is revoked and both the thief and the user must log in again.
+# ---------------------------------------------------------------------------
+
+REFRESH_TOKEN_TTL_SECONDS = REFRESH_TOKEN_EXPIRE_MINUTES * 60
+
+
+def _refresh_token_key(token_id: str) -> str:
+    """Redis key marking a refresh token as unused."""
+
+    return f"refresh-token:{token_id}"
+
+
+def _refresh_family_key(family_id: str) -> str:
+    """Redis key marking a refresh token family (login session) as valid."""
+
+    return f"refresh-family:{family_id}"
+
+
+def _refresh_user_key(username: str) -> str:
+    """Redis key holding the set of a user's refresh token family ids."""
+
+    return f"refresh-user:{username}"
+
+
+async def issue_refresh_token(
+    *,
+    family_id: str | None = None,
+    redis: aioredis.Redis,
+    username: str,
+    workspace_name: str,
+) -> str:
+    """Create a refresh token and register it in Redis.
+
+    Parameters
+    ----------
+    family_id
+        The family to add the token to. `None` starts a new family (a new login).
+    redis
+        The Redis client holding refresh token state.
+    username
+        The username the token is issued to.
+    workspace_name
+        The workspace the token is scoped to.
+
+    Returns
+    -------
+    str
+        The encoded refresh token.
+    """
+
+    family_id = family_id or uuid4().hex
+    token_id = uuid4().hex
+    ttl = REFRESH_TOKEN_TTL_SECONDS
+
+    # One round trip. Each refresh slides the family's expiry forward, so a session
+    # ends after REFRESH_TOKEN_EXPIRE_MINUTES without activity.
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.set(_refresh_token_key(token_id), family_id, ex=ttl)
+        pipe.set(_refresh_family_key(family_id), username, ex=ttl)
+        pipe.sadd(_refresh_user_key(username), family_id)
+        pipe.expire(_refresh_user_key(username), ttl)
+        await pipe.execute()
+
+    return create_refresh_token(
+        family_id=family_id,
+        token_id=token_id,
+        username=username,
+        workspace_name=workspace_name,
+    )
+
+
+async def revoke_refresh_token_family(
+    *, family_id: str, redis: aioredis.Redis, username: str
+) -> None:
+    """Revoke every refresh token issued from one login.
+
+    Parameters
+    ----------
+    family_id
+        The family to revoke.
+    redis
+        The Redis client holding refresh token state.
+    username
+        The family's user.
+    """
+
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.delete(_refresh_family_key(family_id))
+        pipe.srem(_refresh_user_key(username), family_id)
+        await pipe.execute()
+
+
+async def revoke_all_refresh_tokens(*, redis: aioredis.Redis, username: str) -> None:
+    """Revoke every refresh token of a user, e.g. after a password reset. Access
+    tokens already issued stay valid until they expire (ACCESS_TOKEN_EXPIRE_MINUTES).
+
+    Parameters
+    ----------
+    redis
+        The Redis client holding refresh token state.
+    username
+        The user whose sessions are revoked.
+    """
+
+    user_key = _refresh_user_key(username)
+    # redis-py types smembers as "Awaitable[set] | set" for its sync and async clients.
+    family_ids: set[bytes] = await redis.smembers(user_key)  # type: ignore[misc]
+    keys = [_refresh_family_key(f.decode()) for f in family_ids] + [user_key]
+    await redis.delete(*keys)
+
+
+async def refresh_access_token(
+    *, redis: aioredis.Redis, refresh_token: str
+) -> AuthenticationDetails:
+    """Exchange a refresh token for a new access token and refresh token.
+
+    The process is as follows:
+
+    1. Verify the JWT (signature, expiry, `type`).
+    2. Consume the token in Redis. Deleting the key is atomic, so of two concurrent
+        refreshes with the same token only one succeeds.
+    3. If the token was already consumed, it is being reused: revoke its family.
+    4. Check the family has not been revoked (logout, reuse, password reset).
+    5. Check the user still exists and is still in the workspace, and re-read their
+        role, so removals and role changes apply at the next refresh.
+    6. Issue a new pair in the same family.
+
+    Parameters
+    ----------
+    redis
+        The Redis client holding refresh token state.
+    refresh_token
+        The refresh token sent by the client.
+
+    Returns
+    -------
+    AuthenticationDetails
+        The new access token and refresh token.
+
+    Raises
+    ------
+    UnauthorizedError
+        If the refresh token is invalid, already used, revoked, or its user no
+        longer belongs to the workspace.
+    """
+
+    # 1.
+    payload = _decode_token(expected_type="refresh_token", token=refresh_token)
+    username: str = payload["username"]
+    workspace_name: str = payload["workspace_name"]
+    token_id = payload.get("jti")
+    family_id = payload.get("fam")
+    if not (isinstance(token_id, str) and isinstance(family_id, str)):
+        raise _credentials_error()
+
+    # 2.
+    consumed = await redis.delete(_refresh_token_key(token_id))
+
+    # 3.
+    if not consumed:
+        logger.warning(
+            "Refresh token reuse detected; revoking its session family.",
         )
-    except InvalidTokenError as err:
-        raise _credentials_error() from err
-
-    if payload.get("type") != "access_token":
+        await revoke_refresh_token_family(
+            family_id=family_id, redis=redis, username=username
+        )
         raise _credentials_error()
 
-    username = payload.get("username", None)
-    workspace_name = payload.get("workspace_name", None)
-    if not (
-        isinstance(username, str)
-        and username
-        and isinstance(workspace_name, str)
-        and workspace_name
-    ):
+    # 4.
+    if not await redis.exists(_refresh_family_key(family_id)):
         raise _credentials_error()
-    return username, workspace_name
+
+    # 5.
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        _, user_role = await _get_membership(
+            asession=asession, username=username, workspace_name=workspace_name
+        )
+
+    # 6.
+    return await build_authentication_details(
+        access_level="fullaccess",
+        family_id=family_id,
+        redis=redis,
+        user_role=user_role,
+        username=username,
+        workspace_name=workspace_name,
+    )
 
 
-def build_authentication_details(
+async def logout(*, redis: aioredis.Redis, refresh_token: str) -> None:
+    """Revoke the login session a refresh token belongs to.
+
+    Logging out always succeeds from the client's point of view: an invalid or
+    expired token has nothing left to revoke.
+
+    Parameters
+    ----------
+    redis
+        The Redis client holding refresh token state.
+    refresh_token
+        The refresh token sent by the client.
+    """
+
+    try:
+        payload = _decode_token(expected_type="refresh_token", token=refresh_token)
+    except UnauthorizedError:
+        return
+    family_id = payload.get("fam")
+    if isinstance(family_id, str):
+        await revoke_refresh_token_family(
+            family_id=family_id, redis=redis, username=payload["username"]
+        )
+
+
+async def build_authentication_details(
     *,
     access_level: AccessLevel,
+    family_id: str | None = None,
+    redis: aioredis.Redis,
     user_role: UserRoles,
     username: str,
     workspace_name: str,
 ) -> AuthenticationDetails:
-    """Issue a JWT for the user in the given workspace and wrap it in the response
-    model returned by the login and workspace-switch endpoints.
+    """Issue an access token and refresh token for the user in the given workspace
+    and wrap them in the response model returned by the login, refresh and
+    workspace-switch endpoints.
 
     Parameters
     ----------
     access_level
         The access level of the user.
+    family_id
+        The refresh token family to continue (on refresh). `None` starts a new one.
+    redis
+        The Redis client holding refresh token state.
     user_role
         The role of the user in the workspace.
     username
@@ -166,7 +432,15 @@ def build_authentication_details(
         access_token=create_access_token(
             user_role=user_role, username=username, workspace_name=workspace_name
         ),
-        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        refresh_token=await issue_refresh_token(
+            family_id=family_id,
+            redis=redis,
+            username=username,
+            workspace_name=workspace_name,
+        ),
+        # "bearer" is the OAuth2 token type name, not a secret.
+        token_type="bearer",  # nosec B106
         user_role=user_role,
         username=username,
         workspace_name=workspace_name,
@@ -233,7 +507,7 @@ async def authenticate_credentials(
 
 
 async def login_with_credentials(
-    *, password: str, username: str
+    *, password: str, redis: aioredis.Redis, username: str
 ) -> AuthenticationDetails:
     """Authenticate a user with username and password and issue a JWT token.
 
@@ -241,6 +515,8 @@ async def login_with_credentials(
     ----------
     password
         User password.
+    redis
+        The Redis client holding refresh token state.
     username
         User username.
 
@@ -263,7 +539,8 @@ async def login_with_credentials(
     if authenticated_user is None:
         raise UnauthorizedError("Invalid credentials.")
 
-    return build_authentication_details(
+    return await build_authentication_details(
+        redis=redis,
         access_level=authenticated_user.access_level,
         user_role=authenticated_user.user_role,
         username=authenticated_user.username,
@@ -336,7 +613,8 @@ async def login_with_google(
         gmail=idinfo["email"], redis=redis
     )
 
-    return build_authentication_details(
+    return await build_authentication_details(
+        redis=redis,
         access_level=authenticated_user.access_level,
         user_role=authenticated_user.user_role,
         username=authenticated_user.username,
@@ -541,7 +819,40 @@ async def _get_workspace_for_member(
     *, asession: AsyncSession, username: str, workspace_name: str
 ) -> WorkspaceDB:
     """Return the token's workspace, but only while the token's user still exists and
-    still belongs to that workspace.
+    still belongs to that workspace. See `_get_membership`.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    username
+        The `username` claim from the token.
+    workspace_name
+        The `workspace_name` claim from the token.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace the user is a member of.
+
+    Raises
+    ------
+    UnauthorizedError
+        If the user or workspace no longer exists, or the user is no longer a
+        member of the workspace.
+    """
+
+    workspace_db, _ = await _get_membership(
+        asession=asession, username=username, workspace_name=workspace_name
+    )
+    return workspace_db
+
+
+async def _get_membership(
+    *, asession: AsyncSession, username: str, workspace_name: str
+) -> tuple[WorkspaceDB, UserRoles]:
+    """Return the token's workspace and the user's role in it, but only while the
+    token's user still exists and still belongs to that workspace.
 
     A JWT stays cryptographically valid until it expires, so without this check a
     user who was deleted or removed from a workspace keeps access until expiry.
@@ -557,8 +868,8 @@ async def _get_workspace_for_member(
 
     Returns
     -------
-    WorkspaceDB
-        The workspace the user is a member of.
+    tuple[WorkspaceDB, UserRoles]
+        The workspace the user is a member of, and the user's current role in it.
 
     Raises
     ------
@@ -583,7 +894,7 @@ async def _get_workspace_for_member(
     if user_role is None:
         raise _credentials_error()
 
-    return workspace_db
+    return workspace_db, user_role
 
 
 async def get_workspace_name_for_access_token(*, token: str) -> str:

@@ -22,7 +22,10 @@ def has_all_days(d: dict[str, int]) -> dict[str, int]:
         The validated dictionary.
     """
 
-    assert set(d.keys()) - set(get_args(Day)) == set(), "Missing some days in data"
+    # An explicit check, not an assert: asserts are stripped under `python -O`.
+    # Pydantic turns the ValueError into a ValidationError, as it did the assert.
+    if set(d.keys()) - set(get_args(Day)):
+        raise ValueError("Missing some days in data")
     return d
 
 

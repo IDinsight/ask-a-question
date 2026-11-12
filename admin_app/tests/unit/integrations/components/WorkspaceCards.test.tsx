@@ -41,11 +41,15 @@ describe("KeyManagement", () => {
     const user = userEvent.setup();
     const props = renderKey();
 
-    expect(screen.getByRole("region", { name: "Workspace API key" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Workspace API key" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("test-k")).toBeInTheDocument();
     expect(screen.getByText("(rest of key hidden)")).toBeInTheDocument();
     expect(screen.getByText("Last updated 1 Jan 2026")).toBeInTheDocument();
-    expect(screen.getByText(/immediately invalidates the old one/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/immediately invalidates the old one/),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Regenerate key" }));
     expect(props.onOpenConfirmation).toHaveBeenCalledOnce();
@@ -58,7 +62,9 @@ describe("KeyManagement", () => {
 
   it("disables regenerate while a key is being generated", () => {
     renderKey({ isGenerating: true });
-    expect(screen.getByRole("button", { name: "Regenerate key" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Regenerate key" }),
+    ).toBeDisabled();
   });
 
   it("offers to generate the first key when none exists", async () => {
@@ -66,14 +72,19 @@ describe("KeyManagement", () => {
     const props = renderKey({ workspace: { keyStart: "", keyUpdated: "" } });
 
     expect(screen.getByText(/doesn’t have an API key yet/)).toBeInTheDocument();
-    expect(screen.getByText(/You’ll see the full key once/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/You’ll see the full key once/),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Generate key" }));
     expect(props.onRenew).toHaveBeenCalledOnce();
   });
 
   it("disables the first-key button while generating", () => {
-    renderKey({ workspace: { keyStart: "", keyUpdated: "" }, isGenerating: true });
+    renderKey({
+      workspace: { keyStart: "", keyUpdated: "" },
+      isGenerating: true,
+    });
     // The Spinner carries its own accessible label, so match the name loosely.
     expect(screen.getByRole("button", { name: /Generate key/ })).toBeDisabled();
   });
@@ -104,12 +115,16 @@ describe("KeyManagement", () => {
 describe("DailyLimit", () => {
   it("shows a placeholder while loading", () => {
     render(<DailyLimit quota={undefined} />);
-    expect(screen.queryByText(/requests|No daily limit/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/requests|No daily limit/),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the formatted limit per day", () => {
     render(<DailyLimit quota={12000} />);
-    expect(screen.getByText(`${(12000).toLocaleString()} requests`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`${(12000).toLocaleString()} requests`),
+    ).toBeInTheDocument();
     expect(screen.getByText("per day")).toBeInTheDocument();
   });
 

@@ -41,7 +41,8 @@ const CONNECTIONS: ConnectionInfo[] = [
   },
   {
     name: "REST API",
-    description: "Call the search and urgency services directly from your own code.",
+    description:
+      "Call the search and urgency services directly from your own code.",
     ModalContent: RestApiContent,
   },
 ];
@@ -58,7 +59,11 @@ const ConnectionLogo = ({ item }: { item: ConnectionInfo }) => (
   >
     {item.logo_src ? (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={item.logo_src} alt="" className="max-h-7 max-w-8 object-contain" />
+      <img
+        src={item.logo_src}
+        alt=""
+        className="max-h-7 max-w-8 object-contain"
+      />
     ) : (
       <IconCode className="size-4.5" aria-hidden="true" />
     )}

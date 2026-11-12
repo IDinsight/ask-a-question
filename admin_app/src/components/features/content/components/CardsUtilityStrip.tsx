@@ -12,7 +12,10 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
 import {
   Combobox,
   ComboboxChip,
@@ -32,7 +35,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { IndexingStatusResponse } from "../types";
 import type { Content, Tag } from "../types";
 import { SearchBar, SearchBarProps } from "./SearchBar";
@@ -109,7 +116,11 @@ export const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <div className="w-55">
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </div>
-        <TagsFilter tags={tags} filterTags={filterTags} setFilterTags={setFilterTags} />
+        <TagsFilter
+          tags={tags}
+          filterTags={filterTags}
+          setFilterTags={setFilterTags}
+        />
       </div>
 
       {/* Right: bulk actions while cards are selected, otherwise page actions */}
@@ -208,7 +219,11 @@ export const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
  * Multi-select tag filter. Shows the first chosen tag as a chip and
  * "+N" for the rest, so the toolbar doesn't grow as tags are added.
  */
-const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+const TagsFilter: React.FC<TagsFilterProps> = ({
+  tags,
+  filterTags,
+  setFilterTags,
+}) => {
   const anchor = useComboboxAnchor();
   return (
     <Combobox
@@ -267,7 +282,11 @@ const AddButtonWithDropdown: React.FC<{
     // Split button: "New" opens the editor, the arrow opens the import menu
     <ButtonGroup aria-label="Add content">
       {editAccess ? (
-        <Button size="lg" nativeButton={false} render={<Link href="/content/edit" />}>
+        <Button
+          size="lg"
+          nativeButton={false}
+          render={<Link href="/content/edit" />}
+        >
           <IconPlus data-icon="inline-start" />
           New
         </Button>

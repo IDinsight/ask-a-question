@@ -30,7 +30,10 @@ describe("ConnectionModalContents", () => {
       screen.getByRole("link", { name: "Open Turn Playbook" }),
       "whatsapp.turn.io",
     );
-    expectExternal(screen.getByRole("link", { name: "documentation" }), "turn.io/turn");
+    expectExternal(
+      screen.getByRole("link", { name: "documentation" }),
+      "turn.io/turn",
+    );
   });
 
   it("Glific: links to the flow and the docs, and names the key placeholder", () => {
@@ -39,7 +42,10 @@ describe("ConnectionModalContents", () => {
       screen.getByRole("link", { name: "Open Glific Flow" }),
       "search_flow_without_feedback.json",
     );
-    expectExternal(screen.getByRole("link", { name: "documentation" }), "glific/glific");
+    expectExternal(
+      screen.getByRole("link", { name: "documentation" }),
+      "glific/glific",
+    );
     expect(screen.getByText("INSERT_AAQ_API_KEY")).toBeInTheDocument();
   });
 

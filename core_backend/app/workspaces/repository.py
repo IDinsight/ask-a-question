@@ -68,9 +68,13 @@ async def create_workspace(
         workspace was newly created.
     """
 
-    assert api_daily_quota is None or api_daily_quota >= 0
-    assert content_quota is None or content_quota >= 0
-    assert doc_language in IdentifiedLanguage.get_supported_languages()
+    # Explicit checks, not asserts: asserts are stripped under `python -O`.
+    if api_daily_quota is not None and api_daily_quota < 0:
+        raise ValueError(f"api_daily_quota must be >= 0, got {api_daily_quota}.")
+    if content_quota is not None and content_quota < 0:
+        raise ValueError(f"content_quota must be >= 0, got {content_quota}.")
+    if doc_language not in IdentifiedLanguage.get_supported_languages():
+        raise ValueError(f"Unsupported doc_language: {doc_language}.")
 
     result = await asession.execute(
         select(WorkspaceDB).where(WorkspaceDB.workspace_name == user.workspace_name)

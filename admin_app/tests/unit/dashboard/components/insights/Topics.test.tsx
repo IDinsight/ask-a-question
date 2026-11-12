@@ -17,7 +17,9 @@ const topicButtons = () =>
 
 describe("Topics", () => {
   it("shows a placeholder when there are no topics (data defaults to empty)", () => {
-    render(<Topics selectedTopicId={null} onClick={() => {}} topicsPerPage={3} />);
+    render(
+      <Topics selectedTopicId={null} onClick={() => {}} topicsPerPage={3} />,
+    );
 
     expect(screen.getByText("No topics yet.")).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
@@ -28,7 +30,12 @@ describe("Topics", () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(
-      <Topics data={topics(2)} selectedTopicId={2} onClick={onClick} topicsPerPage={3} />,
+      <Topics
+        data={topics(2)}
+        selectedTopicId={2}
+        onClick={onClick}
+        topicsPerPage={3}
+      />,
     );
 
     expect(screen.getByRole("button", { name: /Topic 1/ })).toHaveAttribute(
@@ -50,13 +57,22 @@ describe("Topics", () => {
   it("pages through topics", async () => {
     const user = userEvent.setup();
     render(
-      <Topics data={topics(5)} selectedTopicId={null} onClick={() => {}} topicsPerPage={3} />,
+      <Topics
+        data={topics(5)}
+        selectedTopicId={null}
+        onClick={() => {}}
+        topicsPerPage={3}
+      />,
     );
     const prev = screen.getByRole("button", { name: "Previous topics" });
     const next = screen.getByRole("button", { name: "Next topics" });
 
     expect(screen.getByText("1 / 2")).toBeInTheDocument();
-    expect(topicButtons().map((b) => b.textContent)).toEqual(["Topic 13", "Topic 26", "Topic 39"]);
+    expect(topicButtons().map((b) => b.textContent)).toEqual([
+      "Topic 13",
+      "Topic 26",
+      "Topic 39",
+    ]);
     expect(prev).toBeDisabled();
 
     await user.click(next);
@@ -71,14 +87,24 @@ describe("Topics", () => {
   it("moves back to the last page when new data has fewer pages", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
-      <Topics data={topics(7)} selectedTopicId={null} onClick={() => {}} topicsPerPage={3} />,
+      <Topics
+        data={topics(7)}
+        selectedTopicId={null}
+        onClick={() => {}}
+        topicsPerPage={3}
+      />,
     );
     await user.click(screen.getByRole("button", { name: "Next topics" }));
     await user.click(screen.getByRole("button", { name: "Next topics" }));
     expect(screen.getByText("3 / 3")).toBeInTheDocument();
 
     rerender(
-      <Topics data={topics(4)} selectedTopicId={null} onClick={() => {}} topicsPerPage={3} />,
+      <Topics
+        data={topics(4)}
+        selectedTopicId={null}
+        onClick={() => {}}
+        topicsPerPage={3}
+      />,
     );
     expect(screen.getByText("2 / 2")).toBeInTheDocument();
     expect(topicButtons().map((b) => b.textContent)).toEqual(["Topic 412"]);

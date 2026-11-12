@@ -134,8 +134,30 @@ DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 # Bearer token required to scrape /metrics. When unset, /metrics returns 404.
 METRICS_TOKEN = os.environ.get("METRICS_TOKEN", "")
 
+# ---- request rate limiting (slowapi)
+# Per-client request rates, separate from the per-workspace daily API quota above.
+# Limit strings use the `limits` syntax, e.g. "100/minute" or "5/second;100/hour".
+RATE_LIMIT_ENABLED = os.environ.get("RATE_LIMIT_ENABLED", "true").lower() == "true"
+# Applied to every endpoint, keyed by the caller's user / API key (IP if anonymous).
+RATE_LIMIT_DEFAULT = os.environ.get("RATE_LIMIT_DEFAULT", "300/minute")
+# Applied (per client IP) to credential endpoints: login, refresh, first-user
+# registration and password reset, to slow down brute forcing.
+RATE_LIMIT_AUTH = os.environ.get("RATE_LIMIT_AUTH", "10/minute")
+# Shared counter storage, so limits hold across gunicorn workers. Defaults to Redis.
+RATE_LIMIT_STORAGE_URI = os.environ.get("RATE_LIMIT_STORAGE_URI", REDIS_HOST)
+# How many reverse proxies in front of the backend append to X-Forwarded-For. The
+# client IP is read that many entries from the right; 0 ignores the header. The
+# docker-compose setup (Caddy, which overwrites the header; the admin app's /bff proxy
+# passes it through unchanged) needs 1. Too high a value lets clients spoof their IP.
+RATE_LIMIT_TRUSTED_PROXY_HOPS = int(os.environ.get("RATE_LIMIT_TRUSTED_PROXY_HOPS", 1))
+
 # ---- auth settings (moved from app/auth/config.py)
-ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)
+# Access tokens are short-lived; clients renew them with a refresh token (POST
+# /refresh). Refresh tokens are single-use and tracked in Redis so they can be revoked.
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+REFRESH_TOKEN_EXPIRE_MINUTES = int(
+    os.environ.get("REFRESH_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)
+)
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 # Required in every environment (prod, dev and tests) and has no default.
 # `validate_security_settings` (app.core.security) refuses to start the app when it is

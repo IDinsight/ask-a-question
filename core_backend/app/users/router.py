@@ -7,7 +7,9 @@ from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.router import get_current_user, get_current_workspace_name
+from app.core.config import RATE_LIMIT_AUTH
 from app.core.database import get_async_session
+from app.core.security import get_client_ip, limiter
 from app.users.models import UserDB
 from app.users.schemas import (
     RequireRegisterResponse,
@@ -139,6 +141,7 @@ async def add_existing_user(
 
 
 @router.post("/register-first-user", response_model=UserCreateWithCode)
+@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)
 async def create_first_user(
     user: UserCreateWithPassword,
     request: Request,
@@ -344,9 +347,13 @@ async def is_register_required(
     return await check_register_required(asession=asession)
 
 
+# Public and guarded only by a recovery code, so limited per client IP.
 @router.put("/reset-password", response_model=UserRetrieve)
+@limiter.limit(RATE_LIMIT_AUTH, key_func=get_client_ip)
 async def reset_password(
-    user: UserResetPassword, asession: AsyncSession = Depends(get_async_session)
+    request: Request,
+    user: UserResetPassword,
+    asession: AsyncSession = Depends(get_async_session),
 ) -> UserRetrieve:
     """Reset user password. Takes a user object, generates a new password, replaces the
     old one in the database, and returns the updated user object.
@@ -369,6 +376,8 @@ async def reset_password(
 
     Parameters
     ----------
+    request
+        The request object.
     user
         The user object with the new password and recovery code.
     asession
@@ -380,7 +389,9 @@ async def reset_password(
         The updated user object.
     """
 
-    return await reset_user_password(asession=asession, user=user)
+    return await reset_user_password(
+        asession=asession, redis=request.app.state.redis, user=user
+    )
 
 
 @router.put("/{user_id}", response_model=UserRetrieve)

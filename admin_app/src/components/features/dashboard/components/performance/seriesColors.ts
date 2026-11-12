@@ -6,4 +6,10 @@
  * Slots 3–5 are below 3:1 contrast, so every chart using them also has a
  * legend and the table below acts as the table view.
  */
-export const SERIES_COLORS = ["#264D96", "#EB6834", "#1BAF7A", "#EDA100", "#E87BA4"];
+export const SERIES_COLORS = [
+  "#264D96",
+  "#EB6834",
+  "#1BAF7A",
+  "#EDA100",
+  "#E87BA4",
+];

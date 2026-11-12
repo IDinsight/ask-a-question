@@ -1,4 +1,7 @@
-"""This script is useful if you want to test the dashboard with dummy data. Navigate to
+"""This script is useful if you want to test the dashboard with dummy data.
+
+`# nosec B311`: `random` only generates synthetic records here, nothing security
+related. Navigate to
 the core_backend directory of the project and run the following command:
     > python add_dummy_data_to_db.py
 """
@@ -26,6 +29,7 @@ if __name__ == "__main__":
 from app.contents.models import ContentDB
 from app.core.config import PGVECTOR_VECTOR_SIZE
 from app.core.database import get_session
+from app.core.security import generate_secret_key
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
@@ -55,11 +59,17 @@ def add_year_data() -> None:
     last_year = now - timedelta(days=365)
     year_datetimes = [
         last_year + timedelta(days=i)
-        for i in random.choices(range(365), k=N_DATAPOINTS)
+        for i in random.choices(range(365), k=N_DATAPOINTS)  # nosec B311
     ]
 
     for dt in year_datetimes:
         create_data(dt)
+
+
+def _random_hours() -> timedelta:
+    """A random 0-24 hour offset, to spread synthetic records over a day."""
+
+    return timedelta(hours=random.randint(0, 24))  # nosec B311
 
 
 def add_month_data() -> None:
@@ -68,8 +78,8 @@ def add_month_data() -> None:
     now = datetime.now(timezone.utc)
     last_month = now - timedelta(days=30)
     month_datetimes = [
-        last_month + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
-        for i in random.choices(range(30), k=N_DATAPOINTS)
+        last_month + timedelta(days=i) + _random_hours()
+        for i in random.choices(range(30), k=N_DATAPOINTS)  # nosec B311
     ]
 
     for dt in month_datetimes:
@@ -82,8 +92,8 @@ def add_week_data() -> None:
     now = datetime.now(timezone.utc)
     last_week = now - timedelta(days=7)
     week_datetimes = [
-        last_week + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
-        for i in random.choices(range(7), k=N_DATAPOINTS)
+        last_week + timedelta(days=i) + _random_hours()
+        for i in random.choices(range(7), k=N_DATAPOINTS)  # nosec B311
     ]
 
     for dt in week_datetimes:
@@ -95,9 +105,8 @@ def add_day_data() -> None:
 
     now = datetime.now(timezone.utc)
     last_day = now - timedelta(hours=24)
-    hour_datetimes = [
-        last_day + timedelta(hours=i) for i in random.choices(range(24), k=N_DATAPOINTS)
-    ]
+    hours = random.choices(range(24), k=N_DATAPOINTS)  # nosec B311
+    hour_datetimes = [last_day + timedelta(hours=i) for i in hours]
 
     for dt in hour_datetimes:
         create_data(dt)
@@ -112,14 +121,15 @@ def create_data(dt: datetime) -> None:
         The datetime for which to create a record.
     """
 
-    is_urgent = random.random() < URGENCY_RATE
+    is_urgent = random.random() < URGENCY_RATE  # nosec B311
     session = next(get_session())
     create_urgency_record(dt, is_urgent, session)
     if not is_urgent:
         query_db = create_query_record(dt, session)
         query_id = query_db.query_id
         session_id = query_db.session_id
-        response_feedback_is_negative = random.random() < NEGATIVE_FEEDBACK_RATE
+        roll = random.random()  # nosec B311
+        response_feedback_is_negative = roll < NEGATIVE_FEEDBACK_RATE
         create_response_feedback_record(
             dt=dt,
             query_id=query_id,
@@ -127,7 +137,8 @@ def create_data(dt: datetime) -> None:
             is_negative=response_feedback_is_negative,
             session=session,
         )
-        content_feedback_is_negative = random.random() < NEGATIVE_FEEDBACK_RATE
+        roll = random.random()  # nosec B311
+        content_feedback_is_negative = roll < NEGATIVE_FEEDBACK_RATE
         create_content_feedback_record(
             dt=dt,
             query_id=query_id,
@@ -153,7 +164,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     """
 
     urgency_db = UrgencyQueryDB(
-        feedback_secret_key="abc123",  # pragma: allowlist secret
+        feedback_secret_key=generate_secret_key(),
         message_datetime_utc=dt,
         message_text="test message",
         workspace_id=_WORKSPACE_ID,
@@ -188,7 +199,7 @@ def create_query_record(dt: datetime, session: Session) -> QueryDB:
     """
 
     query_db = QueryDB(
-        feedback_secret_key="abc123",  # pragma: allowlist secret
+        feedback_secret_key=generate_secret_key(),
         query_datetime_utc=dt,
         query_generate_llm_response=False,
         query_metadata={},
@@ -261,12 +272,12 @@ def create_content_feedback_record(
 
     sentiment = "negative" if is_negative else "positive"
     sentiment_text = (
-        random.choice(NEGATIVE_FEEDBACK_TEXTS)
+        random.choice(NEGATIVE_FEEDBACK_TEXTS)  # nosec B311
         if is_negative
-        else random.choice(POSITIVE_FEEDBACK_TEXTS)
+        else random.choice(POSITIVE_FEEDBACK_TEXTS)  # nosec B311
     )
     all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
-    content_ids = random.choices(all_content_ids, k=3)
+    content_ids = random.choices(all_content_ids, k=3)  # nosec B311
     for content_id in content_ids:
         feedback_db = ContentFeedbackDB(
             content_id=content_id,
@@ -295,7 +306,7 @@ def create_content_for_query(dt: datetime, query_id: int, session: Session) -> N
     """
 
     all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
-    content_ids = random.choices(
+    content_ids = random.choices(  # nosec B311
         all_content_ids,
         weights=[c.query_count for c in session.query(ContentDB).all()],
         k=8,
@@ -452,8 +463,8 @@ def generate_synthetic_query() -> str:
         The synthetic query.
     """
 
-    template = random.choice(QUERY_TEMPLATES)
-    term = random.choice(MATERNAL_HEALTH_TERMS)
+    template = random.choice(QUERY_TEMPLATES)  # nosec B311
+    term = random.choice(MATERNAL_HEALTH_TERMS)  # nosec B311
     return template.format(term=term)
 
 

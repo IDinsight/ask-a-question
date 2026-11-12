@@ -31,11 +31,16 @@ test.describe("workspace management", () => {
     ).toBeVisible();
     const list = page.getByRole("list").filter({ hasText: "amina" });
     // The current admin is always first
-    await expect(list.getByRole("listitem").first()).toContainText("test-admin");
+    await expect(list.getByRole("listitem").first()).toContainText(
+      "test-admin",
+    );
     await expect(list.getByRole("listitem").first()).toContainText("(You)");
     await expect(list.getByRole("listitem")).toHaveCount(3);
     await expect(page.locator('[class*="Mui"]')).toHaveCount(0);
-    await page.screenshot({ path: "test-results/workspace.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/workspace.png",
+      fullPage: true,
+    });
   });
 
   test("read-only users see access denied", async ({ page }) => {
@@ -43,7 +48,9 @@ test.describe("workspace management", () => {
     await expect(page.getByText("Access denied")).toBeVisible();
   });
 
-  test("creates a user and shows their recovery codes once", async ({ page }) => {
+  test("creates a user and shows their recovery codes once", async ({
+    page,
+  }) => {
     const api = await openWorkspace(page);
     await page.getByRole("button", { name: "Create new user" }).click();
 
@@ -59,7 +66,8 @@ test.describe("workspace management", () => {
     await expect(codes.getByText("code-1111")).toBeVisible();
     await expect(page.getByText("User successfully created")).toBeVisible(); // toast
     expect(
-      api.users.find((u) => u.username === "chidi")?.user_workspaces[0].user_role,
+      api.users.find((u) => u.username === "chidi")?.user_workspaces[0]
+        .user_role,
     ).toBe("admin");
     await codes.getByRole("button", { name: "Close" }).first().click();
     await expect(page.getByText("chidi")).toBeVisible();
@@ -74,9 +82,9 @@ test.describe("workspace management", () => {
     await dialog.getByLabel("Confirm password").fill("two");
     await dialog.getByRole("button", { name: "Create user" }).click();
     await expect(dialog.getByText("Passwords do not match.")).toBeVisible();
-    expect(api.requests.some((r) => r.method === "POST" && r.path === "/user/")).toBe(
-      false,
-    );
+    expect(
+      api.requests.some((r) => r.method === "POST" && r.path === "/user/"),
+    ).toBe(false);
   });
 
   test("adds an existing user after verifying them", async ({ page }) => {
@@ -94,7 +102,9 @@ test.describe("workspace management", () => {
 
     await expect(page.getByText("User successfully added")).toBeVisible();
     expect(
-      api.requests.some((r) => r.path === "/user/add-existing-user-to-workspace"),
+      api.requests.some(
+        (r) => r.path === "/user/add-existing-user-to-workspace",
+      ),
     ).toBe(true);
   });
 
@@ -109,12 +119,18 @@ test.describe("workspace management", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("User successfully edited")).toBeVisible();
     expect(
-      api.users.find((u) => u.username === "amina")?.user_workspaces[0].user_role,
+      api.users.find((u) => u.username === "amina")?.user_workspaces[0]
+        .user_role,
     ).toBe("admin");
 
     await page.getByText("brian").hover();
-    await page.getByRole("button", { name: "Remove brian from workspace" }).click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
+    await page
+      .getByRole("button", { name: "Remove brian from workspace" })
+      .click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Remove" })
+      .click();
     await expect(page.getByText("User removed successfully")).toBeVisible();
     await expect(page.getByText("brian")).toHaveCount(0);
   });
@@ -127,7 +143,10 @@ test.describe("workspace management", () => {
     await page
       .getByRole("button", { name: "Remove test-admin from workspace" })
       .click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Remove" })
+      .click();
     await expect(
       page.getByText("You cannot remove the only admin from the workspace"),
     ).toBeVisible();
@@ -139,7 +158,9 @@ test.describe("workspace management", () => {
     const api = await openWorkspace(page);
     await page.getByRole("button", { name: "Rename workspace" }).click();
     const dialog = page.getByRole("dialog", { name: "Rename workspace" });
-    await expect(dialog.getByLabel("Workspace name")).toHaveValue("Test workspace");
+    await expect(dialog.getByLabel("Workspace name")).toHaveValue(
+      "Test workspace",
+    );
 
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).toBeHidden();
@@ -150,14 +171,17 @@ test.describe("workspace management", () => {
     await page.getByRole("button", { name: "Rename workspace" }).click();
     await dialog.getByLabel("Workspace name").fill("");
     await dialog.getByRole("button", { name: "Save" }).click();
-    await expect(dialog.getByText("Please enter a workspace name")).toBeVisible();
+    await expect(
+      dialog.getByText("Please enter a workspace name"),
+    ).toBeVisible();
     await dialog.getByLabel("Workspace name").fill("Clinic team");
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect
       .poll(
         () =>
-          api.requests.find((r) => r.method === "PUT" && r.path === "/workspace/1")
-            ?.body,
+          api.requests.find(
+            (r) => r.method === "PUT" && r.path === "/workspace/1",
+          )?.body,
       )
       .toEqual({ workspace_name: "Clinic team" });
   });

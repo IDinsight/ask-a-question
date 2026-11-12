@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
@@ -13,7 +13,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { CustomDashboardFrequency } from "@/components/features/dashboard/types";
 
 interface DateRangePickerDialogProps {
@@ -37,7 +40,12 @@ const frequencyLimits: Record<CustomDashboardFrequency, number> = {
   Month: 1825,
 };
 
-const frequencyOptions: CustomDashboardFrequency[] = ["Hour", "Day", "Week", "Month"];
+const frequencyOptions: CustomDashboardFrequency[] = [
+  "Hour",
+  "Day",
+  "Week",
+  "Month",
+];
 
 const frequencyLabels: Record<CustomDashboardFrequency, string> = {
   Hour: "Hourly",
@@ -67,8 +75,11 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
       ? Math.abs(differenceInCalendarDays(endDate, startDate)) + 1
       : null;
 
-  // Reset to the last applied range each time the dialog opens.
-  useEffect(() => {
+  // Reset to the last applied range each time the dialog opens. Done during
+  // render (tracking the previous `open`) rather than in an effect.
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setRange(
         initialStartDate
@@ -80,19 +91,18 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
       );
       setFrequency(initialFrequency || "Day");
     }
-  }, [open, initialStartDate, initialEndDate, initialFrequency]);
+  }
 
-  // If the range is too long for the chosen frequency, step up to the first one that fits.
-  useEffect(() => {
-    if (diffDays !== null && diffDays > frequencyLimits[frequency]) {
-      const validOption = frequencyOptions.find(
-        (option) => diffDays <= frequencyLimits[option],
-      );
-      if (validOption && validOption !== frequency) {
-        setFrequency(validOption);
-      }
+  // If the range is too long for the chosen frequency, step up to the first
+  // one that fits. Guarded, so this settles after a single extra render.
+  if (diffDays !== null && diffDays > frequencyLimits[frequency]) {
+    const validOption = frequencyOptions.find(
+      (option) => diffDays <= frequencyLimits[option],
+    );
+    if (validOption && validOption !== frequency) {
+      setFrequency(validOption);
     }
-  }, [diffDays, frequency]);
+  }
 
   const handleOk = () => {
     if (startDate && endDate) {
@@ -112,7 +122,9 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="flex flex-col gap-5 p-6 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Custom date range</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            Custom date range
+          </DialogTitle>
           <DialogDescription className="text-sm">
             {startDate && endDate
               ? `${format(startDate, "MMM d, yyyy")} – ${format(
@@ -147,7 +159,9 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
               <NativeSelectOption
                 key={option}
                 value={option}
-                disabled={diffDays !== null && diffDays > frequencyLimits[option]}
+                disabled={
+                  diffDays !== null && diffDays > frequencyLimits[option]
+                }
               >
                 {frequencyLabels[option]}
               </NativeSelectOption>
@@ -156,8 +170,8 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         </Field>
 
         <p className="bg-muted p-3 text-xs text-muted-foreground">
-          Frequency only changes the bar chart on the Overview page. It doesn’t affect
-          Content Performance or Query Topics.
+          Frequency only changes the bar chart on the Overview page. It doesn’t
+          affect Content Performance or Query Topics.
         </p>
 
         <DialogFooter>

@@ -24,7 +24,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RowDataType, ApexTSDataPoint } from "@/components/features/dashboard/types";
+import {
+  RowDataType,
+  ApexTSDataPoint,
+} from "@/components/features/dashboard/types";
 import { SortableTableHeader } from "./SortableTableHeader";
 
 /** Tiny line of query counts over the period, in the row's chart colour. */
@@ -37,7 +40,10 @@ const QueryCountTimeSeries: React.FC<{
     className="aspect-auto h-6 w-full min-w-24"
     initialDimension={{ width: 160, height: 24 }}
   >
-    <LineChart data={queryCount} margin={{ top: 2, bottom: 2, left: 2, right: 2 }}>
+    <LineChart
+      data={queryCount}
+      margin={{ top: 2, bottom: 2, left: 2, right: 2 }}
+    >
       <ChartTooltip
         cursor={false}
         content={
@@ -77,8 +83,12 @@ interface ContentsTableProps {
 const percentageIncrease = (queryCount: number[]): number => {
   if (queryCount.length < 4) return 0;
   const queryLength = queryCount.length;
-  const lastQuarter = queryCount.slice(Math.floor((queryLength / 4) * 3), queryLength);
-  const lastQuarterValue = lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
+  const lastQuarter = queryCount.slice(
+    Math.floor((queryLength / 4) * 3),
+    queryLength,
+  );
+  const lastQuarterValue =
+    lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
   const thirdQuarter = queryCount.slice(
     Math.floor((queryLength / 4) * 2),
     Math.floor((queryLength / 4) * 3),
@@ -121,13 +131,18 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
   longerRange,
 }) => {
   const [page, setPage] = useState(1);
-  const [sortColumn, setSortColumn] = useState<keyof RowDataType>("query_count");
-  const [sortOrder, setSortOrder] = useState<"ascending" | "descending">("descending");
+  const [sortColumn, setSortColumn] =
+    useState<keyof RowDataType>("query_count");
+  const [sortOrder, setSortOrder] = useState<"ascending" | "descending">(
+    "descending",
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredRows = useMemo(() => {
     return searchTerm
-      ? rows.filter((r) => r.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      ? rows.filter((r) =>
+          r.title.toLowerCase().includes(searchTerm.toLowerCase()),
+        )
       : rows;
   }, [rows, searchTerm]);
 
@@ -239,9 +254,15 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
                   {row.title}
                 </button>
               </TableCell>
-              <TableCell className="px-4 tabular-nums">{row.query_count}</TableCell>
-              <TableCell className="px-4 tabular-nums">{row.positive_votes}</TableCell>
-              <TableCell className="px-4 tabular-nums">{row.negative_votes}</TableCell>
+              <TableCell className="px-4 tabular-nums">
+                {row.query_count}
+              </TableCell>
+              <TableCell className="px-4 tabular-nums">
+                {row.positive_votes}
+              </TableCell>
+              <TableCell className="px-4 tabular-nums">
+                {row.negative_votes}
+              </TableCell>
               <TableCell className="px-4">
                 <QueryCountTimeSeries
                   queryCount={row.query_count_timeseries}
@@ -258,8 +279,8 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
           <b className="text-sm font-semibold">No content performance yet</b>
           <span className="max-w-100 text-[13px] text-muted-foreground">
             Once your chatbot starts sending answers, you will see how each card
-            performs and how people rate it. Try a longer time range if you expected
-            data.
+            performs and how people rate it. Try a longer time range if you
+            expected data.
           </span>
           {longerRange && (
             <Button

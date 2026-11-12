@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { IconAlertCircle, IconCircleCheck, IconFileUpload } from "@tabler/icons-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconFileUpload,
+} from "@tabler/icons-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -12,11 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-
-interface CustomError {
-  type: string;
-  description: string;
-}
+import type { CsvUploadResult } from "../types";
 
 const ImportFromCSVModal = ({
   open,
@@ -30,7 +30,7 @@ const ImportFromCSVModal = ({
    * `{status, detail}` when the backend rejects the file; rejects only on a
    * network failure. Supplied by ContentWrapper, which refreshes the list.
    */
-  uploadCsv: (file: File) => Promise<{ status: number; data?: any; detail?: any }>;
+  uploadCsv: (file: File) => Promise<CsvUploadResult>;
 }) => {
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -65,9 +65,11 @@ const ImportFromCSVModal = ({
           setSelectedFile(null);
         } else {
           console.error("Error uploading file:", response.detail);
-          if (response.detail.errors) {
-            const errorDescriptions = response.detail.errors.map(
-              (error: CustomError) => error.description,
+          // `detail` is per-row errors, or a plain message string.
+          const detail = response.detail;
+          if (typeof detail === "object" && detail.errors) {
+            const errorDescriptions = detail.errors.map(
+              (error) => error.description,
             );
             setImportErrorMessages(errorDescriptions);
           } else {
@@ -91,11 +93,18 @@ const ImportFromCSVModal = ({
 
   // Modal auto-closes shortly after a successful import. (The card list is
   // refreshed by the upload mutation, so no page reload is needed.)
+  // Hold the latest handleClose in a ref so the timer effect below doesn't
+  // re-run (and restart the timer) every render. Updated in an effect, not
+  // during render. (useEffectEvent would fit, but @types/react is still v18.)
+  const handleCloseRef = useRef(handleClose);
+  useEffect(() => {
+    handleCloseRef.current = handleClose;
+  });
   useEffect(() => {
     let timerId: NodeJS.Timeout;
     if (importSuccess) {
       timerId = setTimeout(() => {
-        handleClose();
+        handleCloseRef.current();
       }, 1000);
     }
     return () => clearTimeout(timerId);
@@ -117,17 +126,23 @@ const ImportFromCSVModal = ({
           <p>The CSV file should have the following columns:</p>
           <ul className="flex list-disc flex-col gap-1 pl-5">
             <li>
-              <code className="font-mono font-semibold text-foreground">title</code>:
-              content title, up to 150 characters
+              <code className="font-mono font-semibold text-foreground">
+                title
+              </code>
+              : content title, up to 150 characters
             </li>
             <li>
-              <code className="font-mono font-semibold text-foreground">text</code>:
-              content text, up to 2000 characters
+              <code className="font-mono font-semibold text-foreground">
+                text
+              </code>
+              : content text, up to 2000 characters
             </li>
             <li>
               (Optional){" "}
-              <code className="font-mono font-semibold text-foreground">tags</code>:
-              content tags, e.g. &quot;tag1, tag2, tag3&quot;
+              <code className="font-mono font-semibold text-foreground">
+                tags
+              </code>
+              : content tags, e.g. &quot;tag1, tag2, tag3&quot;
             </li>
           </ul>
           <p>Duplicate titles or texts will be rejected.</p>
@@ -142,7 +157,10 @@ const ImportFromCSVModal = ({
             hidden
             onChange={handleFileChange}
           />
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <IconFileUpload data-icon="inline-start" />
             Attach file
           </Button>

@@ -5,6 +5,7 @@ Functions here never raise `HTTPException`; they raise the domain exceptions in
 `app.core.exceptions`, which the global handler turns into the same HTTP responses.
 """
 
+from redis import asyncio as aioredis
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -435,9 +436,14 @@ async def rotate_workspace_api_key(
 
 
 async def switch_user_workspace(
-    *, asession: AsyncSession, calling_user_db: UserDB, workspace_name: str
+    *,
+    asession: AsyncSession,
+    calling_user_db: UserDB,
+    redis: aioredis.Redis,
+    workspace_name: str,
 ) -> AuthenticationDetails:
-    """Issue a new access token scoped to another workspace the user belongs to.
+    """Issue a new access token and refresh token scoped to another workspace the
+    user belongs to.
 
     Parameters
     ----------
@@ -445,6 +451,8 @@ async def switch_user_workspace(
         The SQLAlchemy async session to use for all database connections.
     calling_user_db
         The user object associated with the user switching workspaces.
+    redis
+        The Redis client holding refresh token state.
     workspace_name
         The name of the workspace to switch into.
 
@@ -482,8 +490,9 @@ async def switch_user_workspace(
         raise InternalServerError("Invalid user role when switching to workspace.")
 
     # Hardcode "fullaccess" now, but may use it in the future.
-    return build_authentication_details(
+    return await build_authentication_details(
         access_level="fullaccess",
+        redis=redis,
         user_role=user_role,
         username=username,
         workspace_name=workspace_name,

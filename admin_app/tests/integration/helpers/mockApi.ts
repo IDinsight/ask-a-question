@@ -22,12 +22,14 @@ import type {
   WorkspaceUpdate,
 } from "@/client";
 import { BFF_ROUTES } from "@/lib/bff/routes.gen";
+import { SESSION_COOKIE } from "@/utils/sessionCookie";
 
 /**
  * Test helpers that let the admin app run without a backend or a real login.
  *
  * - `mockAuth` seeds the localStorage keys AuthProvider reads on load, so
- *   ProtectedComponent treats the browser as logged in.
+ *   ProtectedComponent treats the browser as logged in, plus the signed-in
+ *   marker cookie src/proxy.ts checks.
  * - `mockBackend` intercepts every call the browser makes to the BFF (/bff/*)
  *   and answers from an in-memory store, so tests can create/delete tags and
  *   contents. The Next.js BFF and core_backend are never reached.
@@ -75,7 +77,9 @@ export const makeUser = (
 ): MockUser => ({
   user_id: id,
   username,
-  user_workspaces: [{ workspace_id: 1, workspace_name: "Test workspace", user_role: role }],
+  user_workspaces: [
+    { workspace_id: 1, workspace_name: "Test workspace", user_role: role },
+  ],
   is_default_workspace: [true],
   created_datetime_utc: TIMESTAMP,
   updated_datetime_utc: TIMESTAMP,
@@ -97,7 +101,9 @@ export type MockState = {
   /** Current workspace (GET /workspace/current-workspace). Rotating the key updates it. */
   workspace: Pick<
     WorkspaceRetrieve,
-    "api_key_first_characters" | "api_key_updated_datetime_utc" | "api_daily_quota"
+    | "api_key_first_characters"
+    | "api_key_updated_datetime_utc"
+    | "api_daily_quota"
   >;
   /** Every request the mock answered (backend paths, no /bff prefix). */
   requests: { method: string; path: string; body: unknown }[];
@@ -149,7 +155,10 @@ export const makeOverview = ({
   queriesPerDay = 0,
   topContent = [] as TopContent[],
 } = {}): DashboardOverview => {
-  const days = Array.from({ length: 7 }, (_, i) => `2026-11-0${i + 1}T00:00:00`);
+  const days = Array.from(
+    { length: 7 },
+    (_, i) => `2026-11-0${i + 1}T00:00:00`,
+  );
   const series = (n: number) => Object.fromEntries(days.map((d) => [d, n]));
   return {
     stats_cards: {
@@ -163,7 +172,10 @@ export const makeOverview = ({
         percentage_positive_increase: 0,
         percentage_negative_increase: queriesPerDay ? -0.5 : 0,
       },
-      urgency_stats: { n_urgent: queriesPerDay ? 3 : 0, percentage_increase: 0 },
+      urgency_stats: {
+        n_urgent: queriesPerDay ? 3 : 0,
+        percentage_increase: 0,
+      },
       content_feedback_stats: {
         n_positive: queriesPerDay ? 9 : 0,
         n_negative: queriesPerDay ? 1 : 0,
@@ -175,7 +187,9 @@ export const makeOverview = ({
     heatmap: Object.fromEntries(
       HOURS.map((h, i) => [
         h,
-        Object.fromEntries(DAYS.map((d, j) => [d, queriesPerDay ? (i + j) % 5 : 0])),
+        Object.fromEntries(
+          DAYS.map((d, j) => [d, queriesPerDay ? (i + j) % 5 : 0]),
+        ),
       ]),
     ) as Heatmap,
     time_series: {
@@ -239,6 +253,13 @@ export async function mockAuth(
     );
     window.localStorage.setItem("workspaceName", "Test workspace");
   }, role);
+  // src/proxy.ts redirects to /login before render unless this marker cookie
+  // is present, so set it before the first page.goto().
+  await page
+    .context()
+    .addCookies([
+      { name: SESSION_COOKIE, value: "1", url: "http://localhost:3000" },
+    ]);
 }
 
 /**
@@ -254,7 +275,9 @@ const json = <T>(route: Route, body: T, status = 200) =>
 
 /** Is this "METHOD /backend/path" an operation in the generated BFF allowlist? */
 const isSpecOperation = (method: string, path: string) =>
-  BFF_ROUTES.some((route) => route.method === method && route.pattern.test(path));
+  BFF_ROUTES.some(
+    (route) => route.method === method && route.pattern.test(path),
+  );
 
 /**
  * Answer backend calls from an in-memory store. Returns the store so tests
@@ -326,7 +349,8 @@ export async function mockBackend(
       }
 
       // --- Tags ---
-      if (method === "GET" && path === "/tag/") return json<TagRetrieve[]>(route, state.tags);
+      if (method === "GET" && path === "/tag/")
+        return json<TagRetrieve[]>(route, state.tags);
       if (method === "POST" && path === "/tag/") {
         const tag = makeTag(nextTagId++, (body as any).tag_name);
         state.tags.push(tag);
@@ -391,7 +415,8 @@ export async function mockBackend(
       }
 
       // --- Users (workspace management) ---
-      if (method === "GET" && path === "/user/") return json<UserRetrieve[]>(route, state.users);
+      if (method === "GET" && path === "/user/")
+        return json<UserRetrieve[]>(route, state.users);
       if (method === "POST" && path === "/user/") {
         const b = body as { username: string; role: "admin" | "read_only" };
         const user = makeUser(
@@ -408,7 +433,10 @@ export async function mockBackend(
           recovery_codes: ["code-1111", "code-2222"],
         });
       }
-      if (method === "POST" && path === "/user/add-existing-user-to-workspace") {
+      if (
+        method === "POST" &&
+        path === "/user/add-existing-user-to-workspace"
+      ) {
         const b = body as { username: string; role: "admin" | "read_only" };
         state.users.push(
           makeUser(
@@ -506,10 +534,12 @@ export async function mockBackend(
           negative_votes: row?.negative_votes ?? 0,
           daily_query_count_avg: Math.round((row?.total_query_count ?? 0) / 7),
           time_series: Object.fromEntries(
-            Object.entries(row?.query_count_time_series ?? {}).map(([ts, n]) => [
-              ts,
-              { query_count: n, positive_count: 1, negative_count: 0 },
-            ]),
+            Object.entries(row?.query_count_time_series ?? {}).map(
+              ([ts, n]) => [
+                ts,
+                { query_count: n, positive_count: 1, negative_count: 0 },
+              ],
+            ),
           ),
           user_feedback: [
             {
@@ -538,7 +568,8 @@ export async function mockBackend(
         return json<UrgencyRuleRetrieve[]>(route, state.urgencyRules);
       }
       if (method === "POST" && path === "/urgency-rules/") {
-        const id = Math.max(0, ...state.urgencyRules.map((r) => r.urgency_rule_id)) + 1;
+        const id =
+          Math.max(0, ...state.urgencyRules.map((r) => r.urgency_rule_id)) + 1;
         const rule = makeUrgencyRule(id, (body as any).urgency_rule_text);
         state.urgencyRules.push(rule);
         return json<UrgencyRuleRetrieve>(route, rule);
@@ -546,7 +577,9 @@ export async function mockBackend(
       const ruleMatch = path.match(/^\/urgency-rules\/(\d+)$/);
       if (ruleMatch) {
         const id = Number(ruleMatch[1]);
-        const existing = state.urgencyRules.find((r) => r.urgency_rule_id === id);
+        const existing = state.urgencyRules.find(
+          (r) => r.urgency_rule_id === id,
+        );
         if (method === "PUT" && existing) {
           existing.urgency_rule_text = (body as any).urgency_rule_text;
           existing.updated_datetime_utc = "2026-02-01T09:30:00Z";
@@ -563,7 +596,9 @@ export async function mockBackend(
       if (method === "POST" && path === "/urgency-detect") {
         const text = String((body as any).message_text).toLowerCase();
         const matched = state.urgencyRules
-          .filter((r) => text.includes(r.urgency_rule_text.split(" ")[0].toLowerCase()))
+          .filter((r) =>
+            text.includes(r.urgency_rule_text.split(" ")[0].toLowerCase()),
+          )
           .map((r) => r.urgency_rule_text);
         return json<UrgencyResponse>(route, {
           is_urgent: matched.length > 0,
@@ -574,7 +609,11 @@ export async function mockBackend(
 
       // A real operation this mock doesn't implement yet: fail loudly.
       console.warn(`[mockBackend] unhandled ${method} ${path}`);
-      return json(route, { detail: `Unmocked endpoint ${method} ${path}` }, 404);
+      return json(
+        route,
+        { detail: `Unmocked endpoint ${method} ${path}` },
+        404,
+      );
     },
   );
 

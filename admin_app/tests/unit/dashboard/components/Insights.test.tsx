@@ -19,7 +19,10 @@ const response: TopicModelingResponse = {
       topic_popularity: 12,
       topic_summary: "Questions about opening times.",
       topic_samples: [
-        { query_text: "Open on Sunday?", query_datetime_utc: "2026-02-01T08:00:00Z" },
+        {
+          query_text: "Open on Sunday?",
+          query_datetime_utc: "2026-02-01T08:00:00Z",
+        },
       ],
     },
     {
@@ -53,10 +56,18 @@ describe("Insight", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /Clinic hours/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Vaccines/ })).toBeInTheDocument();
-    expect(screen.getByText("Discover what people ask about")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Topic visualization" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Clinic hours/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Vaccines/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Discover what people ask about"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Topic visualization" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the selected topic's summary and samples, and forwards clicks", async () => {
@@ -74,7 +85,9 @@ describe("Insight", () => {
       />,
     );
 
-    expect(screen.getByText("Questions about opening times.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Questions about opening times."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Open on Sunday?")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Vaccines/ }));

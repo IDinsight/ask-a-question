@@ -77,7 +77,8 @@ const ContentWrapper = () => {
   const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
   const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
-  const [openBulkDeleteModal, setOpenBulkDeleteModal] = React.useState<boolean>(false);
+  const [openBulkDeleteModal, setOpenBulkDeleteModal] =
+    React.useState<boolean>(false);
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [openDownloadModal, setOpenDownloadModal] = useState(false);
   const [openCSVModal, setOpenCSVModal] = useState(false);
@@ -226,8 +227,9 @@ const ContentWrapper = () => {
               Question Answering
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Add, edit, and test content for question-answering. Questions sent to the
-              search service will retrieve results from here. Content limit is 50.{" "}
+              Add, edit, and test content for question-answering. Questions sent
+              to the search service will retrieve results from here. Content
+              limit is 50.{" "}
               <a
                 href="https://docs.ask-a-question.com/latest/contact_us/"
                 className="underline underline-offset-4 hover:text-foreground"
@@ -313,7 +315,8 @@ const ContentWrapper = () => {
               related_contents={nextCard?.related_contents || []}
               onRelatedContentClick={() => {
                 setSnackMessage({
-                  message: "Related contents cannot be viewed in validation mode",
+                  message:
+                    "Related contents cannot be viewed in validation mode",
                   color: "warning",
                 });
               }}

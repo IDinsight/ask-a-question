@@ -31,13 +31,17 @@ const StatCard: React.FC<StatCardProps> = ({
   // The backend reports 0% when the previous period had nothing to compare with,
   // so a zero value with zero change means there's no trend to show yet.
   const noChangeData = value === 0 && percentageChange === 0;
-  const DirectionIcon = percentageChange < 0 ? IconTrendingDown : IconTrendingUp;
+  const DirectionIcon =
+    percentageChange < 0 ? IconTrendingDown : IconTrendingUp;
 
   return (
     <Card className="gap-1.5 shadow-xs">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-[13px] text-muted-foreground">
-          <Icon className={cn("size-4 shrink-0", iconClassName)} aria-hidden="true" />
+          <Icon
+            className={cn("size-4 shrink-0", iconClassName)}
+            aria-hidden="true"
+          />
           {title}
         </CardTitle>
       </CardHeader>
@@ -46,7 +50,9 @@ const StatCard: React.FC<StatCardProps> = ({
           {value.toLocaleString()}
         </div>
         {noChangeData ? (
-          <span className="text-xs text-muted-foreground">No change data yet</span>
+          <span className="text-xs text-muted-foreground">
+            No change data yet
+          </span>
         ) : (
           // Percentage and comparison on separate lines so every card wraps the same way
           <span className="flex flex-col gap-0.5 text-xs text-muted-foreground">

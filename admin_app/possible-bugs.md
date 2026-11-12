@@ -6,24 +6,27 @@ The status column tells you how far each one has been checked:
 
 - **Confirmed**: read in the source, and the failure path is clear.
 - **Likely**: the code reads as described, but nobody has reproduced it in the running app.
+- **Fixed**: resolved, with a regression test.
 - **Cleanup**: not a user-facing bug. Dead code or noise worth removing.
 
-| # | Issue | Where | Severity | Status |
-|---|-------|-------|----------|--------|
-| 1 | Adding a new user skips the password checks | `UserWorkspaceModal.tsx` | High | Confirmed |
-| 2 | A chat session id of 0 is treated as "no session" | `ChatSideBar.tsx` | Low | Confirmed |
-| 3 | A failed tag delete fails silently | `ContentBox.tsx` | Medium | Confirmed |
-| 4 | Related content picked on a new card is lost | `ContentBox.tsx` | Medium | Likely |
-| 5 | The CSV import modal keeps old state when the parent closes it | `ImportFromCSVModal.tsx` | Low | Likely |
-| 6 | Indexing status rows sort on formatted date text | `content/api.ts` | Low | Likely |
-| 7 | Close timers are never cleared | `UserWorkspaceModal.tsx`, `WorkspaceCreateModal.tsx` | Low | Confirmed |
-| 8 | `useCallback` dependency lists are incomplete | `UserWorkspaceModal.tsx` | Low | Confirmed |
-| 9 | Debug `console.log` calls left in | `SearchSidebar.tsx` | Cleanup | Confirmed |
-| 10 | Unreachable code | Several files | Cleanup | Confirmed |
+| #   | Issue                                                          | Where                                                | Severity | Status    |
+| --- | -------------------------------------------------------------- | ---------------------------------------------------- | -------- | --------- |
+| 1   | Adding a new user skips the password checks                    | `UserWorkspaceModal.tsx`                             | High     | Fixed     |
+| 2   | A chat session id of 0 is treated as "no session"              | `ChatSideBar.tsx`                                    | Low      | Confirmed |
+| 3   | A failed tag delete fails silently                             | `ContentBox.tsx`                                     | Medium   | Confirmed |
+| 4   | Related content picked on a new card is lost                   | `ContentBox.tsx`                                     | Medium   | Likely    |
+| 5   | The CSV import modal keeps old state when the parent closes it | `ImportFromCSVModal.tsx`                             | Low      | Likely    |
+| 6   | Indexing status rows sort on formatted date text               | `content/api.ts`                                     | Low      | Likely    |
+| 7   | Close timers are never cleared                                 | `UserWorkspaceModal.tsx`, `WorkspaceCreateModal.tsx` | Low      | Confirmed |
+| 8   | `useCallback` dependency lists are incomplete                  | `UserWorkspaceModal.tsx`                             | Low      | Confirmed |
+| 9   | Debug `console.log` calls left in                              | `SearchSidebar.tsx`                                  | Cleanup  | Confirmed |
+| 10  | Unreachable code                                               | Several files                                        | Cleanup  | Confirmed |
 
 ---
 
 ## 1. Adding a new user skips the password checks
+
+**Fixed (November 2026):** `validateInputs` now checks the password whenever the password fields are shown (`showPasswordFields`), including "add → user doesn't exist". Regression tests are in `tests/unit/workspace-management/components/UserWorkspaceModal.test.tsx`.
 
 **File:** [src/components/features/workspace-management/components/UserWorkspaceModal.tsx](src/components/features/workspace-management/components/UserWorkspaceModal.tsx#L124)
 
@@ -92,6 +95,7 @@ A smaller point: `importSuccess` starts as `null` and `handleClose` sets it to `
 ## 7. Close timers are never cleared
 
 **Files:**
+
 - [UserWorkspaceModal.tsx:197](src/components/features/workspace-management/components/UserWorkspaceModal.tsx#L197): `setTimeout(onClose, 300)`
 - [WorkspaceCreateModal.tsx:86](src/components/features/workspace-management/components/WorkspaceCreateModal.tsx#L86): `setTimeout(onClose, 3000)`
 
@@ -120,13 +124,13 @@ Line 315 logs the whole feedback response on success, and line 327 logs repeat f
 
 None of these can run from the UI. They're the main reason coverage isn't 100%. Removing them makes the code easier to read.
 
-| File | Line(s) | Why it can't run |
-|------|---------|------------------|
-| [ImportFromCSVModal.tsx](src/components/features/content/components/ImportFromCSVModal.tsx#L87) | 87–88 | The "No file selected" error, but the Import button is disabled until a file is chosen. |
-| [ImportFromPDFModal.tsx](src/components/features/content/components/ImportFromPDFModal.tsx#L104) | 104 | Same as above. |
-| [ImportFromPDFModal.tsx](src/components/features/content/components/ImportFromPDFModal.tsx#L81) | 81 | The "unknown error" fallback, but react-dropzone always provides a list of errors. |
-| [SearchSidebar.tsx](src/components/features/content/components/SearchSidebar.tsx#L302) | 299–302 | Parses `rawJson` when it's a string, but the feedback buttons only show when `rawJson` is an object (line 336). |
-| [ContentBox.tsx](src/components/features/content/edit/components/ContentBox.tsx#L263) | 263 | The "Tag already exists" message, but the "Create …" option is hidden when the typed text matches an existing tag. |
-| [UserWorkspaceModal.tsx](src/components/features/workspace-management/components/UserWorkspaceModal.tsx#L167) | 167 | The "Unable to add user" fallback, but the submit button is disabled until the user is verified. |
-| [DateRangePicker.tsx](src/components/features/dashboard/components/DateRangePicker.tsx#L91) | 91 | The `validOption !== frequency` check is always true at this point. |
-| [ConfirmDeleteModal.tsx](src/components/features/content/components/ConfirmDeleteModal.tsx#L40), [RegisterModal.tsx](src/components/features/login/components/RegisterModal.tsx#L62), [FirstUserSetup.tsx](src/components/features/login/components/FirstUserSetup.tsx#L128) | 40, 62/195, 128 | Each handles a dialog opening itself, but none of these dialogs can open itself. |
+| File                                                                                                                                                                                                                                                                         | Line(s)         | Why it can't run                                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| [ImportFromCSVModal.tsx](src/components/features/content/components/ImportFromCSVModal.tsx#L87)                                                                                                                                                                              | 87–88           | The "No file selected" error, but the Import button is disabled until a file is chosen.                            |
+| [ImportFromPDFModal.tsx](src/components/features/content/components/ImportFromPDFModal.tsx#L104)                                                                                                                                                                             | 104             | Same as above.                                                                                                     |
+| [ImportFromPDFModal.tsx](src/components/features/content/components/ImportFromPDFModal.tsx#L81)                                                                                                                                                                              | 81              | The "unknown error" fallback, but react-dropzone always provides a list of errors.                                 |
+| [SearchSidebar.tsx](src/components/features/content/components/SearchSidebar.tsx#L302)                                                                                                                                                                                       | 299–302         | Parses `rawJson` when it's a string, but the feedback buttons only show when `rawJson` is an object (line 336).    |
+| [ContentBox.tsx](src/components/features/content/edit/components/ContentBox.tsx#L263)                                                                                                                                                                                        | 263             | The "Tag already exists" message, but the "Create …" option is hidden when the typed text matches an existing tag. |
+| [UserWorkspaceModal.tsx](src/components/features/workspace-management/components/UserWorkspaceModal.tsx#L167)                                                                                                                                                                | 167             | The "Unable to add user" fallback, but the submit button is disabled until the user is verified.                   |
+| [DateRangePicker.tsx](src/components/features/dashboard/components/DateRangePicker.tsx#L91)                                                                                                                                                                                  | 91              | The `validOption !== frequency` check is always true at this point.                                                |
+| [ConfirmDeleteModal.tsx](src/components/features/content/components/ConfirmDeleteModal.tsx#L40), [RegisterModal.tsx](src/components/features/login/components/RegisterModal.tsx#L62), [FirstUserSetup.tsx](src/components/features/login/components/FirstUserSetup.tsx#L128) | 40, 62/195, 128 | Each handles a dialog opening itself, but none of these dialogs can open itself.                                   |

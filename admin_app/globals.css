@@ -67,14 +67,20 @@
   --secondary: oklch(0.95 0.007 277.2); /* #EDEEF3 */
   --secondary-foreground: oklch(0.32 0.094 265.9);
   --muted: oklch(0.95 0.007 277.2); /* #EDEEF3 */
-  --muted-foreground: oklch(0.505 0.023 250.6); /* #5B6672, 5.3:1 on background */
-  --accent: oklch(0.95 0.007 277.2); /* hover/selected fill, as in stock shadcn */
+  --muted-foreground: oklch(
+    0.505 0.023 250.6
+  ); /* #5B6672, 5.3:1 on background */
+  --accent: oklch(
+    0.95 0.007 277.2
+  ); /* hover/selected fill, as in stock shadcn */
   --accent-foreground: oklch(0.294 0.025 241.8);
   --destructive: oklch(0.505 0.19 27.5); /* #B91C1C */
 
   /* Test / "Run discovery" actions (orange in the current product) */
   --warning: oklch(0.782 0.158 72.3); /* #F5A524 */
-  --warning-foreground: oklch(0.294 0.025 241.8); /* dark text, about 7:1 on orange */
+  --warning-foreground: oklch(
+    0.294 0.025 241.8
+  ); /* dark text, about 7:1 on orange */
   --urgent: oklch(0.555 0.146 49); /* #B45309 urgent status text/icons */
 
   /* Controls */

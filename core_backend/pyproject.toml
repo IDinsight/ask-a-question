@@ -82,6 +82,14 @@ dev = [
     "types-PyYAML==6.0.12.12",
     "types-python-dateutil==2.9.0.20240315",
     "types-requests==2.32.0.20241016",
+    # SAST: `uv run bandit -c pyproject.toml -r .` (config in [tool.bandit] below).
+    "bandit[toml]==1.9.4",
+]
+# validation/ suites only (S3 data + SNS notifications): `uv sync --group validation`.
+# s3fs is versioned in lockstep with fsspec (pulled in by torch/huggingface-hub).
+validation = [
+    "boto3==1.43.117",
+    "s3fs==2026.9.0",
 ]
 
 # On Linux (the Docker images and CI), take torch from PyTorch's CPU-only index.
@@ -102,14 +110,31 @@ entrypoint = "app.main:app"
 # Lint config (moved here from the old repo-root pyproject.toml).
 [tool.mypy]
 disallow_untyped_defs = true
+# Derive module names from file paths (relative to core_backend/), so directories
+# without __init__.py, like validation/retrieval/ and validation/urgency_detection/,
+# don't both produce a top-level `conftest` module. Same as the Makefile's
+# --explicit-package-base, so plain `uv run mypy .` behaves the same.
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy",
             "google.auth.transport", "google.oauth2",
             "gtts", "google.cloud", "bertopic", "hdbscan", "pydub",
-            "sklearn", "umap", "bokeh.*", "uvicorn_worker"]
+            "sklearn", "umap", "bokeh.*", "uvicorn_worker",
+            # No type hints shipped. boto3 is only installed for validation/.
+            "pgvector", "gunicorn.*", "boto3"]
 ignore_missing_imports = true
 follow_imports = "skip"
+
+# SAST. Run with `uv run bandit -c pyproject.toml -r .` (make lint and CI do).
+[tool.bandit]
+# tests/ is test code (pytest relies on assert); .venv is third-party code.
+exclude_dirs = ["tests", ".venv"]
+# B101 (assert_used): asserts are stripped under `python -O`. The app never runs
+# optimized (Dockerfiles, startup.sh and gunicorn don't use -O or PYTHONOPTIMIZE),
+# and its remaining asserts are internal invariants / type narrowing. Checks on
+# outside input use explicit raises, not asserts.
+skips = ["B101"]
 
 [tool.ruff]
 lint.select = ["E", "F", "B", "Q", "I"]
@@ -138,8 +163,13 @@ testpaths = ["tests"]
 # (`pytest -m rails`). A later -m on the command line replaces this one.
 # --cov: always measure coverage (settings in [tool.coverage.*] below). Pass
 # --no-cov to skip it, e.g. when running a single test file while iterating.
-addopts = ["-ra", "--strict-markers", "-m", "not rails", "--cov"]
+# --cov takes an optional value, so it must not be last: otherwise a path given on
+# the command line (`pytest tests/foo.py`) is read as the coverage source.
+addopts = ["-ra", "--cov", "--strict-markers", "-m", "not rails"]
 asyncio_mode = "auto"
+# Put core_backend/ on sys.path so `app` imports however pytest is started (e.g. the
+# validation suites, whose directories have no __init__.py).
+pythonpath = ["."]
 bdd_features_base_dir = "tests/bdd/features"
 filterwarnings = ["ignore::DeprecationWarning"]
 markers = [

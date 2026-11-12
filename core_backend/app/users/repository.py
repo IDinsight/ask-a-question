@@ -49,12 +49,6 @@ class UserWorkspaceRoleAlreadyExistsError(Exception):
     """Exception raised when a user workspace role already exists in the database."""
 
 
-
-
-
-
-
-
 async def add_existing_user_to_workspace(
     *,
     asession: AsyncSession,

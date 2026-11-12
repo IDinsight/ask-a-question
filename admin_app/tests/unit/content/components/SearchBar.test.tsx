@@ -7,9 +7,9 @@ import { SearchBar } from "@/components/features/content/components/SearchBar";
 describe("SearchBar", () => {
   it("shows the current search term", () => {
     render(<SearchBar searchTerm="malaria" setSearchTerm={() => {}} />);
-    expect(screen.getByRole("searchbox", { name: "Search content" })).toHaveValue(
-      "malaria",
-    );
+    expect(
+      screen.getByRole("searchbox", { name: "Search content" }),
+    ).toHaveValue("malaria");
   });
 
   it("reports each change to the parent", async () => {

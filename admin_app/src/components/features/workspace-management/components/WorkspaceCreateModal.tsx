@@ -109,7 +109,11 @@ const WorkspaceCreateModal = ({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="p-6 sm:max-w-md">
-        <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-5"
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2.5 text-lg font-semibold">
               <IconFolderPlus
@@ -154,7 +158,12 @@ const WorkspaceCreateModal = ({
           </Field>
 
           <DialogFooter>
-            <Button type="button" variant="outline" size="lg" onClick={handleClose}>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={handleClose}
+            >
               Cancel
             </Button>
             <Button type="submit" size="lg" disabled={submitting}>

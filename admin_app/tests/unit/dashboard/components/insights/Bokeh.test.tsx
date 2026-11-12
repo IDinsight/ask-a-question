@@ -26,7 +26,8 @@ const setup = (props: Partial<BokehPlotProps> = {}) => {
   );
   // The decorative placeholder is 7 grey squares, only shown before a plot loads.
   const placeholderCount = () =>
-    utils.container.querySelectorAll('[aria-hidden="true"] > span.bg-muted').length;
+    utils.container.querySelectorAll('[aria-hidden="true"] > span.bg-muted')
+      .length;
   return { user: userEvent.setup(), onOpenChange, placeholderCount, ...utils };
 };
 
@@ -38,10 +39,14 @@ describe("BokehPlot", () => {
   it("starts collapsed with a placeholder and asks to expand on click", async () => {
     const { user, onOpenChange, placeholderCount } = setup();
 
-    expect(screen.getByRole("heading", { name: "Topic visualization" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Topic visualization" }),
+    ).toBeInTheDocument();
     expect(placeholderCount()).toBe(7);
 
-    await user.click(screen.getByRole("button", { name: "Expand topic visualization" }));
+    await user.click(
+      screen.getByRole("button", { name: "Expand topic visualization" }),
+    );
     expect(onOpenChange).toHaveBeenCalled();
     expect(onOpenChange.mock.calls[0][0]).toBe(true);
     expect(embedItem).not.toHaveBeenCalled();
@@ -51,13 +56,25 @@ describe("BokehPlot", () => {
     const { user, placeholderCount } = setup({ open: true, loading: true });
 
     expect(placeholderCount()).toBe(0);
-    expect(screen.getByRole("button", { name: "Collapse topic visualization" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Collapse topic visualization" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "How to use this tool" }));
-    expect(screen.getByText(/queries and content grouped by their topic/)).toBeInTheDocument();
-    for (const alt of ["Scroll Zoom", "Pan Tool", "Tooltip", "Lasso Tool", "Reset Tool"]) {
+    await user.click(
+      screen.getByRole("button", { name: "How to use this tool" }),
+    );
+    expect(
+      screen.getByText(/queries and content grouped by their topic/),
+    ).toBeInTheDocument();
+    for (const alt of [
+      "Scroll Zoom",
+      "Pan Tool",
+      "Tooltip",
+      "Lasso Tool",
+      "Reset Tool",
+    ]) {
       expect(screen.getByAltText(alt)).toBeInTheDocument();
     }
   });
@@ -78,14 +95,19 @@ describe("BokehPlot", () => {
   });
 
   it("shows the error when embedding throws", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
     embedItem.mockImplementation(() => {
       throw new Error("bad spec");
     });
     setup({ open: true, plotSpec: { doc: "broken" } });
 
     expect(await screen.findByRole("alert")).toHaveTextContent(LOAD_ERROR);
-    expect(consoleError).toHaveBeenCalledWith("Error embedding the plot:", expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith(
+      "Error embedding the plot:",
+      expect.any(Error),
+    );
     consoleError.mockRestore();
   });
 

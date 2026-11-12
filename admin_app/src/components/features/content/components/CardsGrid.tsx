@@ -119,7 +119,9 @@ export const CardsGrid = ({
   }, []);
 
   const getRelatedContent = (content_ids: number[]) => {
-    return allCards.filter((content) => content_ids.includes(content.content_id!));
+    return allCards.filter((content) =>
+      content_ids.includes(content.content_id!),
+    );
   };
 
   if (isLoading) {
@@ -146,12 +148,16 @@ export const CardsGrid = ({
                 </EmptyMedia>
                 <EmptyTitle>No content yet</EmptyTitle>
                 <EmptyDescription>
-                  Content you add here is what the search and chat services answer from.
+                  Content you add here is what the search and chat services
+                  answer from.
                 </EmptyDescription>
               </EmptyHeader>
               {editAccess && (
                 <EmptyContent>
-                  <Button nativeButton={false} render={<Link href="/content/edit" />}>
+                  <Button
+                    nativeButton={false}
+                    render={<Link href="/content/edit" />}
+                  >
                     <IconPlus data-icon="inline-start" />
                     Add content
                   </Button>
@@ -191,12 +197,16 @@ export const CardsGrid = ({
                     last_modified={item.updated_datetime_utc}
                     tags={
                       tags
-                        ? tags.filter((tag) => item.content_tags.includes(tag.tag_id))
+                        ? tags.filter((tag) =>
+                            item.content_tags.includes(tag.tag_id),
+                          )
                         : []
                     }
                     positive_votes={item.positive_votes}
                     negative_votes={item.negative_votes}
-                    related_contents={getRelatedContent(item.related_contents_id)}
+                    related_contents={getRelatedContent(
+                      item.related_contents_id,
+                    )}
                     onSuccessfulArchive={onSuccessfulArchive}
                     onFailedArchive={onFailedArchive}
                     archiveContent={archiveContent}

@@ -31,7 +31,11 @@ const okResponse = (overrides: Record<string, unknown> = {}) => ({
   // Keys are rank order; deliberately out of order to check sorting.
   search_results: {
     "1": { id: 21, title: "Water storage", text: "Keep containers covered." },
-    "0": { id: 20, title: "Safe drinking water", text: "Boil or filter water." },
+    "0": {
+      id: 20,
+      title: "Safe drinking water",
+      text: "Boil or filter water.",
+    },
   },
   ...overrides,
 });
@@ -43,7 +47,11 @@ const setup = ({
   const closeSidebar = vi.fn();
   const user = userEvent.setup();
   render(
-    <SearchSidebar closeSidebar={closeSidebar} search={search} sendFeedback={sendFeedback} />,
+    <SearchSidebar
+      closeSidebar={closeSidebar}
+      search={search}
+      sendFeedback={sendFeedback}
+    />,
   );
   const input = screen.getByRole("textbox", { name: "Question" });
   return { user, input, search, sendFeedback, closeSidebar };
@@ -76,7 +84,9 @@ describe("SearchSidebar", () => {
 
   it("lists results in rank order without an answer block", async () => {
     const request = deferred<ReturnType<typeof okResponse>>();
-    const { user, input, search } = setup({ search: vi.fn(() => request.promise) });
+    const { user, input, search } = setup({
+      search: vi.fn(() => request.promise),
+    });
 
     await user.type(input, "Is tap water safe?{Enter}");
     expect(search).toHaveBeenCalledWith("Is tap water safe?", false);
@@ -106,14 +116,22 @@ describe("SearchSidebar", () => {
 
   it("says when the answer was empty and when no content matched", async () => {
     const { user, input } = setup({
-      search: vi.fn().mockResolvedValue(okResponse({ llm_response: null, search_results: {} })),
+      search: vi
+        .fn()
+        .mockResolvedValue(
+          okResponse({ llm_response: null, search_results: {} }),
+        ),
     });
 
     await user.click(screen.getByRole("checkbox"));
     await user.type(input, "Anything?{Enter}");
 
-    expect(await screen.findByText("No answer text was returned.")).toBeInTheDocument();
-    expect(screen.getByText("No matching content was found.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No answer text was returned."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No matching content was found."),
+    ).toBeInTheDocument();
   });
 
   it("treats missing search_results as no results", async () => {
@@ -128,9 +146,13 @@ describe("SearchSidebar", () => {
     const { user, input } = setup();
     await user.type(input, "water{Enter}");
 
-    await user.click(await screen.findByRole("button", { name: /Safe drinking water/ }));
+    await user.click(
+      await screen.findByRole("button", { name: /Safe drinking water/ }),
+    );
 
-    const dialog = await screen.findByRole("dialog", { name: "Safe drinking water" });
+    const dialog = await screen.findByRole("dialog", {
+      name: "Safe drinking water",
+    });
     expect(dialog).toHaveTextContent("Reference 1 · Content #20");
     expect(dialog).toHaveTextContent("Boil or filter water.");
   });
@@ -145,8 +167,12 @@ describe("SearchSidebar", () => {
       await screen.findByText(/The search service returned an error \(500\)/),
     ).toBeInTheDocument();
     // No feedback buttons without a feedback key, but the raw response is there.
-    expect(screen.queryByRole("button", { name: "Helpful" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "View raw response" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Helpful" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "View raw response" }),
+    ).toBeInTheDocument();
   });
 
   it("shows an error bubble when the request fails and exposes the raw error", async () => {
@@ -155,11 +181,13 @@ describe("SearchSidebar", () => {
     });
     await user.type(input, "water{Enter}");
 
-    expect(await screen.findByText(/The search request failed/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/The search request failed/),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "View raw response" }));
-    expect(await screen.findByRole("dialog", { name: "Raw response" })).toHaveTextContent(
-      "network down",
-    );
+    expect(
+      await screen.findByRole("dialog", { name: "Raw response" }),
+    ).toHaveTextContent("network down");
   });
 
   it("sends thumbs up/down feedback once each", async () => {
@@ -185,7 +213,9 @@ describe("SearchSidebar", () => {
       sentiment: "negative",
       feedbackSecretKey: "fake-secret",
     });
-    expect(screen.getByRole("button", { name: "Marked not helpful" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Marked not helpful" }),
+    ).toBeInTheDocument();
   });
 
   it("logs when sending feedback fails", async () => {
@@ -204,9 +234,13 @@ describe("SearchSidebar", () => {
     const { user, input } = setup();
     await user.type(input, "water{Enter}");
     await user.click(await screen.findByRole("button", { name: "Helpful" }));
-    expect(screen.getByRole("button", { name: "Marked helpful" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Marked helpful" }),
+    ).toBeInTheDocument();
 
     await user.type(input, "{Enter}");
-    expect(await screen.findByRole("button", { name: "Helpful" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Helpful" }),
+    ).toBeInTheDocument();
   });
 });

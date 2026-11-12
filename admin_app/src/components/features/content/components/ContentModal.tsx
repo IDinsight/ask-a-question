@@ -239,7 +239,7 @@ interface ArchiveContentModalProps {
   onClose: () => void;
   onSuccessfulArchive: (content_id: number) => void;
   onFailedArchive: (content_id: number, error_message: string) => void;
-  archiveContent: (content_id: number) => Promise<any>;
+  archiveContent: (content_id: number) => Promise<unknown>;
 }
 
 const ArchiveContentModal: React.FC<ArchiveContentModalProps> = ({

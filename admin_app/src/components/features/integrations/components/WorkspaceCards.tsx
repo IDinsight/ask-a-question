@@ -1,5 +1,10 @@
 import React from "react";
-import { IconArrowRight, IconClock, IconKey, IconRefresh } from "@tabler/icons-react";
+import {
+  IconArrowRight,
+  IconClock,
+  IconKey,
+  IconRefresh,
+} from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -97,8 +102,8 @@ export const KeyManagement = ({
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          This workspace doesn’t have an API key yet. Generate one to connect your chat
-          manager.
+          This workspace doesn’t have an API key yet. Generate one to connect
+          your chat manager.
         </p>
       )}
 
@@ -126,7 +131,12 @@ export const KeyManagement = ({
             Regenerate key
           </Button>
         ) : (
-          <Button key="generate" size="lg" onClick={onRenew} disabled={isGenerating}>
+          <Button
+            key="generate"
+            size="lg"
+            onClick={onRenew}
+            disabled={isGenerating}
+          >
             {isGenerating ? (
               <Spinner data-icon="inline-start" />
             ) : (
@@ -170,7 +180,9 @@ export const DailyLimit = ({ quota }: { quota: number | null | undefined }) => (
       <Skeleton className="h-8 w-40" />
     ) : (
       <p className="text-2xl font-semibold tracking-tight tabular-nums">
-        {quota === null ? "No daily limit" : `${quota.toLocaleString()} requests`}
+        {quota === null
+          ? "No daily limit"
+          : `${quota.toLocaleString()} requests`}
         {quota !== null && (
           <span className="ml-1.5 text-sm font-normal text-muted-foreground">
             per day

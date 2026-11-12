@@ -101,19 +101,6 @@ if LANGFUSE == "True":
             LANGFUSE_PROJECT_NAME = None
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def create_langfuse_metadata(
     *,
     feature_name: str | None = None,
