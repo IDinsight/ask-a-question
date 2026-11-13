@@ -6,7 +6,10 @@ import type {
   DocIndexingStatusRow,
   DocIndexingTask,
 } from "@/components/features/content/types";
-import { IndexingStatusModal } from "@/components/features/content/components/IndexingStatusModal";
+import {
+  IndexingStatusModal,
+  summarizeError,
+} from "@/components/features/content/components/IndexingStatusModal";
 
 const task = (overrides: Partial<DocIndexingTask> = {}): DocIndexingTask => ({
   error_trace: "",
@@ -72,7 +75,8 @@ describe("IndexingStatusModal", () => {
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
 
-  it("renders a single-task upload with a dash for missing dates", () => {
+  it("renders a failed single-task upload with a readable error row", async () => {
+    const user = userEvent.setup();
     renderModal({
       indexEntries: [
         row({
@@ -88,14 +92,48 @@ describe("IndexingStatusModal", () => {
     const cells = screen.getAllByRole("row")[1].querySelectorAll("td");
     expect(cells[1]).toHaveTextContent("broken.pdf");
     expect(cells[2]).toHaveTextContent("Error");
+    expect(screen.getByText("Error")).toHaveClass("text-destructive");
     expect(cells[5]).toHaveTextContent("—");
-    // A single failed task colours the row's error trace.
-    expect(cells[6]).toHaveTextContent("parse failed");
-    expect(cells[6]).toHaveClass("text-destructive");
+
+    // The error shows as a friendly summary; the raw trace is hidden.
+    expect(
+      screen.getByText("Something went wrong while processing this file."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("parse failed")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Show technical details" }),
+    );
+    expect(screen.getByText("parse failed")).toBeInTheDocument();
+
     // Single-task rows have no expand toggle.
     expect(
       screen.queryByRole("button", { name: "Show files" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("falls back to the task's trace when the upload has none", () => {
+    renderModal({
+      indexEntries: [
+        row({
+          status: "Error",
+          errorTrace: "",
+          tasks: [
+            task({ task_status: "Failed", error_trace: "Connection error." }),
+          ],
+        }),
+      ],
+    });
+    expect(screen.getByText(/Couldn't reach the AI service/)).toBeInTheDocument();
+  });
+
+  it.each([
+    ["OpenAIException - Connection error.", /Couldn't reach the AI service/],
+    ["Request timed out", /took too long/],
+    ["RateLimitError 429", /busy right now/],
+    ["AuthenticationError: bad API key", /rejected our credentials/],
+    ["something odd", /Something went wrong/],
+  ])("summarizes %j", (trace, expected) => {
+    expect(summarizeError(trace)).toMatch(expected);
   });
 
   it("handles an upload with no tasks", () => {
@@ -133,10 +171,11 @@ describe("IndexingStatusModal", () => {
     expect(screen.getByText("a.pdf")).toBeInTheDocument();
     expect(screen.getByText("Success")).toHaveClass("text-green-700");
     expect(screen.getByText("In progress")).toHaveClass("text-amber-700");
-    const failedRow = screen.getByText("c.pdf").closest("tr")!;
-    expect(within(failedRow).getByText("bad pdf")).toHaveClass(
-      "text-destructive",
-    );
+    // The failed task gets its own error row and a red badge.
+    expect(screen.getByText("Failed")).toHaveClass("text-destructive");
+    expect(
+      screen.getByText("Something went wrong while processing this file."),
+    ).toBeInTheDocument();
     // The in-progress task has no finish time.
     expect(
       within(screen.getByText("b.pdf").closest("tr")!).getByText("—"),

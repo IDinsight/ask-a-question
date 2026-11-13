@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import {
   IconAlertCircle,
+  IconAlertTriangle,
   IconChevronDown,
   IconFileOff,
 } from "@tabler/icons-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,52 +40,140 @@ import { formatDate } from "../queries";
 import type { DocIndexingStatusRow } from "../types";
 
 // Column headers and widths, shared by the header and every row so the
-// nested task rows line up with their parent.
+// nested task rows line up with their parent. File name takes whatever width
+// is left; dates get a fixed width wide enough to stay on one line.
+// Errors are not a column: they render as a full-width row under the file.
 const COLUMNS = [
   { key: "expandToggle", label: "", className: "w-10" },
-  { key: "fileName", label: "File name", className: "w-[25%]" },
-  { key: "status", label: "Status", className: "w-[15%]" },
-  { key: "docsIndexed", label: "Documents processed", className: "w-[15%]" },
-  { key: "createdAt", label: "Created at", className: "w-[15%]" },
-  { key: "finishedAt", label: "Finished at", className: "w-[15%]" },
-  { key: "errorTrace", label: "Error trace", className: "w-[15%]" },
+  { key: "fileName", label: "File name", className: "" },
+  { key: "status", label: "Status", className: "w-28" },
+  { key: "docsIndexed", label: "Documents", className: "w-24" },
+  { key: "createdAt", label: "Created at", className: "w-48" },
+  { key: "finishedAt", label: "Finished at", className: "w-48" },
 ] as const;
 
 const WRAP = "whitespace-normal wrap-break-word";
+const DATE = "whitespace-nowrap text-muted-foreground tabular-nums";
 
 const handleEmptyDate = (dateString: string) => {
   if (!dateString) return "—";
   return dateString;
 };
 
-/** Text colour for a status. Upload-level and task-level statuses differ. */
-const statusClassName = (status: string) => {
+type StatusTone = "success" | "pending" | "error" | "neutral";
+
+/** Upload-level ("Done"/"Error") and task-level ("Success"/"Failed") statuses
+ *  use different words; map both onto one tone. */
+const statusTone = (status: string): StatusTone => {
   switch (status) {
     case "Done":
     case "Success":
-      return "text-green-700 dark:text-green-500";
+      return "success";
     case "Ongoing":
     case "In progress":
-      return "text-amber-700 dark:text-amber-500";
+      return "pending";
+    case "Error":
     case "Failed":
-      return "text-destructive";
+      return "error";
     default:
-      return "";
+      return "neutral";
   }
+};
+
+const TONE_CLASS: Record<StatusTone, string> = {
+  success:
+    "bg-green-600/10 text-green-700 dark:bg-green-500/15 dark:text-green-500",
+  pending:
+    "bg-amber-600/10 text-amber-700 dark:bg-amber-500/15 dark:text-amber-500",
+  error: "bg-destructive/10 text-destructive dark:bg-destructive/20",
+  neutral: "bg-muted text-muted-foreground",
+};
+
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => (
+  <Badge className={TONE_CLASS[statusTone(status)]}>{status}</Badge>
+);
+
+/**
+ * Turns a raw backend error trace into one plain sentence for the admin.
+ * Assumption: matching on substrings of LiteLLM / OpenAI error text, which
+ * isn't a stable contract. Anything unrecognised falls back to a generic
+ * message, and the raw trace is always one click away.
+ */
+export const summarizeError = (trace: string): string => {
+  if (/connection error|connect call failed|cannot connect/i.test(trace)) {
+    return "Couldn't reach the AI service. Try again in a few minutes; if it keeps failing, contact your administrator.";
+  }
+  if (/timed? ?out/i.test(trace)) {
+    return "The AI service took too long to respond. Try uploading the file again.";
+  }
+  if (/rate ?limit|\b429\b/i.test(trace)) {
+    return "The AI service is busy right now. Wait a minute, then upload the file again.";
+  }
+  if (/authentication|api key|\b401\b/i.test(trace)) {
+    return "The AI service rejected our credentials. Contact your administrator.";
+  }
+  return "Something went wrong while processing this file.";
+};
+
+/** Full-width row under a failed file: a readable summary, with the raw
+ *  trace behind a toggle for whoever needs to debug it. */
+const ErrorRow: React.FC<{ trace: string; nested?: boolean }> = ({
+  trace,
+  nested = false,
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell />
+      <TableCell
+        colSpan={COLUMNS.length - 1}
+        className={cn("pt-0 pb-3", nested && "pl-6")}
+      >
+        <div className="flex flex-col gap-2 border-l-2 border-destructive bg-destructive/5 px-3 py-2">
+          <div className="flex items-start gap-2 text-destructive">
+            <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <p className={cn(WRAP, "text-sm")}>{summarizeError(trace)}</p>
+          </div>
+          <Button
+            variant="link"
+            size="xs"
+            className="h-auto w-fit p-0 text-muted-foreground"
+            aria-expanded={showDetails}
+            onClick={(e) => {
+              // Don't toggle the parent ZIP row.
+              e.stopPropagation();
+              setShowDetails(!showDetails);
+            }}
+          >
+            {showDetails ? "Hide technical details" : "Show technical details"}
+          </Button>
+          {showDetails && (
+            <pre className="max-h-40 overflow-auto bg-muted p-2 font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground">
+              {trace}
+            </pre>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
 };
 
 const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
   const [open, setOpen] = useState(false);
   const hasMultipleTasks = entry.tasks.length > 1;
-  // For a single-task upload the row's error colour follows that task.
-  const effectiveStatus = hasMultipleTasks
-    ? entry.status
-    : entry.tasks[0]?.task_status;
+  // For a single-task upload the error comes from that task when the
+  // upload-level trace is empty.
+  const errorTrace =
+    entry.errorTrace || (!hasMultipleTasks && entry.tasks[0]?.error_trace) || "";
 
   return (
     <>
       <TableRow
-        className={cn(hasMultipleTasks && "cursor-pointer")}
+        className={cn(
+          hasMultipleTasks && "cursor-pointer",
+          errorTrace && "border-b-0",
+        )}
         onClick={hasMultipleTasks ? () => setOpen(!open) : undefined}
       >
         <TableCell className="px-2">
@@ -107,47 +197,45 @@ const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
         <TableCell className={cn(WRAP, "font-medium")}>
           {entry.fileName}
         </TableCell>
-        <TableCell className={cn("font-medium", statusClassName(entry.status))}>
-          {entry.status}
+        <TableCell>
+          <StatusBadge status={entry.status} />
         </TableCell>
-        <TableCell>{entry.docsIndexed}</TableCell>
-        <TableCell>{handleEmptyDate(entry.created_at)}</TableCell>
-        <TableCell>{handleEmptyDate(entry.finished_at)}</TableCell>
-        <TableCell
-          className={cn(
-            WRAP,
-            effectiveStatus === "Failed" && "text-destructive",
-          )}
-        >
-          {entry.errorTrace}
+        <TableCell className="tabular-nums">{entry.docsIndexed}</TableCell>
+        <TableCell className={DATE}>
+          {handleEmptyDate(entry.created_at)}
+        </TableCell>
+        <TableCell className={DATE}>
+          {handleEmptyDate(entry.finished_at)}
         </TableCell>
       </TableRow>
+      {errorTrace && <ErrorRow trace={errorTrace} />}
+
       {/* Per-file rows of a ZIP upload, shown when expanded */}
       {hasMultipleTasks &&
         open &&
         entry.tasks.map((task, taskIndex) => (
-          <TableRow key={taskIndex} className="bg-muted/40 hover:bg-muted/60">
-            <TableCell />
-            <TableCell className={cn(WRAP, "pl-6")}>{task.doc_name}</TableCell>
-            <TableCell className={statusClassName(task.task_status)}>
-              {task.task_status}
-            </TableCell>
-            <TableCell />
-            <TableCell>
-              {handleEmptyDate(formatDate(task.created_datetime_utc))}
-            </TableCell>
-            <TableCell>
-              {handleEmptyDate(formatDate(task.finished_datetime_utc))}
-            </TableCell>
-            <TableCell
+          <React.Fragment key={taskIndex}>
+            <TableRow
               className={cn(
-                WRAP,
-                task.task_status === "Failed" && "text-destructive",
+                "bg-muted/40 hover:bg-muted/60",
+                task.error_trace && "border-b-0",
               )}
             >
-              {task.error_trace}
-            </TableCell>
-          </TableRow>
+              <TableCell />
+              <TableCell className={cn(WRAP, "pl-6")}>{task.doc_name}</TableCell>
+              <TableCell>
+                <StatusBadge status={task.task_status} />
+              </TableCell>
+              <TableCell />
+              <TableCell className={DATE}>
+                {handleEmptyDate(formatDate(task.created_datetime_utc))}
+              </TableCell>
+              <TableCell className={DATE}>
+                {handleEmptyDate(formatDate(task.finished_datetime_utc))}
+              </TableCell>
+            </TableRow>
+            {task.error_trace && <ErrorRow trace={task.error_trace} nested />}
+          </React.Fragment>
         ))}
     </>
   );
@@ -174,7 +262,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
   const renderTable = () => (
     // The inner table container is made non-scrolling so the sticky header
     // sticks to this outer, height-limited box.
-    <div className="h-[40vh] overflow-auto border [&>[data-slot=table-container]]:overflow-visible">
+    <div className="max-h-[50vh] min-h-[200px] overflow-auto border [&>[data-slot=table-container]]:overflow-visible">
       <Table className="table-fixed text-sm">
         <TableHeader className="sticky top-0 z-10 bg-popover">
           <TableRow className="hover:bg-transparent">
