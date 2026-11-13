@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Any, Callable, Optional
 
 import pytest
-from PyPDF2 import PdfWriter
+from pypdf import PdfWriter
 
 
 class FakeRedis:

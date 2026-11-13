@@ -2,7 +2,20 @@
 
 SHELL := /bin/bash
 
-.PHONY : lint tests tests-alembic tests-rails teardown-test-containers
+.PHONY : lint check audit tests tests-alembic tests-rails teardown-test-containers
+
+# The same non-SAST checks CI runs in Phase 1: ruff, mypy and the dependency audit.
+check:
+	uv run ruff check .
+	uv run mypy .
+	$(MAKE) audit
+
+# Audit exactly what ships (locked runtime deps, no dev group), as CI does.
+# Nothing is installed; pip-audit checks the pinned versions against OSV/PyPI.
+audit:
+	@req=$$(mktemp) && trap 'rm -f "$$req"' EXIT && \
+	uv export --locked --no-dev --no-emit-project --format requirements-txt -o "$$req" -q && \
+	uvx pip-audit==2.9.0 -r "$$req" --disable-pip --progress-spinner off
 
 # Format, lint, type-check and SAST (config in pyproject.toml and .pylintrc).
 lint:

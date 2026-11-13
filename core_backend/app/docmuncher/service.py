@@ -14,10 +14,10 @@ from uuid import uuid4
 
 import numpy as np
 import redis.asyncio as aioredis
-from langchain.text_splitter import MarkdownHeaderTextSplitter
 from langchain_core.documents import Document
+from langchain_text_splitters import MarkdownHeaderTextSplitter
 from mistralai import DocumentURLChunk, Mistral
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.contents.repository import save_content_to_db
