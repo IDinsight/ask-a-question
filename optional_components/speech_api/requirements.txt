@@ -4,7 +4,7 @@ openai-whisper==20250625
 ffmpeg-python==0.2.0
 fastapi==0.109.1
 python-multipart==0.0.9
-litellm==1.61.15
+litellm==1.109.0.dev1
 openai>=1.61.0,<3
 aiohttp==3.10.11
 sounddevice==0.5.0
