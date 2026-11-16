@@ -2,7 +2,6 @@
 
 import logging
 from logging import Logger
-from typing import Optional
 
 from .config import LOG_LEVEL
 
@@ -33,7 +32,7 @@ def get_log_level_from_str(*, log_level_str: str = LOG_LEVEL) -> int:
     return log_level_dict.get(log_level_str.upper(), logging.INFO)
 
 
-def setup_logger(*, log_level: Optional[int] = None, name: str = __name__) -> Logger:
+def setup_logger(*, log_level: int | None = None, name: str = __name__) -> Logger:
     """Setup logger for the application.
 
     Parameters

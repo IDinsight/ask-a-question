@@ -49,19 +49,21 @@ async def synthesize_speech(*, language: IdentifiedLanguage, text: str) -> Bytes
 
         voice = PiperVoice.load(model_path)
 
-        with wave.open("output.wav", "wb") as wav_file:
+        # Write the WAV straight into an in-memory buffer rather than a temp file on
+        # disk. This avoids blocking file I/O inside an async function (ruff ASYNC230)
+        # and stops concurrent requests from clobbering a shared "output.wav".
+        # `wave` does not close file objects it didn't open, so the buffer stays usable.
+        audio_buffer = BytesIO()
+        with wave.open(audio_buffer, "wb") as wav_file:
             voice.synthesize_wav(text, wav_file)
 
         logger.info("Speech synthesis completed successfully.")
 
-        with open("output.wav", "rb") as file:
-            audio_data = file.read()
-
-        os.remove("output.wav")
-
-        return BytesIO(audio_data)
+        # Rewind so the caller (StreamingResponse) reads from the start.
+        audio_buffer.seek(0)
+        return audio_buffer
     except Exception as e:
-        error_msg = f"Failed to synthesize speech for text '{text}': {str(e)}"
+        error_msg = f"Failed to synthesize speech for text '{text}': {e!s}"
         logger.error(error_msg)
         raise ValueError(error_msg) from e
 
@@ -97,8 +99,19 @@ async def transcribe_audio(*, file_path: str) -> TranscriptionResponse:
 
         logger.info(f"Transcription completed successfully for {file_path}.")
 
-        return TranscriptionResponse(language=result["language"], text=result["text"])
+        # whisper annotates its result as dict[str, str | list]; only "segments" is
+        # actually a list. Narrow "language" and "text" to str explicitly so type
+        # checkers (pyright/Pylance) are satisfied and an unexpected shape fails
+        # loudly instead of being silently stringified.
+        language, text = result["language"], result["text"]
+        if not isinstance(language, str) or not isinstance(text, str):
+            raise TypeError(
+                "Unexpected whisper result: 'language' and 'text' must be str, got "
+                f"{type(language).__name__} and {type(text).__name__}."
+            )
+
+        return TranscriptionResponse(language=language, text=text)
     except Exception as e:
-        error_msg = f"Failed to transcribe audio file '{file_path}': {str(e)}"
+        error_msg = f"Failed to transcribe audio file '{file_path}': {e!s}"
         logger.error(error_msg)
         raise ValueError(error_msg) from e
