@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AddExistingUserData, AddExistingUserErrors, AddExistingUserResponses, ArchiveContentData, ArchiveContentErrors, ArchiveContentResponses, BulkUploadContentsData, BulkUploadContentsErrors, BulkUploadContentsResponses, ChatData, ChatErrors, ChatResponses, CheckIfUsernameExistsData, CheckIfUsernameExistsErrors, CheckIfUsernameExistsResponses, ClassifyTextData, ClassifyTextErrors, ClassifyTextResponses, CreateContentData, CreateContentErrors, CreateContentResponses, CreateFirstUserData, CreateFirstUserErrors, CreateFirstUserResponses, CreateNewUserData, CreateNewUserErrors, CreateNewUserResponses, CreatePlotData, CreatePlotErrors, CreatePlotResponses, CreateTagData, CreateTagErrors, CreateTagResponses, CreateUrgencyRuleData, CreateUrgencyRuleErrors, CreateUrgencyRuleResponses, CreateWorkspacesData, CreateWorkspacesErrors, CreateWorkspacesResponses, DeleteContentData, DeleteContentErrors, DeleteContentResponses, DeleteTagData, DeleteTagErrors, DeleteTagResponses, DeleteUrgencyRuleData, DeleteUrgencyRuleErrors, DeleteUrgencyRuleResponses, EditContentData, EditContentErrors, EditContentResponses, EditTagData, EditTagErrors, EditTagResponses, FeedbackData, FeedbackErrors, FeedbackResponses, GetAllJobsData, GetAllJobsResponses, GetJobsRunningForUserData, GetJobsRunningForUserResponses, GetNewApiKeyData, GetNewApiKeyResponses, GetNextUnvalidatedContentData, GetNextUnvalidatedContentResponses, GetUnvalidatedCardCountData, GetUnvalidatedCardCountResponses, GetUrgencyRuleData, GetUrgencyRuleErrors, GetUrgencyRuleResponses, GetUrgencyRulesData, GetUrgencyRulesResponses, GetUserData, GetUserResponses, IsRegisterRequiredData, IsRegisterRequiredResponses, LoginData, LoginErrors, LoginGoogleData, LoginGoogleErrors, LoginGoogleResponses, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RefreshAccessTokenData, RefreshAccessTokenErrors, RefreshAccessTokenResponses, RefreshInsightsFrequencyData, RefreshInsightsFrequencyErrors, RefreshInsightsFrequencyResponses, RemoveUserFromWorkspaceData, RemoveUserFromWorkspaceErrors, RemoveUserFromWorkspaceResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, RetrieveAllUsersInCurrentWorkspaceData, RetrieveAllUsersInCurrentWorkspaceResponses, RetrieveAllWorkspacesData, RetrieveAllWorkspacesResponses, RetrieveContentAiSummaryData, RetrieveContentAiSummaryErrors, RetrieveContentAiSummaryResponses, RetrieveContentByIdData, RetrieveContentByIdErrors, RetrieveContentByIdResponses, RetrieveContentData, RetrieveContentDetailsData, RetrieveContentDetailsErrors, RetrieveContentDetailsResponses, RetrieveContentErrors, RetrieveContentResponses, RetrieveCurrentWorkspaceData, RetrieveCurrentWorkspaceResponses, RetrieveInsightsFrequencyData, RetrieveInsightsFrequencyErrors, RetrieveInsightsFrequencyResponses, RetrieveOverviewFrequencyData, RetrieveOverviewFrequencyErrors, RetrieveOverviewFrequencyResponses, RetrievePerformanceFrequencyData, RetrievePerformanceFrequencyErrors, RetrievePerformanceFrequencyResponses, RetrieveTagByIdData, RetrieveTagByIdErrors, RetrieveTagByIdResponses, RetrieveTagData, RetrieveTagErrors, RetrieveTagResponses, RetrieveWorkspaceByWorkspaceIdData, RetrieveWorkspaceByWorkspaceIdErrors, RetrieveWorkspaceByWorkspaceIdResponses, RetrieveWorkspacesByUserIdData, RetrieveWorkspacesByUserIdErrors, RetrieveWorkspacesByUserIdResponses, SearchData, SearchErrors, SearchResponses, SwitchWorkspaceData, SwitchWorkspaceErrors, SwitchWorkspaceResponses, UpdateUrgencyRuleData, UpdateUrgencyRuleErrors, UpdateUrgencyRuleResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses, UploadDocumentData, UploadDocumentErrors, UploadDocumentResponses, ValidateContentCardData, ValidateContentCardErrors, ValidateContentCardResponses } from './types.gen';
+import type { AddExistingUserData, AddExistingUserErrors, AddExistingUserResponses, ArchiveContentData, ArchiveContentErrors, ArchiveContentResponses, BulkUploadContentsData, BulkUploadContentsErrors, BulkUploadContentsResponses, ChatData, ChatErrors, ChatResponses, CheckIfUsernameExistsData, CheckIfUsernameExistsErrors, CheckIfUsernameExistsResponses, ClassifyTextData, ClassifyTextErrors, ClassifyTextResponses, CreateContentData, CreateContentErrors, CreateContentResponses, CreateFirstUserData, CreateFirstUserErrors, CreateFirstUserResponses, CreateNewUserData, CreateNewUserErrors, CreateNewUserResponses, CreatePlotData, CreatePlotErrors, CreatePlotResponses, CreateTagData, CreateTagErrors, CreateTagResponses, CreateUrgencyRuleData, CreateUrgencyRuleErrors, CreateUrgencyRuleResponses, CreateWorkspacesData, CreateWorkspacesErrors, CreateWorkspacesResponses, DeleteContentData, DeleteContentErrors, DeleteContentResponses, DeleteTagData, DeleteTagErrors, DeleteTagResponses, DeleteUrgencyRuleData, DeleteUrgencyRuleErrors, DeleteUrgencyRuleResponses, EditContentData, EditContentErrors, EditContentResponses, EditTagData, EditTagErrors, EditTagResponses, FeedbackData, FeedbackErrors, FeedbackResponses, GetAllJobsData, GetAllJobsResponses, GetJobsRunningForUserData, GetJobsRunningForUserResponses, GetNewApiKeyData, GetNewApiKeyResponses, GetNextUnvalidatedContentData, GetNextUnvalidatedContentResponses, GetUnvalidatedCardCountData, GetUnvalidatedCardCountResponses, GetUrgencyRuleData, GetUrgencyRuleErrors, GetUrgencyRuleResponses, GetUrgencyRulesData, GetUrgencyRulesResponses, GetUserData, GetUserResponses, IsRegisterRequiredData, IsRegisterRequiredResponses, LoginData, LoginErrors, LoginGoogleData, LoginGoogleErrors, LoginGoogleResponses, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RefreshAccessTokenData, RefreshAccessTokenErrors, RefreshAccessTokenResponses, RefreshInsightsFrequencyData, RefreshInsightsFrequencyErrors, RefreshInsightsFrequencyResponses, RemoveUserFromWorkspaceData, RemoveUserFromWorkspaceErrors, RemoveUserFromWorkspaceResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, RetrieveAllUsersInCurrentWorkspaceData, RetrieveAllUsersInCurrentWorkspaceResponses, RetrieveAllWorkspacesData, RetrieveAllWorkspacesResponses, RetrieveContentAiSummaryData, RetrieveContentAiSummaryErrors, RetrieveContentAiSummaryResponses, RetrieveContentByIdData, RetrieveContentByIdErrors, RetrieveContentByIdResponses, RetrieveContentData, RetrieveContentDetailsData, RetrieveContentDetailsErrors, RetrieveContentDetailsResponses, RetrieveContentErrors, RetrieveContentResponses, RetrieveCurrentWorkspaceData, RetrieveCurrentWorkspaceResponses, RetrieveCurrentWorkspaceUsageData, RetrieveCurrentWorkspaceUsageResponses, RetrieveInsightsFrequencyData, RetrieveInsightsFrequencyErrors, RetrieveInsightsFrequencyResponses, RetrieveOverviewFrequencyData, RetrieveOverviewFrequencyErrors, RetrieveOverviewFrequencyResponses, RetrievePerformanceFrequencyData, RetrievePerformanceFrequencyErrors, RetrievePerformanceFrequencyResponses, RetrieveTagByIdData, RetrieveTagByIdErrors, RetrieveTagByIdResponses, RetrieveTagData, RetrieveTagErrors, RetrieveTagResponses, RetrieveWorkspaceByWorkspaceIdData, RetrieveWorkspaceByWorkspaceIdErrors, RetrieveWorkspaceByWorkspaceIdResponses, RetrieveWorkspacesByUserIdData, RetrieveWorkspacesByUserIdErrors, RetrieveWorkspacesByUserIdResponses, SearchData, SearchErrors, SearchResponses, SwitchWorkspaceData, SwitchWorkspaceErrors, SwitchWorkspaceResponses, UpdateUrgencyRuleData, UpdateUrgencyRuleErrors, UpdateUrgencyRuleResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses, UploadDocumentData, UploadDocumentErrors, UploadDocumentResponses, ValidateContentCardData, ValidateContentCardErrors, ValidateContentCardResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -2024,6 +2024,38 @@ export const retrieveCurrentWorkspace = <ThrowOnError extends boolean = true>(op
             type: 'http'
         }],
     url: '/workspace/current-workspace',
+    ...options
+});
+
+/**
+ * Retrieve Current Workspace Usage
+ *
+ * Return the current workspace's usage: content cards, urgency rules, and API
+ * calls made today, alongside the workspace's quotas.
+ *
+ * NB: This endpoint can be called by any authenticated user.
+ *
+ * Parameters
+ * ----------
+ * workspace_name
+ * The name of the current workspace.
+ * request
+ * The request object (for the Redis client that tracks API calls).
+ * asession
+ * The SQLAlchemy async session to use for all database connections.
+ *
+ * Returns
+ * -------
+ * WorkspaceUsage
+ * The current workspace's usage and quotas.
+ */
+export const retrieveCurrentWorkspaceUsage = <ThrowOnError extends boolean = true>(options?: Options<RetrieveCurrentWorkspaceUsageData, ThrowOnError>): RequestResult<RetrieveCurrentWorkspaceUsageResponses, unknown, ThrowOnError> => (options?.client ?? client).get<RetrieveCurrentWorkspaceUsageResponses, unknown, ThrowOnError>({
+    security: [{
+            key: 'OAuth2PasswordBearer',
+            scheme: 'bearer',
+            type: 'http'
+        }],
+    url: '/workspace/current-workspace/usage',
     ...options
 });
 

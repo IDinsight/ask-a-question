@@ -45,6 +45,7 @@ import {
   retrieveTagQueryKey,
 } from "@/client/@tanstack/react-query.gen";
 import type { QueryResponse } from "@/client";
+import { workspaceKeys } from "@/components/features/workspace-management/queries";
 import { ApiServerError, isCustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import type {
@@ -185,6 +186,8 @@ export const useIndexingStatusQuery = () => {
       queryClient.invalidateQueries({
         queryKey: contentKeys.unvalidatedCount(),
       });
+      // The indexing job also adds cards, which changes the sidebar count.
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.usage() });
       return data as IndexingStatusResponse;
     },
     enabled: !!token,
@@ -234,7 +237,10 @@ export const useIndexingHistoryQuery = (enabled: boolean) => {
 /* Content writes                                                      */
 /* ------------------------------------------------------------------ */
 
-/** Archiving changes the list and may remove an unvalidated card. */
+/**
+ * Archiving changes the list and the workspace's card count, and may remove an
+ * unvalidated card.
+ */
 const invalidateAfterArchive = (
   queryClient: ReturnType<typeof useQueryClient>,
 ) =>
@@ -242,6 +248,7 @@ const invalidateAfterArchive = (
     queryClient.invalidateQueries({ queryKey: contentKeys.list() }),
     queryClient.invalidateQueries({ queryKey: contentKeys.unvalidatedCount() }),
     queryClient.invalidateQueries({ queryKey: contentKeys.nextUnvalidated() }),
+    queryClient.invalidateQueries({ queryKey: workspaceKeys.usage() }),
   ]);
 
 /** Archive ("delete") one card. */
@@ -334,7 +341,10 @@ export const useSaveContentMutation = () => {
     onSuccess: (_data, { contentId }) => {
       // Not awaited: the editor navigates away right after saving.
       queryClient.invalidateQueries({ queryKey: contentKeys.list() });
-      if (contentId !== null) {
+      if (contentId === null) {
+        // Only a new card changes the workspace's card count.
+        queryClient.invalidateQueries({ queryKey: workspaceKeys.usage() });
+      } else {
         queryClient.invalidateQueries({
           queryKey: contentKeys.detail(contentId),
         });
@@ -375,6 +385,7 @@ export const useBulkUploadContentsMutation = () => {
       // Imported rows can add cards and tags.
       queryClient.invalidateQueries({ queryKey: contentKeys.list() });
       queryClient.invalidateQueries({ queryKey: contentKeys.tags() });
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.usage() });
     },
   });
 };

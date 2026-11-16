@@ -22,6 +22,7 @@ import {
   getUrgencyRulesOptions,
   getUrgencyRulesQueryKey,
 } from "@/client/@tanstack/react-query.gen";
+import { workspaceKeys } from "@/components/features/workspace-management/queries";
 import { useAuth } from "@/utils/auth";
 import type { UrgencyDetectionResponse } from "./types";
 
@@ -57,6 +58,8 @@ const useRuleListCache = () => {
     // Not awaited, so the mutation settles as soon as the request does.
     invalidate: () => {
       void queryClient.invalidateQueries({ queryKey: urgencyRuleKeys.list() });
+      // Keeps the sidebar's urgency rule count in sync.
+      void queryClient.invalidateQueries({ queryKey: workspaceKeys.usage() });
     },
   };
 };

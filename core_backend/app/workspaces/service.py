@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.schemas import AuthenticationDetails
 from app.auth.service import build_authentication_details
+from app.contents.repository import get_active_content_count
 from app.core.config import (
     DEFAULT_API_QUOTA,
     DEFAULT_CONTENT_QUOTA,
@@ -25,6 +26,7 @@ from app.core.exceptions import (
 from app.core.observability import setup_logger
 from app.core.security import generate_key
 from app.question_answer.schemas import IdentifiedLanguage
+from app.urgency_rules.repository import get_urgency_rule_count
 from app.users.models import UserDB
 from app.users.repository import (
     UserNotFoundError,
@@ -52,6 +54,7 @@ from app.workspaces.schemas import (
     WorkspaceKeyResponse,
     WorkspaceRetrieve,
     WorkspaceUpdate,
+    WorkspaceUsage,
 )
 
 logger = setup_logger()
@@ -259,6 +262,61 @@ async def retrieve_workspace_by_name(
         asession=asession, workspace_name=workspace_name
     )
     return convert_workspace_db_to_schema(workspace_db=workspace_db)
+
+
+async def retrieve_workspace_usage(
+    *, asession: AsyncSession, redis: aioredis.Redis, workspace_name: str
+) -> WorkspaceUsage:
+    """Return the workspace's content, urgency rule, and API call usage.
+
+    API calls used today are derived from the Redis `remaining-calls:{name}`
+    counter that `consume_api_quota` decrements on every API call. That key
+    expires at UTC midnight, so:
+    - no key means no calls yet today (0 used);
+    - a stored "None" means the workspace has no daily quota, so there is no
+      counter to read and we report 0 used.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    redis
+        The Redis client holding the remaining-calls counters.
+    workspace_name
+        The name of the workspace to report usage for.
+
+    Returns
+    -------
+    WorkspaceUsage
+        The workspace's usage and quotas.
+    """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    workspace_id = workspace_db.workspace_id
+    api_daily_quota = workspace_db.api_daily_quota
+
+    content_cards_used = await get_active_content_count(
+        asession=asession, workspace_id=workspace_id
+    )
+    urgency_rules_count = await get_urgency_rule_count(
+        asession=asession, workspace_id=workspace_id
+    )
+
+    api_calls_used_today = 0
+    remaining = await redis.get(f"remaining-calls:{workspace_name}")
+    if api_daily_quota is not None and remaining not in (None, b"None"):
+        # Clamp at 0 in case the quota was lowered after calls were made today.
+        api_calls_used_today = max(0, api_daily_quota - int(remaining))
+
+    return WorkspaceUsage(
+        api_calls_used_today=api_calls_used_today,
+        api_daily_quota=api_daily_quota,
+        content_cards_used=content_cards_used,
+        content_quota=workspace_db.content_quota,
+        urgency_rules_count=urgency_rules_count,
+    )
 
 
 async def retrieve_admin_workspace_by_id(

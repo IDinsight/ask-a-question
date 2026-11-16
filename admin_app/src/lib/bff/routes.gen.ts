@@ -105,6 +105,11 @@ export const BFF_ROUTES: readonly BffRoute[] = [
     pattern: /^\/workspace\/current-workspace$/,
   },
   {
+    method: "GET",
+    template: "/workspace/current-workspace/usage",
+    pattern: /^\/workspace\/current-workspace\/usage$/,
+  },
+  {
     method: "PUT",
     template: "/workspace/rotate-key",
     pattern: /^\/workspace\/rotate-key$/,

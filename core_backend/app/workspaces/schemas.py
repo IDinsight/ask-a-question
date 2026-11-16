@@ -61,6 +61,19 @@ class WorkspaceSwitch(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class WorkspaceUsage(BaseModel):
+    """Pydantic model for the current workspace's usage against its quotas.
+
+    A `None` quota means the workspace has no limit for that resource.
+    """
+
+    api_calls_used_today: int
+    api_daily_quota: Optional[int] = None
+    content_cards_used: int
+    content_quota: Optional[int] = None
+    urgency_rules_count: int
+
+
 class WorkspaceUpdate(BaseModel):
     """Pydantic model for workspace updates."""
 

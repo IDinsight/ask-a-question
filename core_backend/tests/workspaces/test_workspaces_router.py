@@ -43,6 +43,7 @@ class TestAuthAndValidation:
             ("post", "/workspace/"),
             ("get", "/workspace/"),
             ("get", "/workspace/current-workspace"),
+            ("get", "/workspace/current-workspace/usage"),
             ("get", "/workspace/1"),
             ("get", "/workspace/get-user-workspaces/1"),
             ("put", "/workspace/rotate-key"),
@@ -200,6 +201,40 @@ class TestRetrieveWorkspaces:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["workspace_name"] == TEST_WORKSPACE_NAME_1
+
+    def test_retrieve_current_workspace_usage(
+        self, access_token_read_only_1: str, client: TestClient
+    ) -> None:
+        """Test that any authenticated user can read their workspace's usage.
+
+        Counts depend on what other tests have created, so only shape and
+        non-negativity are checked here; the arithmetic is unit-tested in the
+        service tests.
+
+        Parameters
+        ----------
+        access_token_read_only_1
+            Read-only user access token in workspace 1.
+        client
+            Test client.
+        """
+
+        response = client.get(
+            "/workspace/current-workspace/usage",
+            headers=auth(access_token_read_only_1),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert set(body) == {
+            "api_calls_used_today",
+            "api_daily_quota",
+            "content_cards_used",
+            "content_quota",
+            "urgency_rules_count",
+        }
+        assert body["api_calls_used_today"] >= 0
+        assert body["content_cards_used"] >= 0
+        assert body["urgency_rules_count"] >= 0
 
     @pytest.mark.parametrize(
         "token_fixture, expected_status",

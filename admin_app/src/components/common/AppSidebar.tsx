@@ -46,22 +46,13 @@ import {
   useCreateWorkspaceMutation,
   useCurrentUserQuery,
   useEditUserMutation,
+  useWorkspaceUsageQuery,
 } from "@/components/features/workspace-management/queries";
+import type { WorkspaceUsage as WorkspaceUsageData } from "@/client";
 
 /** Stable fallback while the current user's workspaces load. */
 const NO_WORKSPACES: Workspace[] = [];
 
-// ---------------------------------------------------------------------------
-// Placeholder data
-//
-// UI only for now: these numbers are hard-coded until the API exposes them.
-// See admin_app/README.md ("Sidebar: API work") for what is needed.
-// ---------------------------------------------------------------------------
-const PLACEHOLDER_COUNTS = { content: 0, urgencyRules: 0 };
-const PLACEHOLDER_USAGE = {
-  contentCards: { used: 0, quota: 50 },
-  apiCallsToday: { used: 0, quota: 100 },
-};
 // TODO: replace with the real contact/support link once decided.
 const CONTACT_HREF = "#contact";
 
@@ -69,7 +60,8 @@ type NavItem = {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  count?: number;
+  /** Which count from GET /workspace/current-workspace/usage to badge with. */
+  countKey?: "content_cards_used" | "urgency_rules_count";
   /** Returns true when this item matches the current route. */
   isActive: (pathname: string, dashboardPage: string) => boolean;
 };
@@ -97,14 +89,14 @@ const NAV_GROUPS: NavGroup[] = [
         title: "Question answering",
         href: "/content",
         icon: IconMessage,
-        count: PLACEHOLDER_COUNTS.content,
+        countKey: "content_cards_used",
         isActive: (pathname) => pathname.startsWith("/content"),
       },
       {
         title: "Urgency detection",
         href: "/urgency-rules",
         icon: IconBolt,
-        count: PLACEHOLDER_COUNTS.urgencyRules,
+        countKey: "urgency_rules_count",
         isActive: (pathname) => pathname.startsWith("/urgency-rules"),
       },
     ],
@@ -150,6 +142,9 @@ export function AppSidebar() {
   const currentUser = useCurrentUserQuery();
   const editUser = useEditUserMutation();
   const createWorkspace = useCreateWorkspaceMutation();
+  // Badge counts and usage meters. Undefined while loading or on error, in
+  // which case badges and meters are hidden rather than showing a fake 0.
+  const usage = useWorkspaceUsageQuery().data;
 
   return (
     <Sidebar aria-label="Workspace navigation">
@@ -194,8 +189,10 @@ export function AppSidebar() {
                       <item.icon />
                       <span>{item.title}</span>
                     </SidebarMenuButton>
-                    {item.count !== undefined && (
-                      <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
+                    {item.countKey && usage && (
+                      <SidebarMenuBadge>
+                        {usage[item.countKey]}
+                      </SidebarMenuBadge>
                     )}
                   </SidebarMenuItem>
                 );
@@ -206,7 +203,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <WorkspaceUsage />
+        {usage && <WorkspaceUsage usage={usage} />}
         <SidebarMenu>
           <SidebarMenuItem>
             <AccountMenu username={username} onLogout={logout} />
@@ -231,20 +228,21 @@ export function AppSidebar() {
 }
 
 /** Usage card: content cards and daily API calls against workspace quotas. */
-function WorkspaceUsage() {
-  const { contentCards, apiCallsToday } = PLACEHOLDER_USAGE;
+function WorkspaceUsage({ usage }: { usage: WorkspaceUsageData }) {
   return (
     <div className="mx-2 mb-1 flex flex-col gap-3 border border-sidebar-border p-3 text-xs">
       <div className="font-medium">Workspace usage</div>
       <UsageMeter
         label="Content cards"
         unit="content cards"
-        {...contentCards}
+        used={usage.content_cards_used}
+        quota={usage.content_quota ?? null}
       />
       <UsageMeter
         label="API calls today"
         unit="daily API calls"
-        {...apiCallsToday}
+        used={usage.api_calls_used_today}
+        quota={usage.api_daily_quota ?? null}
       />
       <a
         href={CONTACT_HREF}
@@ -265,22 +263,32 @@ function UsageMeter({
   label: string;
   unit: string;
   used: number;
-  quota: number;
+  /** null = no limit for this workspace. */
+  quota: number | null;
 }) {
   // Clamp to 0–100 so an over-quota workspace doesn't overflow the bar.
-  const pct = quota > 0 ? Math.min(100, Math.max(0, (used / quota) * 100)) : 0;
+  // An unlimited quota shows an empty bar.
+  const pct =
+    quota !== null && quota > 0
+      ? Math.min(100, Math.max(0, (used / quota) * 100))
+      : 0;
+  const quotaLabel = quota === null ? "∞" : quota;
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between text-sidebar-foreground/70">
         <span>{label}</span>
         <b className="font-medium text-sidebar-foreground tabular-nums">
-          {used} / {quota}
+          {used} / {quotaLabel}
         </b>
       </div>
       <div
         className="h-1 w-full bg-sidebar-accent"
         role="img"
-        aria-label={`${used} of ${quota} ${unit} used`}
+        aria-label={
+          quota === null
+            ? `${used} ${unit} used, no limit`
+            : `${used} of ${quota} ${unit} used`
+        }
       >
         <i
           className="block h-full bg-sidebar-primary"

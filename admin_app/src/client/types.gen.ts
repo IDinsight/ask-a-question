@@ -1608,6 +1608,36 @@ export type WorkspaceUpdate = {
     workspace_name?: string | null;
 };
 
+/**
+ * WorkspaceUsage
+ *
+ * Pydantic model for the current workspace's usage against its quotas.
+ *
+ * A `None` quota means the workspace has no limit for that resource.
+ */
+export type WorkspaceUsage = {
+    /**
+     * Api Calls Used Today
+     */
+    api_calls_used_today: number;
+    /**
+     * Api Daily Quota
+     */
+    api_daily_quota?: number | null;
+    /**
+     * Content Cards Used
+     */
+    content_cards_used: number;
+    /**
+     * Content Quota
+     */
+    content_quota?: number | null;
+    /**
+     * Urgency Rules Count
+     */
+    urgency_rules_count: number;
+};
+
 export type LoginData = {
     body: BodyLogin;
     path?: never;
@@ -3062,6 +3092,22 @@ export type RetrieveCurrentWorkspaceResponses = {
 };
 
 export type RetrieveCurrentWorkspaceResponse = RetrieveCurrentWorkspaceResponses[keyof RetrieveCurrentWorkspaceResponses];
+
+export type RetrieveCurrentWorkspaceUsageData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/workspace/current-workspace/usage';
+};
+
+export type RetrieveCurrentWorkspaceUsageResponses = {
+    /**
+     * Successful Response
+     */
+    200: WorkspaceUsage;
+};
+
+export type RetrieveCurrentWorkspaceUsageResponse = RetrieveCurrentWorkspaceUsageResponses[keyof RetrieveCurrentWorkspaceUsageResponses];
 
 export type RetrieveWorkspaceByWorkspaceIdData = {
     body?: never;

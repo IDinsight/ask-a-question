@@ -17,6 +17,7 @@ from app.workspaces.schemas import (
     WorkspaceRetrieve,
     WorkspaceSwitch,
     WorkspaceUpdate,
+    WorkspaceUsage,
 )
 
 TAG_METADATA = {
@@ -145,6 +146,39 @@ async def retrieve_current_workspace(
 
     return await service.retrieve_workspace_by_name(
         asession=asession, workspace_name=workspace_name
+    )
+
+
+@router.get("/current-workspace/usage", response_model=WorkspaceUsage)
+async def retrieve_current_workspace_usage(
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+) -> WorkspaceUsage:
+    """Return the current workspace's usage: content cards, urgency rules, and API
+    calls made today, alongside the workspace's quotas.
+
+    NB: This endpoint can be called by any authenticated user.
+
+    Parameters
+    ----------
+    workspace_name
+        The name of the current workspace.
+    request
+        The request object (for the Redis client that tracks API calls).
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    WorkspaceUsage
+        The current workspace's usage and quotas.
+    """
+
+    return await service.retrieve_workspace_usage(
+        asession=asession,
+        redis=request.app.state.redis,
+        workspace_name=workspace_name,
     )
 
 

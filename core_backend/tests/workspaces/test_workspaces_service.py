@@ -393,6 +393,68 @@ class TestRetrieveWorkspaces:
             assert [w.workspace_id for w in await call] == expected_ids
 
 
+class TestRetrieveWorkspaceUsage:
+    """Tests for `service.retrieve_workspace_usage`."""
+
+    @pytest.mark.parametrize(
+        "api_daily_quota, remaining, expected_used",
+        [
+            (100, b"60", 40),  # 40 calls made today.
+            (100, None, 0),  # Key expired/missing: no calls yet today.
+            (None, b"None", 0),  # Unlimited quota: nothing to count against.
+            (10, b"25", 0),  # Quota lowered mid-day: clamp at 0.
+        ],
+    )
+    async def test_usage(
+        self,
+        api_daily_quota: int | None,
+        asession: MagicMock,
+        expected_used: int,
+        patch_repo: PatchRepo,
+        remaining: bytes | None,
+    ) -> None:
+        """Test that counts and quotas are combined and API usage is derived from the
+        Redis remaining-calls counter.
+
+        Parameters
+        ----------
+        api_daily_quota
+            The workspace's daily API quota.
+        asession
+            Fake session.
+        expected_used
+            Expected `api_calls_used_today`.
+        patch_repo
+            Fixture that patches service dependencies.
+        remaining
+            Raw value stored under the Redis remaining-calls key.
+        """
+
+        mocks = patch_repo(
+            get_workspace_by_workspace_name=make_workspace_db(
+                api_daily_quota=api_daily_quota
+            ),
+            get_active_content_count=7,
+            get_urgency_rule_count=3,
+        )
+        redis = MagicMock()
+        redis.get = AsyncMock(return_value=remaining)
+
+        result = await service.retrieve_workspace_usage(
+            asession=asession, redis=redis, workspace_name="ws"
+        )
+
+        assert result.api_calls_used_today == expected_used
+        assert result.api_daily_quota == api_daily_quota
+        assert result.content_cards_used == 7
+        assert result.content_quota == 50
+        assert result.urgency_rules_count == 3
+        redis.get.assert_awaited_once_with("remaining-calls:ws")
+        mocks["get_active_content_count"].assert_awaited_once_with(
+            asession=asession, workspace_id=10
+        )
+
+
 class TestRotateWorkspaceApiKey:
     """Tests for `rotate_workspace_api_key`."""
 

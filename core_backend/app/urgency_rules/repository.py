@@ -7,6 +7,7 @@ from typing import Optional
 
 from sqlalchemy import (
     delete,
+    func,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -198,6 +199,30 @@ async def get_urgency_rules_from_db(
     urgency_rules = (await asession.execute(stmt)).all()
 
     return [c[0] for c in urgency_rules] if urgency_rules else []
+
+
+async def get_urgency_rule_count(*, asession: AsyncSession, workspace_id: int) -> int:
+    """Count the urgency rules in a workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to count urgency rules in.
+
+    Returns
+    -------
+    int
+        The number of urgency rules in the workspace.
+    """
+
+    stmt = (
+        select(func.count())
+        .select_from(UrgencyRuleDB)
+        .where(UrgencyRuleDB.workspace_id == workspace_id)
+    )
+    return (await asession.execute(stmt)).scalar_one()
 
 
 async def get_cosine_distances_from_rules(

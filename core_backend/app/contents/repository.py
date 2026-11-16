@@ -193,6 +193,33 @@ async def mark_content_as_validated(
     await asession.commit()
 
 
+async def get_active_content_count(*, asession: AsyncSession, workspace_id: int) -> int:
+    """Count the workspace's non-archived content cards.
+
+    This is the same set of cards the content quota is checked against.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to count content cards in.
+
+    Returns
+    -------
+    int
+        The number of non-archived content cards in the workspace.
+    """
+
+    stmt = (
+        select(func.count())
+        .select_from(ContentDB)
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.is_archived == false())
+    )
+    return (await asession.execute(stmt)).scalar_one()
+
+
 async def get_unvalidated_count(
     *, asession: AsyncSession, workspace_id: int
 ) -> int | None:

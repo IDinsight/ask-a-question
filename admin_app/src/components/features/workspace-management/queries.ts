@@ -4,8 +4,8 @@
  * Two callers:
  * - WorkspaceManagementWrapper (the /workspace-management page);
  * - the shared app shell in src/components/common (AppSidebar → WorkspaceMenu),
- *   which shows the current user's workspaces and can edit the user or create
- *   a workspace.
+ *   which shows the current user's workspaces and usage, and can edit the user
+ *   or create a workspace.
  * Both read the same query keys, so a mutation on one side updates the other.
  *
  * Conventions (shared by every feature's queries.ts):
@@ -37,6 +37,8 @@ import {
   retrieveAllUsersInCurrentWorkspaceQueryKey,
   retrieveCurrentWorkspaceOptions,
   retrieveCurrentWorkspaceQueryKey,
+  retrieveCurrentWorkspaceUsageOptions,
+  retrieveCurrentWorkspaceUsageQueryKey,
 } from "@/client/@tanstack/react-query.gen";
 import type { UserRetrieve, WorkspaceRetrieve } from "@/client";
 import { isCustomError, type CustomError } from "@/utils/api";
@@ -53,8 +55,31 @@ export const workspaceKeys = {
   currentUser: () => getUserQueryKey(),
   /** GET /workspace/current-workspace */
   currentWorkspace: () => retrieveCurrentWorkspaceQueryKey(),
+  /**
+   * GET /workspace/current-workspace/usage: content/urgency rule counts and
+   * API calls today. Content and urgency rule mutations invalidate this.
+   */
+  usage: () => retrieveCurrentWorkspaceUsageQueryKey(),
   /** GET /user/: users of the current workspace. */
   users: () => retrieveAllUsersInCurrentWorkspaceQueryKey(),
+};
+
+/* ------------------------------------------------------------------ */
+/* Workspace usage (sidebar badges + usage meters)                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Counts and quotas for the current workspace. A `null` quota means
+ * unlimited. API calls are made by external clients, so this also refetches
+ * every minute to keep "API calls today" roughly current.
+ */
+export const useWorkspaceUsageQuery = () => {
+  const { token } = useAuth();
+  return useQuery({
+    ...retrieveCurrentWorkspaceUsageOptions(),
+    enabled: !!token,
+    refetchInterval: 60_000,
+  });
 };
 
 /* ------------------------------------------------------------------ */

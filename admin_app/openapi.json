@@ -3101,6 +3101,33 @@
         ]
       }
     },
+    "/workspace/current-workspace/usage": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Retrieve Current Workspace Usage",
+        "description": "Return the current workspace's usage: content cards, urgency rules, and API\ncalls made today, alongside the workspace's quotas.\n\nNB: This endpoint can be called by any authenticated user.\n\nParameters\n----------\nworkspace_name\n    The name of the current workspace.\nrequest\n    The request object (for the Redis client that tracks API calls).\nasession\n    The SQLAlchemy async session to use for all database connections.\n\nReturns\n-------\nWorkspaceUsage\n    The current workspace's usage and quotas.",
+        "operationId": "retrieve_current_workspace_usage",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUsage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/workspace/{workspace_id}": {
       "get": {
         "tags": [
@@ -6481,6 +6508,52 @@
         "type": "object",
         "title": "WorkspaceUpdate",
         "description": "Pydantic model for workspace updates."
+      },
+      "WorkspaceUsage": {
+        "properties": {
+          "api_calls_used_today": {
+            "type": "integer",
+            "title": "Api Calls Used Today"
+          },
+          "api_daily_quota": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Daily Quota"
+          },
+          "content_cards_used": {
+            "type": "integer",
+            "title": "Content Cards Used"
+          },
+          "content_quota": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Quota"
+          },
+          "urgency_rules_count": {
+            "type": "integer",
+            "title": "Urgency Rules Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_calls_used_today",
+          "content_cards_used",
+          "urgency_rules_count"
+        ],
+        "title": "WorkspaceUsage",
+        "description": "Pydantic model for the current workspace's usage against its quotas.\n\nA `None` quota means the workspace has no limit for that resource."
       }
     },
     "securitySchemes": {
