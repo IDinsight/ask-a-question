@@ -1,7 +1,7 @@
 # One pipeline for the whole system (core_backend + admin_app).
 #
 #   Phase 1  checks  : SAST, type check, dependency audit   (both apps, in parallel)
-#   Phase 2  tests   : backend pytest, frontend vitest + playwright
+#   ests   : backend pytest, frontend vitest + playwright
 #   Phase 3  deploy  : core_backend, then admin_app
 #
 # Each phase `needs` every job of the phase before it, so a failure anywhere
@@ -47,7 +47,7 @@ jobs:
   # ===========================================================================
 
   backend-sast:
-    name: "Phase 1 / backend: SAST (Bandit)"
+    name: "backend: SAST (Bandit)"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -63,7 +63,7 @@ jobs:
       - run: uv run --locked --only-dev bandit -c pyproject.toml -r . -q
 
   frontend-sast:
-    name: "Phase 1 / frontend: SAST (Semgrep)"
+    name: "frontend: SAST (Semgrep)"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -81,7 +81,7 @@ jobs:
           src scripts
 
   backend-typecheck:
-    name: "Phase 1 / backend: type check + lint"
+    name: "backend: type check + lint"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -99,7 +99,7 @@ jobs:
       - run: uv run black --check .
 
   frontend-typecheck:
-    name: "Phase 1 / frontend: type check + lint"
+    name: "frontend: type check + lint"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -119,7 +119,7 @@ jobs:
       - run: pnpm lint
 
   backend-audit:
-    name: "Phase 1 / backend: dependency audit"
+    name: "backend: dependency audit"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -133,7 +133,7 @@ jobs:
       - run: uvx pip-audit==2.9.0 -r "$RUNNER_TEMP/requirements.txt" --disable-pip --progress-spinner off
 
   frontend-audit:
-    name: "Phase 1 / frontend: dependency audit"
+    name: "frontend: dependency audit"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -154,8 +154,16 @@ jobs:
   # ===========================================================================
 
   backend-tests:
-    name: "Phase 2 / backend: tests"
-    needs: [backend-sast, frontend-sast, backend-typecheck, frontend-typecheck, backend-audit, frontend-audit]
+    name: "backend: tests"
+    needs:
+      [
+        backend-sast,
+        frontend-sast,
+        backend-typecheck,
+        frontend-typecheck,
+        backend-audit,
+        frontend-audit,
+      ]
     runs-on: ubuntu-22.04
     # Runs in a container so the service containers resolve by hostname.
     container: node:20-bookworm
@@ -205,8 +213,16 @@ jobs:
         run: uv run pytest --cov --cov-report=term-missing
 
   frontend-tests:
-    name: "Phase 2 / frontend: tests"
-    needs: [backend-sast, frontend-sast, backend-typecheck, frontend-typecheck, backend-audit, frontend-audit]
+    name: "frontend: tests"
+    needs:
+      [
+        backend-sast,
+        frontend-sast,
+        backend-typecheck,
+        frontend-typecheck,
+        backend-audit,
+        frontend-audit,
+      ]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -239,11 +255,11 @@ jobs:
           retention-days: 7
 
   # ===========================================================================
-  # Phase 3: deploy (only if every Phase 2 job passed, and only for deploy events)
+  # Phase 3: deploy (only if every b passed, and only for deploy events)
   # ===========================================================================
 
   resolve-env:
-    name: "Phase 3 / resolve target environment"
+    name: "resolve target environment"
     needs: [backend-tests, frontend-tests]
     runs-on: ubuntu-latest
     outputs:
@@ -268,7 +284,7 @@ jobs:
           echo "env_name=$env_name" >> "$GITHUB_OUTPUT"
 
   deploy-backend:
-    name: "Phase 3 / deploy core_backend"
+    name: "deploy core_backend"
     needs: [resolve-env]
     if: needs.resolve-env.outputs.env_name != ''
     runs-on: ubuntu-latest
@@ -378,7 +394,7 @@ jobs:
           echo "core_backend did not become healthy" && exit 1
 
   deploy-frontend:
-    name: "Phase 3 / deploy admin_app"
+    name: "deploy admin_app"
     # Only after the backend deployed AND passed its health check.
     needs: [resolve-env, deploy-backend]
     runs-on: ubuntu-latest
