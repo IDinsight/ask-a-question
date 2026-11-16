@@ -40,32 +40,55 @@ value, this will not work unless the database is destroyed and created again.
 To deploy Hugging Face embeddings, follow the deployment instructions in [Quick
 Setup](../../deployment/quick-setup.md) with the following additional steps
 
-On _**Step 4:** Configure LiteLLM Proxy server_, edit `.litellm_proxy.env` by setting the following variables:
+On _**Step 3:** Configure the LiteLLM Proxy server_, set these in
+`.litellm_proxy.env` so the proxy can reach the embeddings container:
 
-- `HUGGINGFACE_MODEL`: your Hugging Face model of choice.
-- `HUGGINGFACE_EMBEDDINGS_API_KEY`: API key for Hugging Face Embeddings API
-- `HUGGINGFACE_EMBEDDINGS_ENDPOINT`: API endpoint URL for Hugging Face Embeddings
-    container. The default value should work with docker compose.
+- `HUGGINGFACE_EMBEDDINGS_API_KEY`: API key for the Hugging Face Embeddings API
+- `HUGGINGFACE_EMBEDDINGS_ENDPOINT`: API endpoint URL for the Hugging Face
+    Embeddings container. The default (`http://huggingface-embeddings`) works with
+    Docker Compose.
+
+The embeddings container itself gets its model and API key from Docker Compose
+variable substitution, which reads your shell (or a `.env` file at the repository
+root), **not** the `deployment/docker-compose/*.env` files. Export them before
+starting the stack:
+
+```shell
+export HUGGINGFACE_MODEL="Alibaba-NLP/gte-large-en-v1.5"   # your model of choice
+export HUGGINGFACE_EMBEDDINGS_API_KEY="[HUGGINGFACE_EMBEDDINGS_API_KEY]"  # same value as in .litellm_proxy.env
+```
 
 ??? warning "If using an arm64 device, a docker image should be built locally before deployment."
 
-    This can be done by running the make command: `make build-embeddings-arm`. Also,
-    the variable `EMBEDDINGS_IMAGE_NAME` should be uncommented in `.core_backend.env`.
+    Build it with `make build-embeddings-arm`, then point Compose at it in the same
+    shell: `export EMBEDDINGS_IMAGE_NAME=text-embeddings-inference-arm`.
 
-On _**Step 6:** Run docker-compose_, add `--profile huggingface-embeddings` to the
-docker compose command:
+On _**Step 5:** Start AAQ_, add the `huggingface-embeddings` profile:
 
 ```shell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-    --profile huggingface-embeddings -p aaq-stack up -d --build
+make prod-up PROD_PROFILES="local-db huggingface-embeddings"
 ```
+
+Leave out `local-db` if you use a managed database.
 
 ## Setting up Hugging Face embeddings for development
 
 !!! info "Make sure you've performed the [prerequisite steps](#prerequisite-steps) before proceeding."
 
-To [set up your development environment](../../develop/setup.md) with Hugging Face embeddings, you can start the container
-manually by navigating to `ask-a-question` repository root and executing the following make command:
+First export `HUGGINGFACE_MODEL` and `HUGGINGFACE_EMBEDDINGS_API_KEY` in your shell,
+as shown [above](#deploying-hugging-face-embeddings).
+
+**Docker setup.** If you use the
+[Docker setup](../../develop/setup.md#set-up-using-docker), start the stack with the
+embeddings profile:
+
+```bash
+make dev PROFILES=huggingface-embeddings
+```
+
+**Local setup.** If you run the apps
+[locally](../../develop/setup.md#set-up-locally), start the embeddings container on
+its own from the repository root:
 
 ```bash
 make setup-embeddings
@@ -84,12 +107,15 @@ make setup-embeddings-arm
 ```
 
 
-!!! warning "Before running the commands above, you must export environment variables `HUGGINGFACE_MODEL` and `HUGGINGFACE_EMBEDDINGS_API_KEY`."
+The standalone container listens on [http://localhost:8080](http://localhost:8080).
+For a locally run LiteLLM proxy to use it, set
+`HUGGINGFACE_EMBEDDINGS_ENDPOINT=http://localhost:8080` in `.litellm_proxy.env`. If
+LiteLLM runs in Docker (`make setup-llm-proxy`), use
+`http://host.docker.internal:8080` instead.
 
-The embeddings API endpoint by default is at: [http://localhost:5000](http://localhost:5000).
-
+`make teardown-embeddings` stops it.
 
 ## Also see
 
-1. [Quick Setup]("../../deployment/quick-setup.md")
-2. [Configuring AAQ]("../../deployment/config-options.md")
+1. [Quick Setup](../../deployment/quick-setup.md)
+2. [Configuring AAQ](../../deployment/config-options.md)

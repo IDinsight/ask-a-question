@@ -13,293 +13,287 @@ For questions related to setup, please contact
 
 ## Step 2: Configure environment variables
 
-1. Navigate to the `deployment/docker-compose` directory.
+1. From the repository root, run
 
     ```shell
-    cd ask-a-question/deployment/docker-compose
+    make docker-env
     ```
 
-2. Copy `template.*.env` into new files named `.*.env` within the same directory:
+    This copies each `template.*.env` file in `deployment/docker-compose/` to a
+    matching `.*.env` file (`.base.env`, `.core_backend.env`, `.litellm_proxy.env`)
+    and creates an empty `.gcp_credentials.json` placeholder. Files that already
+    exist are never overwritten, so it's safe to run again.
 
-    ```shell
-    cp template.base.env .base.env
-    cp template.core_backend.env .core_backend.env
-    cp template.litellm_proxy.env .litellm_proxy.env
-    ```
+    ??? note "Doing this by hand"
 
-3. Update `.litellm_proxy.env` with LLM service credentials. This will be used by
-   LiteLLM Proxy Server to authenticate to LLM services.
+        ```shell
+        cd deployment/docker-compose
+        cp template.base.env .base.env
+        cp template.core_backend.env .core_backend.env
+        cp template.litellm_proxy.env .litellm_proxy.env
+        echo '{}' > .gcp_credentials.json
+        ```
 
-    For local development setup, this is the only file you need to update to get started. For more
-    information on the variables used here and other template environment files, see [Configuring AAQ](../deployment/config-options.md).
+        The credentials file must exist even if you don't use Google Cloud. Without
+        it, Docker mounts an empty directory in its place and the LiteLLM proxy fails
+        to start.
 
-4. (optional) Edit which LLMs are used in the
+2. Update `.litellm_proxy.env` with LLM service credentials (for example
+   `OPENAI_API_KEY`). The LiteLLM Proxy Server uses these to authenticate to LLM
+   services.
+
+    For local development, this is the only file you need to edit to get started.
+    For more information on these variables and the other environment files, see
+    [Configuring AAQ](../deployment/config-options.md).
+
+3. (optional) Edit which LLMs are used in
    [`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml).
+
+4. (optional) If you use Vertex AI or Google Cloud Storage, replace
+   `deployment/docker-compose/.gcp_credentials.json` with your service account key.
 
 ## Step 3: Set up your development environment
 
-Once you are done with steps [1](#step-1-fork-the-repository) &
-[2](#step-2-configure-environment-variables), there are two ways to set up your development environment for AAQ:
+There are two ways to run AAQ for development:
 
-1. [Docker Compose Watch](#set-up-using-docker-compose-watch)
-2. [Manual](#set-up-manually)
+1. [Docker](#set-up-using-docker): every app runs in a container, with live reload
+2. [Local](#set-up-locally): the apps run on your machine; only Postgres, Redis and
+   LiteLLM run in Docker
 
-You can view the [pros and cons of each method](#pros-and-cons-of-each-setup-method) at
-the bottom.
+See the [pros and cons of each method](#pros-and-cons-of-each-setup-method) at the
+bottom. Run `make` at the repository root to list every available target.
 
-### Set up using [Docker Compose Watch](https://docs.docker.com/compose/file-watch/)
-
-#### Install prerequisites
-
-1. Install [Docker](https://docs.docker.com/get-docker/).
-2. If you are not using
-[Docker Desktop](https://www.docker.com/products/docker-desktop/), install
-[Docker Compose](https://docs.docker.com/compose/install/) with version \>=2.22 to use
-the `watch` command.
-
-#### Run `docker compose watch`
-
-If not done already, configure the environment variables in [Step 2](#step-2-configure-environment-variables).
-
-1. In the `deployment/docker-compose` directory, run
-
-    ```shell
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-        -p aaq-stack watch
-    ```
-
-    ??? note "Here's what you should see if the above command executes successfully"
-            ✔ Network aaq-stack_default            Created
-            ✔ Volume "aaq-stack_db_volume"         Created
-            ✔ Volume "aaq-stack_caddy_data"        Created
-            ✔ Volume "aaq-stack_caddy_config"      Created
-            ✔ Container aaq-stack-caddy-1          Started
-            ✔ Container aaq-stack-litellm_proxy-1  Started
-            ✔ Container aaq-stack-relational_db-1  Started
-            ✔ Container aaq-stack-core_backend-1   Started
-            ✔ Container aaq-stack-admin_app-1      Started
-            Watch enabled
-
-    The app will now run and update with any changes made to the `core_backend` or
-    `admin_app` folders.
-
-    The admin app will be available on [https://localhost](https://localhost) and the
-    backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
-
-2. To stop AAQ, first exit the running app process in your terminal with
-`ctrl+c` and then run:
-
-    ```shell
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-        -p aaq-stack down
-    ```
-
-### Set up manually
+### Set up using Docker
 
 #### Install prerequisites
 
-1. Install
-   [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
-2. Install [Node.js v19](https://nodejs.org/en/download).
+1. Install [Docker](https://docs.docker.com/get-docker/) with Compose v2 (included
+   in Docker Desktop).
+2. Install [GNU Make](https://www.gnu.org/software/make/) (preinstalled on macOS and
+   most Linux distributions).
 
-    ??? note "Setting up a different NodeJS version"
-        If you have a different NodeJS version installed already, you can switch to a
-        different version by installing
-        [Node Version Manager](https://github.com/nvm-sh/nvm) and then executing
+#### Start the stack
 
-        ```bash
-        nvm install 19
-        nvm use 19
-        ```
+1. From the repository root, run
 
-3. Install [Docker](https://docs.docker.com/get-docker/).
-4. (optional) Install [GNU Make](https://www.gnu.org/software/make/). `make` is used
-to run commands (targets) in `Makefile`s and can be used to automate various setup
-procedures.
+    ```shell
+    make dev
+    ```
+
+    This builds and starts every service in `docker-compose-dev.yml`: `core_backend`,
+    `admin_app`, `docs`, `litellm_proxy`, `redis` and `relational_db`. The backend
+    applies database migrations before it starts. The first run takes a few minutes
+    while images build and dependencies install. Follow progress with
+    `make dev-logs`.
+
+    Source folders are mounted into the containers, so changes to `core_backend/`,
+    `admin_app/` or `docs-site/` reload straight away.
+
+    | Service   | URL                                                     |
+    | --------- | ------------------------------------------------------- |
+    | Admin app | [http://localhost:3000](http://localhost:3000)          |
+    | Backend   | [http://localhost:8000/docs](http://localhost:8000/docs) |
+    | Docs site | [http://localhost:8001](http://localhost:8001)          |
+    | Postgres  | `localhost:5434`                                        |
+    | Redis     | `localhost:6380`                                        |
+    | LiteLLM   | `localhost:4001`                                        |
+
+    Log in to the admin app with `ADMIN_USERNAME` and `ADMIN_PASSWORD` from
+    `.core_backend.env`.
+
+2. Day-to-day commands:
+
+    | Command                       | What it does                                               |
+    | ----------------------------- | ---------------------------------------------------------- |
+    | `make dev-logs [SERVICE=…]`   | Follow logs, optionally for one service                    |
+    | `make dev-ps`                 | Show container status                                      |
+    | `make dev-shell [SERVICE=…]`  | Open a shell in a container (defaults to `core_backend`)   |
+    | `make dev-migrate`            | Run Alembic migrations in the backend container            |
+    | `make dev-rebuild`            | Rebuild images after `uv.lock` or `pnpm-lock.yaml` changes |
+    | `make dev-restart [SERVICE=…]`| Restart containers without rebuilding                      |
+
+3. To stop AAQ, run
+
+    ```shell
+    make dev-down
+    ```
+
+    This keeps the database volume. `make dev-clean` also deletes the volumes,
+    which wipes the dev database.
+
+??? note "Optional services: speech and Hugging Face embeddings"
+
+    Turn on optional services with `PROFILES`:
+
+    ```shell
+    make dev PROFILES=speech
+    make dev PROFILES="speech huggingface-embeddings"
+    ```
+
+    For the backend to use the in-house speech service, set
+    `CUSTOM_STT_ENDPOINT=http://speech_service:8001/transcribe` and
+    `CUSTOM_TTS_ENDPOINT=http://speech_service:8001/synthesize` in
+    `.core_backend.env`. See
+    [in-house speech models](../components/voice-service/in-house-models.md).
+
+??? note "Running the production-style stack locally"
+
+    `make prod-up` builds the optimised images and serves them behind Caddy at
+    [https://localhost](https://localhost). The backend is at
+    [https://localhost/api/docs](https://localhost/api/docs). It includes a Postgres
+    container by default (`PROD_PROFILES=local-db`), which needs
+    `POSTGRES_HOST=relational_db` in `.core_backend.env`. Use `make prod-logs`,
+    `make prod-ps` and `make prod-down` to manage it. This is useful for end-to-end
+    checks, but there's no live reload.
+
+### Set up locally
+
+#### Install prerequisites
+
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/). uv
+   installs the right Python version (3.12) for you.
+2. Install the current [Node.js LTS](https://nodejs.org/en/download). The
+   `admin_app` uses [pnpm](https://pnpm.io/) through
+   [corepack](https://nodejs.org/api/corepack.html), which pins the pnpm version
+   listed in `admin_app/package.json`.
+3. Install [Docker](https://docs.docker.com/get-docker/) to run Postgres, Redis and
+   LiteLLM.
+4. Install [GNU Make](https://www.gnu.org/software/make/) (preinstalled on macOS and
+   most Linux distributions).
+
+#### Start the dependencies
+
+From the repository root, run
+
+```shell
+make setup-dev
+```
+
+This starts the following containers and then applies the database migrations:
+
+- PostgreSQL with the pgvector extension on `localhost:5432`
+- Redis on `localhost:6379`
+- LiteLLM Proxy Server on `localhost:4000`
+
+??? note "Starting the dependencies separately"
+
+    `make setup-db`, `make setup-redis` and `make setup-llm-proxy` start each one on
+    its own. `make setup-llm-proxy-local` runs LiteLLM as a local process on port
+    4001 instead of in Docker. If you use it, set
+    `LITELLM_ENDPOINT=http://localhost:4001` in `core_backend/.env`.
+
+When you're done, remove the containers with
+
+```shell
+make teardown-dev
+```
 
 #### Set up the backend
 
-0. Navigate to `ask-a-question` repository root.
+1. Create the backend's env file and install its dependencies:
 
     ```shell
-    cd ask-a-question
+    cd core_backend
+    cp .env.example .env
+    uv sync
     ```
 
-1. Set up your Python environment by creating a new conda environment using `make`.
+    The defaults in `.env.example` already point at the containers from
+    `make setup-dev`. The only thing to check is that the Postgres credentials in
+    `core_backend/.env` match those in `deployment/docker-compose/.core_backend.env`,
+    because that's the file the Postgres container was created from.
+
+2. Start the backend:
 
     ```shell
-    make fresh-env
+    uv run --env-file .env python -m app.main
     ```
 
-    This command will remove any existing `aaq` conda environment and create a new
-    `aaq` conda environment with the required Python packages.
-
-    <a name="psycopg2"></a>
-    ??? warning "Errors with `psycopg2`?"
-        `psycopg2` vs `psycopg2-binary`: For production use cases we should use
-        `psycopg2` but for local development, `psycopg2-binary` suffices and is often
-        easier to install. If you are getting errors from `psycopg2`, try installing
-        `psycopg2-binary` instead.
-
-        If you would like `psycopg2-binary` instead of `psycopg2`, run
-        `make fresh-env psycopg_binary=true` instead (see below for why you may want
-        this).
-
-        See [here](https://www.psycopg.org/docs/install.html#psycopg-vs-psycopg-binary)
-        for more details.
-
-    <a name="manual-python-setup"></a>
-    ??? note "Setting up the Python environment manually"
-        **Create virtual environment**
-
-            conda create --name aaq python=3.12
-
-        **Install Python packages**
-
-            pip install -r core_backend/requirements.txt
-            pip install -r requirements-dev.txt
-
-        **Install pre-commit**
-
-         [`pre-commit`](https://pre-commit.com/) is used to ensure that code changes
-         are formatted correctly. It is only necessary if you are planning on making
-         changes to the codebase.
-
-            pre-commit install
-
-2. Activate your `aaq` conda environment.
-
-    ```shell
-    conda activate aaq
-    ```
-
-3. Set up the required Docker containers by running
-
-    ```shell
-    make setup-dev
-    ```
-
-    The command will start the following containers:
-
-    - PostgreSQL with pgvector extension
-    - LiteLLM Proxy Server
-    - Redis
-
-    ??? note "Setting up the DB, LiteLLM Proxy Server, and Redis seprately"
-
-        If you would like to set
-        up each of these dependencies *separately*, check out the [Makefile](https://github.com/IDinsight/ask-a-question/blob/main/Makefile) at repository root.
-
-4. Export the environment variables you defined earlier in [Step
-   2](#step-2-configure-environment-variables) by running
-
-    ```shell
-    set -a
-    source deployment/docker-compose/.base.env
-    source deployment/docker-compose/.core_backend.env
-    set +a
-    ```
-
-    ??? note "Saving environment variables in `aaq` conda environment"
-
-        You can set environment variables by either running `conda env config vars set <NAME>=<VALUE>` for each required environment variable, or [save them in the environment activation script](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables).
-
-5. Start the backend app.
-
-    ```shell
-    python -m app.main  # run from core_backend/
-    ```
+    The backend doesn't load `.env` on its own, so keep `--env-file`.
 
     ??? note "Here's what you should see if the above command executes successfully"
 
         ```
-        INFO:     Will watch for changes in these directories: ['~/ask-a-question']
+        INFO:     Will watch for changes in these directories: ['~/ask-a-question/core_backend']
         INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
         INFO:     Started reloader process [73855] using StatReload
         INFO:     Started server process [73858]
         INFO:     Waiting for application startup.
-        07/15/2024 12:29:08 PM          __init__.py  79 : Application started
         INFO:     Application startup complete.
         ```
 
-    This will launch the application in "reload" mode (i.e., the app will automatically
-    refresh everytime you make a change to one of the files).
+    The backend runs in reload mode, so it restarts whenever you change a file. The
+    API documentation is at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-    You can test the endpoint for the API documentation by going to
-    [http://localhost:8000/docs](http://localhost:8000/docs) (the backend itself runs
-    on [http://localhost:8000](http://localhost:8000)).
-
-6. To stop the backend app, first exit the running app process in your terminal with
-`ctrl+c` and then run:
+3. (optional) Install the pre-commit hooks if you plan to make changes:
 
     ```shell
-    make teardown-dev
+    uv run pre-commit install
+    ```
+
+4. To stop the backend, press `ctrl`+`c`.
+
+??? note "Migrations"
+
+    `make setup-dev` applies migrations once. After pulling new migrations, run
+    them from `core_backend/`:
+
+    ```shell
+    uv run --env-file .env python -m alembic upgrade head
     ```
 
 #### Set up the frontend
-
-0. Navigate to `ask-a-question` repository root and activate the
-`aaq` virtual environment:
-
-    ```shell
-    cd ask-a-question
-    ```
-
-    ```shell
-    conda activate aaq
-    ```
 
 1. In a *new* terminal:
 
     ```shell
     cd admin_app
-    nvm use 19
-    npm install
-    npm run dev
+    corepack enable
+    pnpm install
+    pnpm dev
     ```
 
-    ??? note "Here's what you should see if the above commands execute successfully"
+    This installs the admin app's packages and starts it in dev (hot reload) mode at
+    [http://localhost:3000](http://localhost:3000).
 
-        ```
-        > admin-app@0.2.0 dev
-        > next dev
+    The browser only talks to the admin app's `/bff` routes, which then call the
+    backend at `BACKEND_INTERNAL_URL`. That defaults to `http://localhost:8000`, so
+    you don't need to configure anything for local development.
 
-        ▲ Next.js 14.1.3
-        - Local:        http://localhost:3000
+    Log in with `ADMIN_USERNAME` and `ADMIN_PASSWORD` from `.core_backend.env`.
 
-        ✓ Ready in 1233ms
-        ```
+2. To stop the admin app, press `ctrl`+`c`.
 
-    This will install the required NodeJS packages for the admin app and start the
-    admin app in `dev` (i.e., autoreload) mode. The admin app will now be accessible on
-    [http://localhost:3000/](http://localhost:3000/).
+#### Tests and linting
 
-    You can login with either the default credentials
-    (username: `admin`, password: `fullaccess`) or the ones you specified
-    in `.core_backend.env`.
+Each app runs its own checks:
 
-2. To stop the admin app, exit the running app process in your terminal with
-`ctrl`+`c`.
+| App          | Tests                       | Lint and type checks       |
+| ------------ | --------------------------- | -------------------------- |
+| core_backend | `uv run pytest`             | `make -C core_backend lint` |
+| admin_app    | `pnpm test`                 | `pnpm lint`                |
+
+The backend tests start their own throwaway `testdb` and `redis-test` containers,
+so you don't need `make setup-dev` running for them.
 
 ### Pros and cons of each setup method
 
 | Method | Pros | Cons |
 | --- | --- | --- |
-| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 20-30s to be reflected in the app</li></ul> |
-| [Set up manually](#set-up-manually)| <ul><li>Instant feedback from changes</li></ul>| <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |
-
+| [Docker](#set-up-using-docker) | <ul><li>One command starts everything</li><li>No Python or Node setup on your machine</li><li>Same images and service names as deployment</li></ul> | <ul><li>Slower first start while images build</li><li>Rebuild needed when dependencies change</li><li>Debuggers and IDE tooling need extra setup to attach to containers</li></ul> |
+| [Local](#set-up-locally) | <ul><li>Fastest feedback loop</li><li>Easy to attach debuggers and run individual tests</li></ul> | <ul><li>Needs uv, Node.js and pnpm installed</li><li>Two env files to keep in sync</li><li>Each app started in its own terminal</li></ul> |
 
 ## Step 4: Set up docs
 
-The docs are a standalone [uv](https://docs.astral.sh/uv/) project in `docs-site/`, so you
-don't need the `aaq` environment or any backend dependencies.
+The docs are a standalone [uv](https://docs.astral.sh/uv/) project in `docs-site/`, so
+you don't need any backend dependencies. With the Docker setup they're already
+running at [http://localhost:8001](http://localhost:8001).
 
-To host docs offline so that you can see documentation changes in real-time, run the
-following with an altered port (so that it doesn't interfere with the app's server):
+To run them on their own, use a port that doesn't clash with the backend:
 
 ```shell
 cd docs-site
-uv run mkdocs serve -a localhost:8080
+uv run mkdocs serve -a localhost:8001
 ```
 
 `uv run` installs the pinned docs dependencies on first use.

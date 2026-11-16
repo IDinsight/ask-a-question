@@ -12,21 +12,25 @@ To properly set the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment 
 
 To deploy in-house speech models, follow the deployment instructions in the [QuickSetup](../../deployment/quick-setup.md) with this additional step:
 
-In "Step 5: Run docker-compose", append `docker-compose.speech.yml -p` to the docker compose command as below:
+On _**Step 5:** Start AAQ_, turn on the `speech` profile. From the repository root:
 
 ```shell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml -f \
-docker-compose.speech.yml -p aaq-stack up -d --build
+make prod-up PROD_PROFILES="local-db speech"
 ```
+
+Leave out `local-db` if you use a managed database. The equivalent Compose command
+is `docker compose -p aaq --profile speech up -d --build`.
 
 ## Setting Up In-house Models for Development
 
-Currently the in-house models only work with the [Docker Compose Watch](../../develop/setup.md#set-up-using-docker-compose-watch) dev setup. Use the following command:
+The in-house models run as a container, so use the
+[Docker setup](../../develop/setup.md#set-up-using-docker) with the `speech` profile:
 
 ```shell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml -f \
-docker-compose.speech.yml -p aaq-stack up -d --build
+make dev PROFILES=speech
 ```
+
+The backend reaches the service at `http://speech_service:8001`.
 
 ## Additional Resources
 

@@ -18,7 +18,7 @@ To deploy external speech models, simply follow the deployment instructions in t
 
 Follow these steps to [set up your development environment](../../develop/setup.md) for external speech models.
 
-Note: To use the [Manual Setup](../../develop/setup.md#set-up-manually) method, you will need to add your `gcp_credentials` file manually in your local environment as below:
+Note: To use the [Local setup](../../develop/setup.md#set-up-locally) method, you will need to add your `gcp_credentials` file manually in your local environment as below:
 
 1. Place your `gcp_credentials.json` file inside the `core_backend/` folder.
 

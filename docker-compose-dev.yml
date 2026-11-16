@@ -151,13 +151,32 @@ services:
     command:
       [
         "--model-id",
-        "${HUGGINGFACE_MODEL}",
+        "${HUGGINGFACE_MODEL:-}",
         "--api-key",
-        "${HUGGINGFACE_EMBEDDINGS_API_KEY}",
+        "${HUGGINGFACE_EMBEDDINGS_API_KEY:-}",
       ]
     restart: unless-stopped
     env_file:
       - deployment/docker-compose/.litellm_proxy.env
+
+  # Optional: in-house speech-to-text / text-to-speech. Start with
+  # `--profile speech` (or `make dev PROFILES=speech`). Reachable from the
+  # backend at http://speech_service:8001; set CUSTOM_STT_ENDPOINT /
+  # CUSTOM_TTS_ENDPOINT in .core_backend.env to use it. No host port, because
+  # 8001 is the docs site.
+  speech_service:
+    build:
+      context: optional_components/speech_api
+      dockerfile: Dockerfile
+      args:
+        PREFERRED_MODEL: "small"
+    profiles:
+      - speech
+      - optional-components
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+    restart: unless-stopped
+    volumes:
+      - backend_temp:/usr/src/speech_service/temp
 
 volumes:
   backend_temp:

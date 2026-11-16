@@ -31,21 +31,21 @@ the "Fork" button.
 
 ### Install prerequisites
 
-Install
-[conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), the current
+[Node.js LTS](https://nodejs.org/en/download) and
+[Docker](https://docs.docker.com/get-docker/).
 
-### Setup your virtual Python environment
+### Set up your environment
 
-You can automatically create a ready-to-go `aaq` conda environment with:
+Each Python project (`core_backend`, `docs-site`) has its own uv environment:
 
-    make fresh-env
-    conda activate aaq
+    cd core_backend
+    uv sync
 
-If you encounter errors while installing `psycopg2`, see [here](setup.md#psycopg2) for
-troubleshooting.
-
-If you would like to set up your Python environment manually, you can follow the steps
-[here](setup.md#set-up-manually).
+To run the full stack, follow
+[Setting up your development environment](setup.md): either
+[everything in Docker](setup.md#set-up-using-docker) or
+[the apps locally](setup.md#set-up-locally).
 
 ### Make your changes
 
