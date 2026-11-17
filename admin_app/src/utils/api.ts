@@ -1,190 +1,95 @@
-import { env } from "next-runtime-env";
-import axios from "axios";
-
-const NEXT_PUBLIC_BACKEND_URL: string =
-  env("NEXT_PUBLIC_BACKEND_URL") || "http://localhost:8000";
-
-const api = axios.create({
-  baseURL: NEXT_PUBLIC_BACKEND_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-import { AxiosResponse, AxiosError } from "axios";
-
+/**
+ * Error contract shared by every API call in the admin app.
+ *
+ * The generated client (src/client) throws whatever body the server returned.
+ * src/lib/api/interceptors.ts runs every failure through `toApiError`, so
+ * callers always see one of two shapes, same as before the BFF refactor:
+ *
+ * - `CustomError` ({status, message}, a plain object) for 4xx: the backend
+ *   rejected the request on purpose; `message` is safe to show the user.
+ * - `Error` for 5xx, BFF 502/504 (an `ApiServerError`, with status and body)
+ *   and network failures (a plain Error): something broke.
+ *   QueryProvider retries these once and never retries a CustomError.
+ */
 export type CustomError = {
   status: number;
   message: string;
+  /** The raw response body, for the few callers that show structured errors. */
+  body?: unknown;
 };
-export const handleApiError = (customError: any, errorMessage: string) => {
-  if (
-    axios.isAxiosError(customError) &&
-    customError.response &&
-    customError.response.status !== 500
+
+/** A 5xx (or BFF 502/504) response. Still an Error, so retries and checks work as before. */
+export class ApiServerError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body: unknown,
   ) {
-    throw {
-      status: customError.response.status,
-      message:
-        (customError.response.data as any)?.detail ||
-        (customError.response.data as any)?.message ||
-        (customError.response.data as any)?.error_message ||
-        errorMessage,
-    } as CustomError;
-  } else {
-    throw new Error(errorMessage);
+    super(message);
+    this.name = "ApiServerError";
   }
-};
-api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    if (error.response && error.response.status === 401) {
-      console.log("Unauthorized request");
-      const currentPath = window.location.pathname;
-      const sourcePage = encodeURIComponent(currentPath);
-      const token = localStorage.getItem("token");
-      if (token) {
-        localStorage.removeItem("token");
-        window.location.href = `/login?sourcePage=${sourcePage}`;
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+}
 
-const getLoginToken = async (username: string, password: string) => {
-  const formData = new FormData();
-  formData.append("username", username);
-  formData.append("password", password);
+export const isCustomError = (error: unknown): error is CustomError =>
+  typeof error === "object" &&
+  error !== null &&
+  !(error instanceof Error) &&
+  typeof (error as CustomError).status === "number" &&
+  typeof (error as CustomError).message === "string";
 
-  try {
-    const response = await api.post("/login", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  } catch (customError) {
-    let error_message = "Error fetching login token";
-    handleApiError(customError, error_message);
+/**
+ * Pull a readable message out of an error body. FastAPI uses `{detail}`: a
+ * string for HTTPException, or a list of `{msg}` objects for validation (422).
+ */
+export const extractErrorDetail = (body: unknown): string | undefined => {
+  if (typeof body === "string") return body || undefined;
+  if (typeof body !== "object" || body === null) return undefined;
+  const { detail, message, error_message } = body as Record<string, unknown>;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => (item as { msg?: unknown })?.msg)
+      .filter((msg): msg is string => typeof msg === "string");
+    if (messages.length > 0) return messages.join("; ");
   }
+  if (typeof message === "string") return message;
+  if (typeof error_message === "string") return error_message;
+  return undefined;
 };
 
-const getGoogleLoginToken = async (idToken: {
-  client_id: string;
-  credential: string;
-}) => {
-  try {
-    const response = await api.post("/login-google", idToken, {
-      headers: { "Content-Type": "application/json" },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "Error fetching Google login token");
-    console.error("Error fetching Google login token", error);
+/**
+ * Convert a failed call into the contract above.
+ * @param body     what the server sent back (parsed JSON or text), or the thrown error
+ * @param response the HTTP response; undefined when the request never got one
+ */
+export const toApiError = (
+  body: unknown,
+  response: Response | undefined,
+): CustomError | Error => {
+  if (!response) {
+    // No response at all: offline, DNS, CORS, aborted...
+    return body instanceof Error
+      ? body
+      : new Error("Could not reach the server");
   }
-};
-const getSearch = async (
-  question: string,
-  generate_llm_response: boolean,
-  token: string,
-): Promise<{ status: number; data?: any; error?: any } | undefined> => {
-  try {
-    const response = await api.post(
-      "/search",
-      {
-        query_text: question,
-        generate_llm_response,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
+  const detail = extractErrorDetail(body);
+  if (response.status >= 500) {
+    return new ApiServerError(
+      detail ?? `Server error (${response.status})`,
+      response.status,
+      body,
     );
-
-    return { status: response.status, ...response.data };
-  } catch (err) {
-    const error = err as AxiosError;
-    if (error.response) {
-      return { status: error.response.status, error: error.response.data };
-    } else {
-      handleApiError(error, "Error performing search");
-      console.error("Error performing search", error.message);
-    }
   }
+  return {
+    status: response.status,
+    message: detail ?? `Request failed (${response.status})`,
+    body,
+  };
 };
 
-const getChat = async (
-  question: string,
-  generate_llm_response: boolean,
-  token: string,
-  session_id?: number,
-): Promise<{ status: number; data?: any; error?: any } | undefined> => {
-  try {
-    const response = await api.post(
-      "/chat",
-      {
-        query_text: question,
-        generate_llm_response,
-        session_id,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
-    return { status: response.status, ...response.data };
-  } catch (err) {
-    const error = err as AxiosError;
-    handleApiError(error, "Error returning chat response");
-    console.error("Error returning chat response", error.message);
-  }
-};
-const postResponseFeedback = async (
-  query_id: number,
-  feedback_sentiment: string,
-  feedback_secret_key: string,
-  token: string,
-) => {
-  try {
-    const response = await api.post(
-      "/response-feedback",
-      {
-        query_id,
-        feedback_sentiment,
-        feedback_secret_key,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "Error sending response feedback");
-    console.error("Error sending response feedback", error);
-  }
-};
-
-const getUrgencyDetection = async (search: string, token: string) => {
-  try {
-    const response = await api.post(
-      "/urgency-detect",
-      { message_text: search },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
-    return response.data;
-  } catch (error: any) {
-    handleApiError(error, "Error fetching urgency detection");
-    console.error("Error fetching urgency detection", error.message);
-  }
-};
-
-export const apiCalls = {
-  getLoginToken,
-  getGoogleLoginToken,
-  getSearch,
-  getChat,
-  postResponseFeedback,
-  getUrgencyDetection,
-};
-export default api;
+/**
+ * Message for the UI: the backend's explanation for a 4xx, otherwise
+ * `fallback` (5xx/network messages are not meant for users).
+ */
+export const getErrorMessage = (error: unknown, fallback: string): string =>
+  isCustomError(error) ? error.message : fallback;

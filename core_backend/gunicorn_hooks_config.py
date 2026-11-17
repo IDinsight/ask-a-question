@@ -1,8 +1,9 @@
 """This module contains the gunicorn hooks configuration for the application."""
 
 from gunicorn.arbiter import Arbiter
-from main import Worker
 from prometheus_client import multiprocess
+
+from app.main import Worker
 
 
 def child_exit(server: Arbiter, worker: Worker) -> None:  # pylint: disable=W0613

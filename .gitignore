@@ -1,5 +1,6 @@
 # Deployment
 .*env*
+!core_backend/.env.example
 **/data
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -18,7 +19,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -128,6 +128,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
+docs-site/site/
 
 # mypy
 .mypy_cache/
@@ -168,3 +169,5 @@ load_testing/outputs/
 
 # Misc.
 graveyard
+.iterate
+.codegraph

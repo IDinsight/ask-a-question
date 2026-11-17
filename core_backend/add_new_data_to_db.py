@@ -1,4 +1,7 @@
-"""This script is used to add new data to the database for testing purposes."""
+"""This script is used to add new data to the database for testing purposes.
+
+`# nosec B311`: `random` only picks synthetic data here, nothing security related.
+"""
 
 # pylint: disable=E0606, W0718
 import argparse
@@ -11,32 +14,32 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import pandas as pd
-import urllib3
-from app.config import (
+from litellm import completion
+from sqlalchemy import (
+    select,
+)
+
+from app.contents.models import ContentDB
+from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_GENERATION,
 )
-from app.contents.models import ContentDB
-from app.database import get_session
-from app.llm_call.utils import remove_json_markdown
+from app.core.database import get_session
+from app.core.security import get_key_hash
+from app.core.utils import remove_json_markdown
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
     QueryResponseContentDB,
     ResponseFeedbackDB,
 )
+from app.tags import models as _tags_models  # noqa: F401  (mapper registry)
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
-from app.users.models import WorkspaceDB
-from app.utils import get_key_hash
-from litellm import completion
-from sqlalchemy import (
-    select,
-)
-from urllib3.exceptions import InsecureRequestWarning
-
-# To disable InsecureRequestWarning.
-urllib3.disable_warnings(InsecureRequestWarning)
+from app.urgency_rules import models as _ur_models  # noqa: F401
+from app.users import models as _users_models  # noqa: F401
+from app.workspaces import models as _ws_models  # noqa: F401
+from app.workspaces.models import WorkspaceDB
 
 try:
     import requests  # type: ignore
@@ -201,7 +204,6 @@ def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
             },
             json=data,
             timeout=600,
-            verify=False,
         )
         response.raise_for_status()
         return response.json()
@@ -331,7 +333,7 @@ def process_content_feedback(
         return None
 
     # Randomly get a content from the search results to provide feedback on.
-    content_num = str(random.randint(0, 3))
+    content_num = str(random.randint(0, 3))  # nosec B311
     if not search_results or not isinstance(search_results, dict):
         return None
     if content_num not in search_results:
@@ -409,9 +411,9 @@ def create_random_datetime(start_date_: datetime, end_date_: datetime) -> dateti
     """
 
     time_difference = end_date_ - start_date_
-    random_number_of_days = random.randint(0, time_difference.days)
+    random_number_of_days = random.randint(0, time_difference.days)  # nosec B311
 
-    random_number_of_seconds = random.randint(0, 86399)
+    random_number_of_seconds = random.randint(0, 86399)  # nosec B311
     random_datetime = start_date_ + timedelta(
         days=random_number_of_days, seconds=random_number_of_seconds
     )
@@ -463,10 +465,10 @@ def generate_distributed_dates(n: int, start: datetime, end: datetime) -> list:
         # More dates on weekends.
         if date.weekday() >= 5:
             # Within time range or 30% chance.
-            if is_within_time_range(date) or random.random() < 0.4:
+            if is_within_time_range(date) or random.random() < 0.4:  # nosec B311
                 dates.append(date)
-        elif random.random() < 0.6:
-            if is_within_time_range(date) or random.random() < 0.55:
+        elif random.random() < 0.6:  # nosec B311
+            if is_within_time_range(date) or random.random() < 0.55:  # nosec B311
                 dates.append(date)
 
     return dates
@@ -559,10 +561,9 @@ if __name__ == "__main__":
         if end_date_string
         else datetime.now()
     )
-    assert end_date, "Invalid end date. Please provide a valid date. Format is dd-mm-yy"
-    assert (
-        start_date and start_date < end_date
-    ), "Invalid start date. Please provide a valid start date. Format is dd-mm-yy"
+    # Validate the CLI dates explicitly (asserts are stripped under `python -O`).
+    if not start_date < end_date:
+        parser.error("--start-date must be before --end-date (format dd-mm-yy).")
 
     subset = int(args.subset) if args.subset else None
     path = args.csv

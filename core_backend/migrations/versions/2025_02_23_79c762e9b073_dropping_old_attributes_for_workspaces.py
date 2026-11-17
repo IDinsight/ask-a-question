@@ -16,7 +16,6 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.engine.reflection import Inspector
 
 # revision identifiers, used by Alembic.
 revision: str = "79c762e9b073"  # pragma: allowlist secret
@@ -55,7 +54,8 @@ def upgrade() -> None:
     """
 
     conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
+    # Same Inspector as the deprecated `Inspector.from_engine(conn)`.
+    inspector = sa.inspect(conn)
 
     # 1.
     table_name = "content_feedback"

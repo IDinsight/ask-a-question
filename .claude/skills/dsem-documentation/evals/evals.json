@@ -1,0 +1,47 @@
+{
+  "skill_name": "documentation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem documentation Produce the exact file-by-file documentation change plan and proposed content for this completed Level 3 feature, but do not edit files in this eval. `POST /imports` now requires bearer authentication, accepts an optional `Idempotency-Key` header, and returns either `202` with an `ImportJob` body or `409` for a duplicate request. The new `IMPORT_MAX_BYTES` setting is required. The web route `/imports` now displays pending and failed states. Backend verification now uses `uv run pytest tests/imports -q`, and frontend verification uses `pnpm test -- imports`. The already-identified documentation targets are `apps/api/README.md`, `apps/web/README.md`, `openapi.yaml`, and `.env.example`. Preserve each file's existing style when applying the plan. Do not describe staging, rollback, monitoring, or other capabilities that have not been implemented.",
+      "expected_output": "A Level 3 documentation impact plan with concrete proposed content for all four affected targets. The API contract, authentication and idempotency behavior, environment setup, web states, and exact test commands are synchronized with the supplied implementation facts, while unimplemented Level 4 operations remain absent or explicitly deferred and no file change is claimed.",
+      "files": [],
+      "assertions": [
+        "The response identifies implement mode and target Level 3.",
+        "The proposed `openapi.yaml` change covers bearer security, the optional `Idempotency-Key` header, the `202` `ImportJob` response, and the `409` duplicate response while requiring the existing spec style to be preserved.",
+        "The proposed `apps/api/README.md` change documents the endpoint behavior, authentication, required environment variable, and the current backend test command.",
+        "The proposed `apps/web/README.md` change documents the `/imports` workflow, including pending and failed states, and the current frontend test command.",
+        "The proposed `.env.example` change adds `IMPORT_MAX_BYTES` as a non-secret configuration entry without inventing a credential value.",
+        "The documentation does not claim staging, rollback, monitoring, or other Level 4 capabilities are implemented.",
+        "The response includes a post-application checklist to re-read the changed docs and validate the OpenAPI structure when repository tooling permits, without claiming those checks already ran."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem documentation Review our documentation for a public-production target of Level 5; do not modify anything. `README.md` contains clean-checkout setup, exact run/test commands, layered architecture, API and authentication behavior, CI checks, and troubleshooting. `docs/deployment.md` covers staging and production deployment, migrations, rollback, and release ownership. `docs/operations.md` covers observability, audit logs, rate limits, performance and accessibility checks, and on-call ownership. No document defines SLIs/SLOs, incident procedures, backup/restore evidence, disaster recovery, data retention or privacy handling, secrets-manager expectations, production monitoring alerts, support escalation, versioning policy, or zero-downtime release procedures.",
+      "expected_output": "The assistant conducts a read-only evidence review, grades the documented areas at Level 4 rather than inferring readiness from file names, and compares them with the Level 5 target. It identifies the missing production-operability topics against the nearest owning documents and presents the smallest prioritized path to Level 5 without editing files.",
+      "files": [],
+      "assertions": [
+        "The response stays in review mode and does not modify documentation.",
+        "The response identifies Level 4 as the highest documentation level supported by the stated evidence and states Level 5 as the target.",
+        "The review cites the relevant existing files and distinguishes documented evidence from capabilities that may or may not exist in the system.",
+        "The gap report covers SLIs/SLOs, incident response, backup/restore and disaster recovery, retention/privacy, secrets management, production monitoring, support escalation, versioning, and zero-downtime releases.",
+        "Missing topics are mapped to an appropriate nearest document or a clearly justified operational document rather than prompting a wholesale README rewrite.",
+        "Recommendations are prioritized into a minimal path to Level 5 and flag any implementation facts that must be verified before documentation can claim them."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem documentation Run a Level 3 documentation pass after a private refactor. Treat the following as the already-collected `git status` and diff evidence: the change only renames an internal helper and reorganizes its tests. It does not change public API behavior, OpenAPI output, architecture, setup, commands, configuration, data models, user flows, or test invocation. Update whatever documentation is needed.",
+      "expected_output": "After inspecting the change evidence, the assistant intentionally makes no documentation edits. It explains that neither the public contract nor engineer-facing behavior changed, leaves the API spec untouched, and names the documentation targets intentionally left unchanged in the handoff.",
+      "files": [],
+      "assertions": [
+        "The response uses the supplied diff and status evidence to assess documentation impact rather than changing docs automatically.",
+        "No README, API specification, configuration sample, runbook, or new documentation file is edited or created.",
+        "The response explicitly leaves the API specification unchanged because the public contract did not change.",
+        "The response explains that the refactor does not affect setup, commands, architecture, behavior, or other documented knowledge.",
+        "The final handoff identifies documentation as intentionally unchanged and does not invent deferred capabilities or unrelated doc work."
+      ]
+    }
+  ]
+}

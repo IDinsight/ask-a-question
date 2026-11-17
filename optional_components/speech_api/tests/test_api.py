@@ -4,7 +4,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from ..app.schemas import IdentifiedLanguage
+from app.schemas import IdentifiedLanguage
 
 
 class TestTranscribeEndpoint:

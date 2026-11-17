@@ -1,59 +1,48 @@
 #!make
 
 SHELL := /bin/bash
-PYTHON := $(shell which python)
 
-.PHONY : tests
+.PHONY : lint check audit tests tests-alembic tests-rails teardown-test-containers
 
-# Main test target
-tests: setup-test-containers run-tests teardown-test-containers
-tests-alembic: setup-test-containers run-tests-alembic teardown-test-containers
+# The same non-SAST checks CI runs in Phase 1: ruff, mypy and the dependency audit.
+check:
+	uv run ruff check .
+	uv run mypy .
+	$(MAKE) audit
 
-# Test runner
-# NB: `pytest-alembic` requires the DB engine to point an empty database. Thus, alembic
-# tests should be run first.
-run-tests:
-	@set -a && source ./tests/api/test.env && set +a && \
-	$(PYTHON) -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. --ignore-glob="tests/api/step_definitions/*" tests && \
-	$(PYTHON) -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. tests/api/step_definitions
+# Audit exactly what ships (locked runtime deps, no dev group), as CI does.
+# Nothing is installed; pip-audit checks the pinned versions against OSV/PyPI.
+audit:
+	@req=$$(mktemp) && trap 'rm -f "$$req"' EXIT && \
+	uv export --locked --no-dev --no-emit-project --format requirements-txt -o "$$req" -q && \
+	uvx pip-audit==2.9.0 -r "$$req" --disable-pip --progress-spinner off
 
-run-tests-alembic:
-	@set -a && source ./tests/api/test.env && set +a && \
-	$(PYTHON) -m pytest -rPQ -m "not rails and alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov=. tests/api/test_alembic_migrations.py
+# Format, lint, type-check and SAST (config in pyproject.toml and .pylintrc).
+lint:
+	uv run black .
+	uv run ruff check .
+	uv run mypy .
+	uv run bandit -c pyproject.toml -r . -q
+	uv run pylint app tests
 
-## Helper targets
-setup-test-containers: setup-test-db setup-redis-test
-teardown-test-containers: teardown-test-db teardown-redis-test
+# `uv run pytest` is all you need. tests/__init__.py loads tests/test.env, and
+# tests/conftest.py starts the `testdb` / `redis-test` docker containers when they
+# are not running, then recreates a clean, migrated test database on every run.
+# The real-LLM `rails` tests are excluded by default (see [tool.pytest] addopts).
 
-setup-test-db:
-	-@docker stop testdb
-	-@docker rm testdb
-	@docker system prune -f
-	@sleep 2
-	@set -a && source ./tests/api/test.env && set +a && \
-	docker run --name testdb \
-		-p 5433:5432 \
-		-e POSTGRES_PASSWORD \
-		-e POSTGRES_USER \
-		-e POSTGRES_DB \
-		-d pgvector/pgvector:pg16
-	@set -a && source ./tests/api/test.env && set +a && \
-	$(PYTHON) -m alembic upgrade head
+# Whole suite (features, alembic migrations, BDD) with the 80% coverage gate.
+tests:
+	uv run pytest --cov --cov-report=term-missing
 
-# Use port 6381 since port 6379 is used for dev and 6380 for docker-compose
-setup-redis-test:
-	-@docker stop redis-test
-	-@docker rm redis-test
-	@docker system prune -f
-	@sleep 2
-	@docker run --name redis-test \
-	-p 6381:6379 \
-     -d redis:6.0-alpine
+# Only the alembic migration tests (they use their own empty database).
+tests-alembic:
+	uv run pytest -m alembic tests/migrations
 
-teardown-redis-test:
-	@docker stop redis-test
-	@docker rm redis-test
+# Guardrail tests that call a real LLM (needs LLM credentials in your shell).
+tests-rails:
+	uv run pytest -m rails tests/question_answer/rails
 
-teardown-test-db:
-	@docker stop testdb
-	@docker rm testdb
+# The containers are left running between runs to keep start-up fast.
+teardown-test-containers:
+	-@docker stop testdb redis-test
+	-@docker rm testdb redis-test

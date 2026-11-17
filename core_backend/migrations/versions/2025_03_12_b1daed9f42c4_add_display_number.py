@@ -33,16 +33,18 @@ def upgrade() -> None:
         workspace_id = workspace["workspace_id"]
         content = connection.execute(
             sa.text(
-                f'SELECT * FROM "content" WHERE "workspace_id" = {workspace_id} '
-                f'ORDER BY "created_datetime_utc"'
-            )
+                'SELECT * FROM "content" WHERE "workspace_id" = :workspace_id '
+                'ORDER BY "created_datetime_utc"'
+            ),
+            {"workspace_id": workspace_id},
         ).mappings()
         for i, row in enumerate(content):
             connection.execute(
                 sa.text(
-                    f'UPDATE "content" SET "display_number" = {i + 1} '
-                    f'WHERE "content_id" = {row["content_id"]}'
-                )
+                    'UPDATE "content" SET "display_number" = :display_number '
+                    'WHERE "content_id" = :content_id'
+                ),
+                {"content_id": row["content_id"], "display_number": i + 1},
             )
     # ### end Alembic commands ###
 

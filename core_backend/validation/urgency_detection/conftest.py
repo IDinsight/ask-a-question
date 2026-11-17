@@ -1,35 +1,38 @@
-from datetime import datetime, timezone
-from typing import AsyncGenerator, List
+from typing import TYPE_CHECKING, AsyncGenerator, List
 
 import pytest
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pytest import Item
 from pytest_asyncio import is_async_test
 
-from core_backend.app import create_app
-from core_backend.app.auth.dependencies import create_access_token
-from core_backend.app.database import get_session_context_manager
-from core_backend.app.users.models import UserDB
-from core_backend.app.utils import get_key_hash, get_password_salted_hash
+from app.main import app
 
-TEST_USERNAME = "test_username"
-TEST_PASSWORD = "test_password"
-TEST_USER_API_KEY = "test_api_key"
+if TYPE_CHECKING:  # Fixture from validation/conftest.py; imported for typing only.
+    from validation.conftest import ValidationWorkspace
 
 
 def pytest_collection_modifyitems(items: List[Item]) -> None:
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
-    session_scope_marker = pytest.mark.asyncio(scope="session")
+    session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:
         async_test.add_marker(session_scope_marker, append=False)
 
 
 @pytest.fixture(scope="session")
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    app = create_app()
-    async with AsyncClient(app=app, base_url="http://test") as c:
-        yield c
+async def client(
+    validation_workspace: "ValidationWorkspace",
+) -> AsyncGenerator[AsyncClient, None]:
+    """Async client for the app, with the app's lifespan running.
+
+    `ASGITransport` does not run the lifespan, so it is entered here: it creates
+    `app.state.redis` (API quotas) on this event loop. Depends on
+    `validation_workspace` so workspace setup has finished first.
+    """
+
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            yield c
 
 
 # create command line arguments for pytest as per https://stackoverflow.com/a/42145604/7664921
@@ -69,42 +72,17 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 @pytest.fixture(scope="session")
-def user(client: TestClient) -> UserDB:
-    """
-    Returns a user dict
-    """
+def api_key(validation_workspace: "ValidationWorkspace") -> str:
+    """The validation workspace's API key (used by /urgency-detect)."""
 
-    with get_session_context_manager() as db_session:
-        user1 = UserDB(
-            username=TEST_USERNAME,
-            hashed_password=get_password_salted_hash(key=TEST_PASSWORD),
-            hashed_api_key=get_key_hash(key=TEST_USER_API_KEY),
-            created_datetime_utc=datetime.now(timezone.utc),
-            updated_datetime_utc=datetime.now(timezone.utc),
-        )
-
-        db_session.add(user1)
-        db_session.commit()
-
-    return user1
+    return validation_workspace.api_key
 
 
 @pytest.fixture(scope="session")
-def api_key() -> str:
-    """
-    Returns an API key
-    """
-    return TEST_USER_API_KEY
+def fullaccess_token(validation_workspace: "ValidationWorkspace") -> str:
+    """An admin access token for the validation workspace (used to manage rules)."""
 
-
-@pytest.fixture(scope="session")
-def fullaccess_token(user: UserDB) -> str:
-    """
-    Returns a token with full access
-
-    NB: FIX THE CALL TO `create_access_token` WHEN WE WANT THIS TEST TO PASS AGAIN!
-    """
-    return create_access_token(username=user.username)  # type: ignore
+    return validation_workspace.access_token
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:

@@ -1,12 +1,20 @@
-FROM node:19-alpine
+# Defaults to the current Node LTS line; override with --build-arg NODE_VERSION=26
+ARG NODE_VERSION=lts
+
+FROM node:${NODE_VERSION}-alpine
+
+# Node 25+ images no longer bundle corepack; install it so the pnpm version
+# pinned in package.json ("packageManager") is used.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN npm install -g corepack@latest && corepack enable
 
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=development
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
@@ -14,4 +22,4 @@ EXPOSE 3000
 
 ENV PORT=3000
 
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "dev"]

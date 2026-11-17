@@ -1,0 +1,20 @@
+# Installed and built inside the image; host copies (often macOS binaries)
+# would overwrite the Linux node_modules from the deps stage.
+node_modules
+.next
+out
+*.tsbuildinfo
+
+# Test output
+test-results
+playwright-report
+blob-report
+playwright/.cache
+
+# Env vars are injected at runtime (next-runtime-env); keep local secrets out of the image
+.env
+.env*.local
+
+.git
+.DS_Store
+npm-debug.log*

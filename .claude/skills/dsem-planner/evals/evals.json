@@ -1,0 +1,51 @@
+{
+  "skill_name": "planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Plan this feature without implementing it: field inspectors must create incident reports in the existing Android app while offline, including photos, and have them sync to an existing FastAPI service when connectivity returns. Supervisors review and change report status in the existing Next.js app, and every status change must be attributable to a user. Authentication already exists in all three apps, but attachment limits, conflict resolution, and the allowed status transitions are not defined. No target maturity level was specified.",
+      "expected_output": "A Level 3 implementation planning output that treats the request as one cross-stack product slice, distinguishes blocking product decisions from safe assumptions, routes each affected layer to the appropriate skills, sequences contract and backend work before client integration, and maps the workflow and failure cases to verifiable tasks without implementing the feature.",
+      "files": [],
+      "assertions": [
+        "The output explicitly identifies implement mode and infers Level 3 as the shared target for every affected stack",
+        "The affected-layer analysis includes Android UI, local persistence, networking and queued sync; FastAPI behavior and persistence; Next.js review UI and data flow; authorization or audit concerns; testing; and documentation",
+        "Attachment limits, conflict resolution, and allowed status transitions are classified as questions or assumptions according to whether they change the contract, data model, security posture, or user flow, rather than being silently invented",
+        "The output either provides the required full planning structure directly or routes the cross-cutting program to deep-planner, and it identifies the relevant Android, api-skill, Next.js, security, CI/CD, and documentation skills or references",
+        "Workstreams or task cards preserve dependencies by defining the API and persistence contract before backend implementation and tests, then client integration, UI states, end-to-end verification, and documentation",
+        "Each task or workstream has a scope, acceptance behavior, target level, dependencies, files or areas to inspect, and observable verification evidence",
+        "The verification matrix covers offline creation, durable queueing and retry, duplicate or conflict handling, photo upload failure, supervisor authorization, valid status transitions, attribution or audit evidence, and the end-to-end happy path",
+        "Level 4 and Level 5 capabilities are not added to the implementation scope and are either omitted or clearly identified as deferred"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Audit our existing FastAPI and Next.js product for a public launch at Level 5. We use JWT authentication, PostgreSQL migrations, and GitHub Actions, but we have no documented SLOs or backup-restore exercise. Do not change files. I need an evidence-backed assessment of the current level, launch gaps, and a prioritized path to Level 5.",
+      "expected_output": "A review-mode, Level 5 assessment plan that requires repository evidence before assigning current maturity, routes the audit across application, security, delivery, operations, and documentation skills, and organizes gaps and verification in dependency order without mutating the project.",
+      "files": [],
+      "assertions": [
+        "The output explicitly selects review mode and target Level 5 and states that files must not be mutated",
+        "It separates the requested or reported facts from verified repository evidence and does not assign a current level without evidence",
+        "It assesses current and target levels for every affected stack or layer using one shared Level 5 target unless an explicit exception is documented",
+        "The routing covers FastAPI or API setup, Next.js, security, CI/CD, documentation, and deep planning for the cross-cutting review",
+        "The review workstreams include architecture and contracts, persistence and migration safety, authentication and authorization, tests, observability, deployment and rollback, backup restoration, incident readiness, privacy or retention, and documentation",
+        "The plan identifies missing SLOs and restore evidence as Level 5 gaps while also requiring inspection for idempotency, multi-instance correctness, zero-downtime changes, threat modeling, capacity, and production monitoring",
+        "Findings, risks, and recommendations are tied to exact evidence to collect and to pass or fail verification criteria",
+        "The prioritized sequence distinguishes prerequisites and lower-level gaps from Level 5 launch gates rather than presenting an unranked checklist"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Give me an implementation plan to rename the Android settings screen title from \"Preferences\" to \"Settings\". The title is already a string resource and the screen has a screenshot test. No behavior changes and no maturity level requested.",
+      "expected_output": "A lightweight single-layer planning pass that infers the normal Level 3 project target but scopes the change to the Android resource and its focused verification, avoiding unrelated cross-stack or operational work.",
+      "files": [],
+      "assertions": [
+        "The output identifies implement mode and infers Level 3 as the default target because no maturity level was supplied",
+        "It classifies the request as a small Android UI or resource-only change and keeps the planning pass proportionate",
+        "It routes to the Android skill and does not invent API, database, security, deployment, observability, or migration work",
+        "The plan calls for locating the existing string resource and its usages instead of guessing an unverified path",
+        "Verification includes the focused screenshot or UI test and a check for affected localized resources or accessibility-visible text",
+        "The selected maturity level is not used to expand the requested copy change into unrelated architecture or production-readiness upgrades"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+[project]
+name = "aaq-docs"
+version = "0.1.0"
+description = "Ask A Question documentation site (MkDocs Material)"
+requires-python = ">=3.12"
+# Exact pins carried over from the root requirements-dev.txt and the
+# Deploy Docs workflow so the published site renders the same as before.
+dependencies = [
+    "mkdocs-material==9.5.3",
+    "mkdocs-material-extensions==1.3.1",
+    "pymdown-extensions==10.3",
+    "mkdocs-glightbox==0.3.4",
+    "mkdocs-open-in-new-tab==1.0.3",
+    "mike==2.1.2",
+]
+
+[tool.uv]
+# Docs-only project: nothing to build or install as a package.
+package = false

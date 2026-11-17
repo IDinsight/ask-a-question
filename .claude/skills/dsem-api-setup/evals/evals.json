@@ -1,0 +1,45 @@
+{
+  "skill_name": "api-setup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem api-setup Scaffold a disposable Level 1 FastAPI proof of concept named `quote-api` in `./services/quote-api`. It needs an in-memory `POST /quotes` endpoint that accepts `quantity` and `unit_price` and returns the calculated total. There must be no database, Redis, or authentication. I have not approved any commands yet; show me the pre-flight first.",
+      "expected_output": "A confirmation-only pre-flight that identifies implement mode, Level 1, FastAPI, the project name and directory, and the deliberately disposable scope. It waits for explicit approval before touching the workspace and limits the proposed build and verification to a FastAPI spike.",
+      "files": [],
+      "assertions": [
+        "States the operating mode as implement, target as Level 1, framework as FastAPI, project name as `quote-api`, and directory as `./services/quote-api`.",
+        "Requests explicit confirmation and does not claim to create files, install dependencies, or run scaffold commands before that confirmation.",
+        "Describes a Level 1 shape with inline router/business logic, in-memory data, exposed OpenAPI documentation, and smoke tests, and labels it a disposable prototype unsuitable for shared production use.",
+        "Does not request database or Redis configuration and does not propose persistence, migrations, authentication, a service or repository layer, observability, containers, or other higher-level capabilities as part of the Level 1 build.",
+        "Names Level 1 verification outcomes: the application starts, the example endpoint returns the calculated result, invalid input is rejected, and smoke tests pass."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem api-setup Review our existing FastAPI billing API for Level 4 readiness and do not change anything. Treat this as the evidence found during inspection: routers call services, but services contain SQLModel queries directly; ORM models and response schemas are separate; Alembic and isolated PostgreSQL dev/test databases are used; auth is injected with dependencies; pytest covers happy paths, failures, auth, and edge cases; Ruff, mypy, and CI pass; CORS is restrictive and security headers are present. Logging is plain-text stdlib logging with no request IDs. There are no metrics, error tracking, tracing, alerts, rate limiting, audit log, reproducible staging deployment, or migration rollback procedure, and the container runs as root.",
+      "expected_output": "A read-only, evidence-backed maturity assessment that treats the service as Level 2 or incomplete Level 3 overall rather than Level 4. It distinguishes stronger and weaker dimensions, closes the unambiguous Level 3 architecture and request-correlation gaps first, then gives a prioritized Level 4 readiness path and verification evidence.",
+      "files": [],
+      "assertions": [
+        "Explicitly uses review mode with Level 4 as the target and makes no file changes, dependency changes, or installation attempts.",
+        "Does not claim the API is currently Level 4; identifies it as no higher than Level 2 overall or as an incomplete Level 3, citing direct service-layer queries and missing request-ID propagation as behavioral evidence.",
+        "Assesses architecture, data management, testing, security, observability, and delivery separately, recognizing the supplied test, database-isolation, auth, CORS, headers, and CI strengths.",
+        "Prioritizes a Level 3 persistence boundary plus request-ID propagation and global error handling before Level 4 metrics, tracing, and staging work; it does not recommend generic repositories for every model without demonstrated complexity or reuse.",
+        "Identifies the material Level 4 gaps: protected RED metrics, error tracking, tracing, actionable alerts, abuse controls, audit logging, a non-root container, reproducible staging, and documented migration and rollback procedures.",
+        "Includes Level 4 completion evidence such as a successful staging deployment, signals reaching configured destinations, tested migration and rollback procedures, and tests for critical security controls."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem api-setup Set up a production-ready reservations backend named `reservations-api` in `./services/reservations-api`. The team uses NestJS and needs persistent data, but we have not chosen PostgreSQL or MongoDB and have not decided whether to use Redis. By \"production-ready\" we might mean a team staging demo or a public launch. Start now.",
+      "expected_output": "A blocking-question response rather than a scaffold. It records the known implementation context, explains that this skill has no NestJS stack reference, and asks only for the choices that determine architecture and maturity: how to proceed without a reference, Level 4 versus Level 5, primary database, and Redis usage.",
+      "files": [],
+      "assertions": [
+        "Identifies implement mode and records NestJS, `reservations-api`, and `./services/reservations-api` as known pre-flight values.",
+        "States that no NestJS stack reference is available and asks whether to adapt the closest guidance or existing NestJS conventions, or pause until a reference is added.",
+        "Does not silently assign a target level; explains that a staging-ready service maps to Level 4 while a public production launch maps to Level 5 and asks the user to choose.",
+        "Asks the user to choose the primary database and whether Redis is required because this is Level 2+ persistent work.",
+        "Does not create files, install packages, select database tooling, or otherwise scaffold the project before the unsupported-stack, level, database, Redis, and final pre-flight confirmation are resolved."
+      ]
+    }
+  ]
+}

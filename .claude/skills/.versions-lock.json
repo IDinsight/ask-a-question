@@ -1,0 +1,11 @@
+{
+  "dsem-android": "0.1.0",
+  "dsem-api-setup": "0.1.1",
+  "dsem-api-skill": "0.1.0",
+  "dsem-ci-cd": "0.1.0",
+  "dsem-deep-planner": "0.1.0",
+  "dsem-documentation": "0.1.0",
+  "dsem-nextjs": "0.1.0",
+  "dsem-planner": "0.1.0",
+  "dsem-security": "0.1.0"
+}

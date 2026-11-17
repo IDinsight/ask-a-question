@@ -2,8 +2,15 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..llm_call.entailment import UrgencyDetectionEntailment
-from ..urgency_rules.schemas import UrgencyRuleCosineDistance
+from app.urgency_rules.schemas import UrgencyRuleCosineDistance
+
+
+class UrgencyDetectionEntailmentResult(BaseModel):
+    """Pydantic model for the output of the urgency detection entailment task."""
+
+    best_matching_rule: str
+    probability: float = Field(ge=0, le=1)
+    reason: str
 
 
 class UrgencyQuery(BaseModel):
@@ -22,10 +29,7 @@ class UrgencyQuery(BaseModel):
 class UrgencyResponse(BaseModel):
     """Pydantic model for urgency detection responses."""
 
-    details: (
-        dict[int, UrgencyRuleCosineDistance]
-        | UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult
-    )
+    details: dict[int, UrgencyRuleCosineDistance] | UrgencyDetectionEntailmentResult
     is_urgent: bool
     matched_rules: list[str]
 

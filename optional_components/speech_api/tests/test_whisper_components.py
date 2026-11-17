@@ -4,8 +4,8 @@ from io import BytesIO
 
 import pytest
 
-from ..app.schemas import IdentifiedLanguage
-from ..app.voice_components import synthesize_speech, transcribe_audio
+from app.schemas import IdentifiedLanguage
+from app.voice_components import synthesize_speech, transcribe_audio
 
 
 @pytest.mark.asyncio

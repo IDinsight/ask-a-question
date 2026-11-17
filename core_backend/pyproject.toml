@@ -1,0 +1,183 @@
+[project]
+name = "core-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+# Matches the Docker images (python:3.12-slim-bookworm). Pinned deps like
+# numpy 1.26.4 have no wheels for 3.13+.
+requires-python = ">=3.12,<3.13"
+# Exact pins. requirements.txt mirrors these for CI workflows that still use pip;
+# the Docker images install from uv.lock.
+dependencies = [
+    "gunicorn==23.0.0",
+    "uvicorn[standard]==0.54.0",
+    "uvicorn-worker==0.4.0",
+    "fastapi[standard]==0.162.2",
+    "alembic==1.12.0",
+    "pgvector==0.2.5",
+    "psycopg2==2.9.9",
+    "asyncpg==0.30.0",
+    "litellm==1.109.1",
+    "sqlalchemy[asyncio]==2.0.20",
+    "pypdf==7.0.1",
+    "python-multipart==0.0.33",
+    "pyjwt[crypto]==2.15.1",
+    "prometheus_client==0.19.0",
+    "langfuse==2.60.10",
+    "pandas==2.2.2",
+    "pandas-stubs==2.2.2.240603",
+    "numpy==1.26.4",
+    "torch==2.15.0",
+    "redis==5.0.8",
+    "python-dateutil==2.8.2",
+    "bertopic==0.17.4",
+    "google-cloud-storage==2.18.2",
+    "google-cloud-texttospeech==2.16.5",
+    "google-cloud-speech==2.27.0",
+    "pydub==0.25.1",
+    "sentence-transformers==6.3.0",
+    "transformers==5.22.2",
+    "bokeh==3.10.2",
+    "faster-whisper==1.0.3",
+    "sentry-sdk[fastapi]==2.74.0",
+    "langchain-core==1.8.0",
+    "langchain-text-splitters==1.1.3",
+    "mistralai==1.6.0",
+    "python-dotenv==1.2.4",
+    "slowapi>=0.1.10",
+    "pwdlib[argon2]==0.3.1",
+]
+
+# Test and lint tooling. uv installs the `dev` group by default on `uv sync` /
+# `uv run`, so `uv run pytest` / `uv run ruff` always work. Dockerfile.dev
+# includes them; the production Dockerfile syncs with --no-dev.
+[dependency-groups]
+dev = [
+    # Linting / formatting (pins match the pre-commit hook revs)
+    "black==24.3.0",
+    "ruff==0.5.4",
+    "pylint==3.2.5",
+    "pylint-pytest==1.1.9.post1",
+    "pre-commit==3.4.0",
+    # Tests
+    "pytest==9.1.1",
+    "pytest-alembic==0.13.2",
+    "pytest-asyncio==1.4.1.post1",
+    "pytest-bdd==9.0.1",
+    "pytest-cov==7.1.0",
+    "pytest-randomly==5.1.0",
+    "httpx>=0.28.1",
+    "mypy==1.18.2",
+    "types-PyYAML==6.0.12.12",
+    "types-python-dateutil==2.9.0.20240315",
+    "types-requests==2.32.0.20241016",
+    # SAST: `uv run bandit -c pyproject.toml -r .` (config in [tool.bandit] below).
+    "bandit[toml]==1.9.4",
+]
+# validation/ suites only (S3 data + SNS notifications): `uv sync --group validation`.
+# s3fs is versioned in lockstep with fsspec (pulled in by torch/huggingface-hub).
+validation = [
+    "boto3==1.43.117",
+    "s3fs==2026.9.0",
+]
+
+# On Linux (the Docker images and CI), take torch from PyTorch's CPU-only index.
+# PyPI's Linux torch wheels are the CUDA builds, which pull in several GB of
+# nvidia-* packages the backend never uses. macOS keeps the normal PyPI wheel.
+# `explicit = true` means only torch is looked up on this index.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu", marker = "sys_platform == 'linux'" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.fastapi]
+entrypoint = "app.main:app"
+
+# Lint config (moved here from the old repo-root pyproject.toml).
+[tool.mypy]
+disallow_untyped_defs = true
+# Derive module names from file paths (relative to core_backend/), so directories
+# without __init__.py, like validation/retrieval/ and validation/urgency_detection/,
+# don't both produce a top-level `conftest` module. Same as the Makefile's
+# --explicit-package-base, so plain `uv run mypy .` behaves the same.
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy",
+            "google.auth.transport", "google.oauth2",
+            "gtts", "google.cloud", "bertopic", "hdbscan", "pydub",
+            "sklearn", "umap", "bokeh.*", "uvicorn_worker",
+            # No type hints shipped. boto3 is only installed for validation/.
+            "pgvector", "gunicorn.*", "boto3"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
+# SAST. Run with `uv run bandit -c pyproject.toml -r .` (make lint and CI do).
+[tool.bandit]
+# tests/ is test code (pytest relies on assert); .venv is third-party code.
+exclude_dirs = ["tests", ".venv"]
+# B101 (assert_used): asserts are stripped under `python -O`. The app never runs
+# optimized (Dockerfiles, startup.sh and gunicorn don't use -O or PYTHONOPTIMIZE),
+# and its remaining asserts are internal invariants / type narrowing. Checks on
+# outside input use explicit raises, not asserts.
+skips = ["B101"]
+
+[tool.ruff]
+lint.select = ["E", "F", "B", "Q", "I"]
+lint.ignore = ["B008"]  # Do not perform function calls in argument defaults.
+line-length = 88
+# The old root config had no requires-python, so ruff defaulted to py38. Pinned so
+# moving the config here doesn't switch on py>=3.10 rules (B905, Q003). Bump to py312
+# in a follow-up and fix the resulting violations.
+target-version = "py38"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
+
+[tool.ruff.lint.isort]
+# core_backend: validation/ imports it by package name (was first-party from repo root)
+known-first-party = ["app", "core_backend"]
+
+# Pytest config for core_backend. Native TOML table (pytest >= 9). Having it here
+# makes core_backend/ the rootdir, so the repo-root pyproject.toml is not used.
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+# -ra: short summary of skips/failures. --strict-markers: typos in marks fail.
+# -m "not rails": the guardrail tests call a real LLM, so they are opt-in
+# (`pytest -m rails`). A later -m on the command line replaces this one.
+# --cov: always measure coverage (settings in [tool.coverage.*] below). Pass
+# --no-cov to skip it, e.g. when running a single test file while iterating.
+# --cov takes an optional value, so it must not be last: otherwise a path given on
+# the command line (`pytest tests/foo.py`) is read as the coverage source.
+addopts = ["-ra", "--cov", "--strict-markers", "-m", "not rails"]
+asyncio_mode = "auto"
+# Put core_backend/ on sys.path so `app` imports however pytest is started (e.g. the
+# validation suites, whose directories have no __init__.py).
+pythonpath = ["."]
+bdd_features_base_dir = "tests/bdd/features"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "rails: tests the LLM guardrails. These call a real LLM service.",
+    "alembic: alembic migration tests (pytest-alembic).",
+]
+
+# Coverage settings, applied on every pytest run via --cov in addopts.
+[tool.coverage.run]
+source = ["app"]
+branch = true
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

@@ -1,0 +1,50 @@
+{
+  "skill_name": "android",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem android We are starting a new Jetpack Compose clinic check-in demo. Produce an implementation plan for Level 2: a patient-list screen and a check-in form connected by Navigation Compose, using hardcoded sample patients only. There is no backend, persistence, authentication, or offline requirement. We want a production-shaped presentation layer without adding layers that belong to later levels.",
+      "expected_output": "A Level 2 implementation plan that confirms implement mode and the new-app scope, then proposes a Material 3 navigation and presentation structure with per-screen ViewModels, cohesive StateFlow UI state, lifecycle-aware collection, and typed UI callbacks. It should keep all data stubbed, explicitly defer repositories, networking, Room, WorkManager, and Level 3 test obligations, and define proportionate UI/navigation verification without claiming production readiness.",
+      "files": [],
+      "assertions": [
+        "Identifies the request as implement mode, target Level 2, for a new Jetpack Compose app and confirms that scope before implementation.",
+        "Keeps patient data hardcoded or stubbed and does not introduce a repository, API client, Room, WorkManager, authentication, or offline sync.",
+        "Assigns screen-level state to ViewModels exposed as StateFlow while composables render state and emit typed callbacks rather than performing business or data work.",
+        "Uses lifecycle-aware Flow collection and defines a clear Navigation Compose graph between the list and form destinations.",
+        "Plans Material 3 components and app theme usage, including accessible controls and meaningful previews or smoke checks for important screen states.",
+        "States that Level 3 data-layer and automated-test requirements are deferred and does not describe the Level 2 demo as production-ready."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem android Our existing field-inspection app is a tested Level 3 online-only Compose app. The Level 4 upgrade is confirmed. Produce the implementation plan for cached inspection lists and offline create/edit: a save must survive process death, appear immediately as saved on the device, sync once after reconnect, and remain visible with a useful correction path when the API returns a validation conflict. The API owns canonical IDs and approval status.",
+      "expected_output": "A Level 3-to-4 delta plan that makes Room the observable read source, persists local mutations and an outbox before opportunistic upload, and defines server authority for canonical fields. It should specify stable client IDs, sync states and idempotency, constrained unique WorkManager recovery with retry/conflict behavior, simultaneous cached/offline/pending/error UI state, and focused DAO, repository, worker, ViewModel, UI, migration, and process-death/reconnect verification while deferring Level 5 release hardening.",
+      "files": [],
+      "assertions": [
+        "Treats the work as an existing Level 3 app being implemented to Level 4 and separates the Level 4 delta from deferred Level 5 concerns.",
+        "Makes the local Room data source the UI's read source and persists fetched network data locally before exposing it to higher layers.",
+        "Saves offline mutations locally first with a stable client ID, explicit sync status, and an outbox operation carrying or deriving an idempotency key.",
+        "Preserves API authority for canonical IDs and approval status and maps validation rejection to a visible FAILED or CONFLICT state without deleting local work.",
+        "Uses WorkManager as durable recovery with a connected-network constraint, unique work, exponential backoff for transient failures, and idempotent resume behavior.",
+        "Models cached content, refresh or sync activity, offline status, pending count, and non-blocking errors as coexisting UI-state dimensions rather than one mutually exclusive root state.",
+        "Includes layer-appropriate DAO, repository, worker, ViewModel, Compose UI, Room migration, idempotency, process-death, and reconnect tests or smoke scenarios.",
+        "Calls for checking the existing Gradle/version-catalog setup and API contract before adding Room, WorkManager, KSP, or changing DTO and dependency surfaces."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem android Audit this existing Compose demo without changing files. A composable launches Retrofit calls and stores responses in mutableState, the Activity is the only owner of the selected patient and form values, loading is a spinner over a blank screen, and there are no automated tests. The team calls it Level 3 because it talks to a real API, but no target level for future work has been chosen. Assess the current level and explain the next decision; offline use is not a product requirement.",
+      "expected_output": "A read-only review that refuses to infer Level 3 from the presence of Retrofit alone. It should classify the app conservatively as prototype maturity or below a complete Level 2, cite the composable data access, Activity-owned screen state, incomplete UI states, and absent tests as evidence, then distinguish a Level 2 presentation cleanup from a Level 3 connected architecture and request a target-level decision before implementation. It should not prescribe Room, an outbox, or WorkManager without an offline requirement.",
+      "files": [],
+      "assertions": [
+        "Explicitly operates in review mode and does not propose or imply file mutations.",
+        "Does not award Level 3 merely because a real API or Retrofit is present and bases maturity on demonstrated behavior across the level gates.",
+        "Identifies direct network access from a composable and Activity ownership of screen or durable form state as architecture and unidirectional-data-flow violations.",
+        "Explains that the app lacks the complete loading, success, empty, and error handling plus ViewModel, repository or remote-data boundary, and tests required at Level 3.",
+        "Separates a possible Level 2 presentation-layer refactor from a Level 3 connected implementation rather than silently mixing level requirements.",
+        "Records the future target level as unresolved and asks for that decision before implementation work begins.",
+        "Does not recommend Room, an outbox, WorkManager, or other offline machinery when offline behavior is explicitly out of scope."
+      ]
+    }
+  ]
+}

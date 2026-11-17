@@ -1,41 +1,73 @@
+# syntax=docker/dockerfile:1
+#
+# Local development image for core_backend (used by docker-compose-dev.yml).
+#
+# The compose file bind-mounts ./core_backend over the WORKDIR, so the code
+# copied below is only a fallback for running the image on its own. Edits on
+# the host are picked up by uvicorn --reload. Rebuild only when pyproject.toml
+# or uv.lock changes.
+#
+# Differences from the production Dockerfile, on purpose:
+#   - single stage, keeps build tools (gcc) and uv so you can add packages
+#   - installs the `dev` dependency group (pytest, ruff, mypy, ...)
+#   - runs as root so the bind mount is writable whatever your host UID is
+#   - uvicorn with --reload instead of gunicorn with 4 workers
+
+ARG UV_IMAGE=ghcr.io/astral-sh/uv:0.11.26
+
+FROM ${UV_IMAGE} AS uv
+
 FROM python:3.12-slim-bookworm
 
 LABEL maintainer="IDinsight"
 
-# Define arguments
-ARG NAME=aaq_backend
-ARG PORT=8000
-ARG HOME_DIR=/usr/src/${NAME}
-ARG WHISPER_MODEL_DIR=/whisper_models
+ARG HOME_DIR=/usr/src/aaq_backend
+ARG CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
 
-# Install packages
+# gcc + libc6-dev + libpq-dev compile psycopg2 / hdbscan; ffmpeg is used by pydub / whisper.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev python3-dev ffmpeg \
+    gcc libc6-dev libpq-dev ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up directories
-RUN mkdir -p ${HOME_DIR} ${WHISPER_MODEL_DIR} /tmp/prometheus
+COPY --from=uv /uv /uvx /usr/local/bin/
 
-# Set environment variables
-ENV PYTHONPATH="${PYTHONPATH}:${HOME_DIR}"
-ENV PORT=${PORT}
-ENV WHISPER_MODEL_DIR=${WHISPER_MODEL_DIR}
+# - UV_PROJECT_ENVIRONMENT: keep the venv at /opt/venv. The bind mount brings
+#   your host's macOS .venv into the WORKDIR; without this, uv would try to use
+#   (and overwrite) it.
+# - UV_PYTHON_DOWNLOADS=never: use the image's Python.
+# - UV_LINK_MODE=copy: the uv cache is a separate mount, hardlinks can't work.
+ENV PYTHONPATH="${HOME_DIR}" \
+    PYTHONUNBUFFERED=1 \
+    # Don't litter the bind-mounted source tree with __pycache__ dirs.
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_LINK_MODE=copy \
+    PATH="/opt/venv/bin:${PATH}" \
+    # Model caches live outside the bind mount so they survive it.
+    HF_HOME=/opt/hf_cache \
+    WHISPER_MODEL_DIR=/whisper_models \
+    PORT=8000
 
-# Set working directory
 WORKDIR ${HOME_DIR}
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+# Dependencies first so this layer is cached until the lock changes. Includes
+# the dev group, so `docker compose exec core_backend ruff check .` works.
+# torch comes from the CPU-only index on Linux (see pyproject.toml).
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project
 
-# Copy application code
+# Bake the models in so the first request doesn't stall on a download.
+# Same loaders as the app, so tokenizer files come down too.
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('${CROSS_ENCODER_MODEL}')" \
+    && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" \
+    && python -c "from faster_whisper import WhisperModel; WhisperModel('tiny', download_root='/whisper_models')"
+
 COPY . .
-
-# Download required models
-RUN python -c "from transformers import AutoModel; AutoModel.from_pretrained('cross-encoder/ms-marco-MiniLM-L-6-v2')" && \
-    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" && \
-    python -c "from faster_whisper import WhisperModel; model = WhisperModel('tiny', download_root='${WHISPER_MODEL_DIR}')"
 
 EXPOSE ${PORT}
 
-CMD ["python", "main.py"]
+# Apply migrations, then serve with auto-reload on changes under app/.
+# docker-compose-dev.yml sets the same command explicitly.
+CMD ["/bin/sh", "-c", "python -m alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app"]

@@ -1,7 +1,8 @@
 """This module contains endpoints for the speech API."""
 
-from app.routers import router
 from fastapi import FastAPI
+
+from app.routers import router
 
 app = FastAPI()
 
